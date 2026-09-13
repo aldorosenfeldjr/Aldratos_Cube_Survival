@@ -30,6 +30,9 @@ public class GameManager : MonoBehaviour
     private float maxHazardDrag;
 
     [SerializeField]
+    private PowerUpSpawner powerUpSpawner;
+
+    [SerializeField]
     private GameObject mainVCam;
     [SerializeField]
     private GameObject zoomVCam;
@@ -87,6 +90,12 @@ public class GameManager : MonoBehaviour
         highScoreText.gameObject.SetActive(true);
 
         hazardsCoroutine = StartCoroutine(SpawnHazards());
+
+        powerUpSpawner.BeginSpawning();
+        if (PowerUpManager.Instance != null)
+        {
+            PowerUpManager.Instance.ResetAll();
+        }
     }
 
     private void OnDisable()
@@ -161,6 +170,11 @@ public class GameManager : MonoBehaviour
             Destroy(hazard);
         }
 
+        foreach (var powerUp in GameObject.FindGameObjectsWithTag("PowerUp"))
+        {
+            Destroy(powerUp);
+        }
+
         if (hazardsCoroutine != null)
         {
             StopCoroutine(hazardsCoroutine);
@@ -178,6 +192,12 @@ public class GameManager : MonoBehaviour
         player.GetComponent<Player>().ResetState();
 
         hazardsCoroutine = StartCoroutine(SpawnHazards());
+
+        powerUpSpawner.BeginSpawning();
+        if (PowerUpManager.Instance != null)
+        {
+            PowerUpManager.Instance.ResetAll();
+        }
 
         if (Time.timeScale < 1)
         {
@@ -222,6 +242,7 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         StopCoroutine(hazardsCoroutine);
+        powerUpSpawner.StopSpawning();
         gameOver = true;
 
         if (Time.timeScale < 1)
