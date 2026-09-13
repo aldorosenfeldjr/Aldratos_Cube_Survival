@@ -11,6 +11,10 @@ public class GameOverMenu : MonoBehaviour
     [SerializeField]
     private TMPro.TextMeshProUGUI highScore;
     [SerializeField]
+    private TMPro.TextMeshProUGUI finalScoreText;
+    [SerializeField]
+    private GameObject scoreHud;
+    [SerializeField]
     private GameObject firstSelected;
     [SerializeField]
     private GameObject quitButton;
@@ -27,6 +31,14 @@ public class GameOverMenu : MonoBehaviour
     {
         highScore.text = $"High Score: {GameManager.Instance.HighScore}";
 
+        scoreHud.SetActive(false);
+
+        finalScoreText.text = $"Score: {GameManager.Instance.Score}";
+        finalScoreText.transform.localScale = Vector3.zero;
+        LeanTween.scale(finalScoreText.gameObject, Vector3.one, 0.6f)
+            .setEaseOutElastic()
+            .setDelay(1.5f);
+
         var rectTransform = GetComponent<RectTransform>();
         rectTransform.anchoredPosition = new Vector2(0, rectTransform.rect.height);
 
@@ -34,6 +46,14 @@ public class GameOverMenu : MonoBehaviour
 
         EventSystem.current.SetSelectedGameObject(null);
         EventSystem.current.SetSelectedGameObject(firstSelected);
+    }
+
+    private void OnDisable()
+    {
+        if (scoreHud != null)
+        {
+            scoreHud.SetActive(true);
+        }
     }
 
     private void Update()

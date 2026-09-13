@@ -51,6 +51,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance => instance;
     private const string HighScorePreferenceKey = "HighScore";
     public int HighScore => highScore;
+    public int Score => score;
 
     private void Awake()
     {
@@ -83,8 +84,17 @@ public class GameManager : MonoBehaviour
         scoreText.text = "0";
         scoreText.color = normalScoreColor;
         highScoreText.text = $"Best: {highScore}";
+        highScoreText.gameObject.SetActive(true);
 
         hazardsCoroutine = StartCoroutine(SpawnHazards());
+    }
+
+    private void OnDisable()
+    {
+        if (highScoreText != null)
+        {
+            highScoreText.gameObject.SetActive(false);
+        }
     }
 
     private void Update() 
