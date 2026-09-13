@@ -3,11 +3,9 @@ using UnityEngine;
 public class CatWanderer : MonoBehaviour
 {
     [SerializeField]
-    private float minX = -7f;
+    private float minX = -5.3f;
     [SerializeField]
-    private float maxX = 7f;
-    [SerializeField]
-    private float wanderZRange = 1.5f;
+    private float maxX = 5.3f;
 
     [SerializeField]
     private float walkSpeed = 0.6f;
@@ -27,16 +25,21 @@ public class CatWanderer : MonoBehaviour
     private float arriveThreshold = 0.15f;
 
     [SerializeField]
-    private float hazardAvoidRadius = 1.2f;
+    private float hazardAvoidRadius = 1.5f;
     [SerializeField]
     private string hazardTag = "Hazard";
+
+    [SerializeField]
+    private LayerMask groundMask = ~0;
+    [SerializeField]
+    private float groundCheckHeight = 5f;
 
     private enum State { Idle, Walking, Running }
 
     private Animator animator;
     private State state;
     private float stateTimer;
-    private float centerZ;
+    private float fixedZ;
     private Vector3 destination;
     private float currentSpeed;
     private const float CrossFadeTime = 0.2f;
@@ -44,7 +47,7 @@ public class CatWanderer : MonoBehaviour
     private void Start()
     {
         animator = GetComponent<Animator>();
-        centerZ = transform.position.z;
+        fixedZ = transform.position.z;
         EnterIdle();
     }
 
@@ -76,13 +79,16 @@ public class CatWanderer : MonoBehaviour
 
     private void PickDestination()
     {
-        for (int attempt = 0; attempt < 5; attempt++)
+        for (int attempt = 0; attempt < 8; attempt++)
         {
-            var candidate = new Vector3(
-                Random.Range(minX, maxX),
-                transform.position.y,
-                centerZ + Random.Range(-wanderZRange, wanderZRange));
+            var x = Random.Range(minX, maxX);
 
+            if (!TryGetGroundHeight(x, fixedZ, out var groundY))
+            {
+                continue; // no solid ground here (a gap) - try another spot
+            }
+
+            var candidate = new Vector3(x, groundY, fixedZ);
             if (!IsNearHazard(candidate))
             {
                 destination = candidate;
@@ -91,7 +97,7 @@ public class CatWanderer : MonoBehaviour
             }
         }
 
-        // Couldn't find a clear spot; just wait a bit and try again next frame.
+        // Couldn't find a clear, solid spot; wait and try again shortly.
         stateTimer = 0.5f;
     }
 
@@ -123,10 +129,31 @@ public class CatWanderer : MonoBehaviour
         }
 
         var direction = toDestination / distance;
-        transform.position += direction * (currentSpeed * Time.deltaTime);
+        var nextPosition = transform.position + direction * (currentSpeed * Time.deltaTime);
+
+        // Keep the cat glued to the actual ground height as it moves, since the
+        // terrain isn't flat across X.
+        if (TryGetGroundHeight(nextPosition.x, nextPosition.z, out var groundY))
+        {
+            nextPosition.y = groundY;
+        }
+
+        transform.position = nextPosition;
 
         var targetRotation = Quaternion.LookRotation(direction, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+    }
+
+    private bool TryGetGroundHeight(float x, float z, out float groundY)
+    {
+        var origin = new Vector3(x, transform.position.y + groundCheckHeight, z);
+        if (Physics.Raycast(origin, Vector3.down, out var hit, groundCheckHeight * 2f, groundMask))
+        {
+            groundY = hit.point.y;
+            return true;
+        }
+        groundY = 0f;
+        return false;
     }
 
     private bool IsNearHazard(Vector3 position)

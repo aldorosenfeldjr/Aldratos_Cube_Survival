@@ -6605,9 +6605,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8b21e4f1d6e175438f74060b81c0659, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::CatWanderer
-  minX: -7
-  maxX: 7
-  wanderZRange: 1.5
+  minX: -5.3
+  maxX: 5.3
   walkSpeed: 0.6
   runSpeed: 1.6
   turnSpeed: 6
@@ -6615,8 +6614,12 @@ MonoBehaviour:
   idleMinTime: 2
   idleMaxTime: 5
   arriveThreshold: 0.15
-  hazardAvoidRadius: 1.2
+  hazardAvoidRadius: 1.5
   hazardTag: Hazard
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundCheckHeight: 5
 --- !u!1 &1156490931
 GameObject:
   m_ObjectHideFlags: 0
