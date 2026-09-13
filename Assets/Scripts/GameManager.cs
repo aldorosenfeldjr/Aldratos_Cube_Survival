@@ -15,6 +15,12 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private TMPro.TextMeshProUGUI scoreText;
     [SerializeField]
+    private TMPro.TextMeshProUGUI highScoreText;
+    [SerializeField]
+    private Color normalScoreColor = Color.white;
+    [SerializeField]
+    private Color newBestScoreColor = new Color(1f, 0.4f, 0.1f);
+    [SerializeField]
     private Image backgroundMenu;
     [SerializeField]
     private float PauseDuration;
@@ -40,19 +46,23 @@ public class GameManager : MonoBehaviour
     private float timer;
     private Coroutine hazardsCoroutine;
     private bool gameOver;
+    private bool celebratedNewBest;
     private static GameManager instance;
     public static GameManager Instance => instance;
     private const string HighScorePreferenceKey = "HighScore";
     public int HighScore => highScore;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         instance = this;
 
         highScore = PlayerPrefs.GetInt(HighScorePreferenceKey);
         //highScore = 0;
+    }
 
+    // Start is called before the first frame update
+    void Start()
+    {
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 120;
     }
@@ -66,9 +76,13 @@ public class GameManager : MonoBehaviour
         zoomVCam.SetActive(false);
 
         gameOver = false;
-        scoreText.text = "0";
         score = 0;
         timer = 0;
+        celebratedNewBest = false;
+
+        scoreText.text = "0";
+        scoreText.color = normalScoreColor;
+        highScoreText.text = $"Best: {highScore}";
 
         hazardsCoroutine = StartCoroutine(SpawnHazards());
     }
@@ -96,6 +110,19 @@ public class GameManager : MonoBehaviour
         {
             score++;
             scoreText.text = score.ToString();
+
+            if (score > highScore)
+            {
+                highScoreText.text = $"Best: {score}";
+
+                if (!celebratedNewBest)
+                {
+                    celebratedNewBest = true;
+                    scoreText.color = newBestScoreColor;
+                    LeanTween.scale(scoreText.gameObject, Vector3.one * 1.4f, 0.15f)
+                        .setLoopPingPong(1);
+                }
+            }
 
             timer = 0;
         }
@@ -131,7 +158,12 @@ public class GameManager : MonoBehaviour
 
         score = 0;
         timer = 0;
+        celebratedNewBest = false;
+
         scoreText.text = "0";
+        scoreText.color = normalScoreColor;
+        scoreText.transform.localScale = Vector3.one;
+        highScoreText.text = $"Best: {highScore}";
 
         player.GetComponent<Player>().ResetState();
 
