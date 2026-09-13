@@ -5972,7 +5972,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 100006, guid: 756b0c574f380324a85262e736c0418b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1126869530}
   m_SourcePrefab: {fileID: 100100000, guid: 756b0c574f380324a85262e736c0418b, type: 3}
 --- !u!1 &962887313
 GameObject:
@@ -6575,6 +6578,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6895024532925444865, guid: 24ac87268272ca8478d5fe7f95f04ce9, type: 3}
   m_PrefabInstance: {fileID: 355380580}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1090539023 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100006, guid: 756b0c574f380324a85262e736c0418b, type: 3}
+  m_PrefabInstance: {fileID: 959697005}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1109850964 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6895024532925444865, guid: 24ac87268272ca8478d5fe7f95f04ce9, type: 3}
@@ -6585,6 +6593,30 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400006, guid: 756b0c574f380324a85262e736c0418b, type: 3}
   m_PrefabInstance: {fileID: 959697005}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1126869530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1090539023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8b21e4f1d6e175438f74060b81c0659, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::CatWanderer
+  minX: -7
+  maxX: 7
+  wanderZRange: 1.5
+  walkSpeed: 0.6
+  runSpeed: 1.6
+  turnSpeed: 6
+  runChance: 0.2
+  idleMinTime: 2
+  idleMaxTime: 5
+  arriveThreshold: 0.15
+  hazardAvoidRadius: 1.2
+  hazardTag: Hazard
 --- !u!1 &1156490931
 GameObject:
   m_ObjectHideFlags: 0
