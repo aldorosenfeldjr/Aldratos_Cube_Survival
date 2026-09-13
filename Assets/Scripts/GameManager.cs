@@ -54,7 +54,7 @@ public class GameManager : MonoBehaviour
         //highScore = 0;
 
         QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = 120;
     }
 
     private void OnEnable() 

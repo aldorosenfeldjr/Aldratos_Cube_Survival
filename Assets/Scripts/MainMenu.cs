@@ -19,6 +19,9 @@ public class MainMenu : MonoBehaviour
 
     private void Start()
     {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 120;
+
         if (Application.isMobilePlatform)
         {
             exitButton.SetActive(false);
