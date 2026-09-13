@@ -8,11 +8,20 @@ using UnityEditor;
 
 public class GameOverMenu : MonoBehaviour
 {
-    private LTDescr restartAnimation;
     [SerializeField]
     private TMPro.TextMeshProUGUI highScore;
     [SerializeField]
     private GameObject firstSelected;
+    [SerializeField]
+    private GameObject quitButton;
+
+    private void Awake()
+    {
+        if (Application.isMobilePlatform)
+        {
+            quitButton.SetActive(false);
+        }
+    }
 
     private void OnEnable()
     {
@@ -22,14 +31,6 @@ public class GameOverMenu : MonoBehaviour
         rectTransform.anchoredPosition = new Vector2(0, rectTransform.rect.height);
 
         rectTransform.LeanMoveY(0, 1f).setEaseOutElastic().delay = 0.75f;
-
-        if (restartAnimation is null)
-        {
-            restartAnimation = GetComponentInChildren<TMPro.TextMeshProUGUI>().gameObject
-                .LeanScale(new Vector3(1.2f, 1.2f), 0.5f)
-                .setLoopPingPong();
-        }
-        restartAnimation.resume();
 
         EventSystem.current.SetSelectedGameObject(null);
         EventSystem.current.SetSelectedGameObject(firstSelected);
@@ -47,9 +48,8 @@ public class GameOverMenu : MonoBehaviour
 
     public void Restart()
     {
-        restartAnimation.pause();
         gameObject.SetActive(false);
-        
+
         GameManager.Instance.Enable();
     }
 

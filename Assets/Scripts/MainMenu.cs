@@ -14,16 +14,20 @@ public class MainMenu : MonoBehaviour
     [SerializeField]
     private GameObject firstSelected;
 
+    [SerializeField]
+    private GameObject exitButton;
+
     private void Start()
     {
+        if (Application.isMobilePlatform)
+        {
+            exitButton.SetActive(false);
+        }
+
         EventSystem.current.SetSelectedGameObject(null);
         EventSystem.current.SetSelectedGameObject(firstSelected);
 
         scoreRectTransform.anchoredPosition = new Vector2(scoreRectTransform.anchoredPosition.x, 20);
-
-        GetComponentInChildren<TMPro.TextMeshProUGUI>().gameObject
-            .LeanScale(new Vector3(1.2f, 1.2f), 0.5f)
-            .setLoopPingPong();
     }
 
     private void Update()
