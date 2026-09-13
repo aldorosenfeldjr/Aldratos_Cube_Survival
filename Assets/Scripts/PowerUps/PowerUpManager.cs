@@ -70,6 +70,24 @@ public class PowerUpManager : MonoBehaviour
         OnPowerUpGranted?.Invoke(definition, definition.Duration);
     }
 
+    public bool TryConsumeShield()
+    {
+        if (!HasShield)
+        {
+            return false;
+        }
+
+        var active = activePowerUps.Find(p => p.Effect is ShieldEffect);
+        if (active != null)
+        {
+            active.Effect.Remove(this);
+            activePowerUps.Remove(active);
+            OnPowerUpExpired?.Invoke(active.Definition);
+        }
+
+        return true;
+    }
+
     public void ResetAll()
     {
         foreach (var active in activePowerUps)
