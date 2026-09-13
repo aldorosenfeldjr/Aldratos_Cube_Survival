@@ -1,25 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Cinemachine;
+
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] 
+    [SerializeField]
     private float forceMultiplier = 3f;
-    [SerializeField] 
+    [SerializeField]
     private float maximumVelocity = 3f;
-    [SerializeField] 
+    [SerializeField]
+    private float jumpForce = 6f;
+    [SerializeField]
+    private float fallGravityMultiplier = 2.5f;
+    [SerializeField]
     private ParticleSystem deathParticles;
 
     private Rigidbody rb;
-    private CinemachineImpulseSource cinemachineImpulseSource;
+    private Unity.Cinemachine.CinemachineImpulseSource cinemachineImpulseSource;
+    private bool isGrounded;
 
     // Start is called before the first frame update
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        cinemachineImpulseSource = GetComponent<CinemachineImpulseSource>();
+        cinemachineImpulseSource = GetComponent<Unity.Cinemachine.CinemachineImpulseSource>();
     }
 
     // Update is called once per frame
@@ -50,17 +55,54 @@ public class Player : MonoBehaviour
             horizontalInput = Input.GetAxis("Horizontal");
         }
         
-        if (rb.velocity.magnitude <= maximumVelocity)
+        if (rb.linearVelocity.magnitude <= maximumVelocity)
         {
             rb.AddForce(new Vector3(horizontalInput * forceMultiplier * Time.deltaTime, 0, 0));
         }
+
+        if (isGrounded && Time.timeScale > 0 && Input.GetKeyDown(KeyCode.Space))
+        {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
+        }
     }
 
-    private void OnEnable() 
+    private void FixedUpdate()
+    {
+        if (rb.linearVelocity.y < 0)
+        {
+            rb.AddForce(Vector3.up * Physics.gravity.y * (fallGravityMultiplier - 1f), ForceMode.Acceleration);
+        }
+
+        isGrounded = false;
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Hazard"))
+        {
+            return;
+        }
+
+        foreach (var contact in collision.contacts)
+        {
+            if (contact.normal.y > 0.5f)
+            {
+                isGrounded = true;
+                break;
+            }
+        }
+    }
+
+    private void OnEnable()
+    {
+        ResetState();
+    }
+
+    public void ResetState()
     {
         transform.position = new Vector3(0, 0.75f, 0);
         transform.rotation = Quaternion.identity;
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
     }
 
     private void GameOver()

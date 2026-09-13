@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class GameManager : MonoBehaviour
 {
@@ -49,6 +52,9 @@ public class GameManager : MonoBehaviour
 
         highScore = PlayerPrefs.GetInt(HighScorePreferenceKey);
         //highScore = 0;
+
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
     }
 
     private void OnEnable() 
@@ -103,12 +109,47 @@ public class GameManager : MonoBehaviour
         backgroundMenu.gameObject.SetActive(true);
     }
 
-    private void Resume()
+    public void Resume()
     {
         LeanTween.value(0, 1, PauseDuration)
             .setOnUpdate(SetTimeScale)
             .setIgnoreTimeScale(true);
         backgroundMenu.gameObject.SetActive(false);
+    }
+
+    public void RestartGame()
+    {
+        foreach (var hazard in GameObject.FindGameObjectsWithTag("Hazard"))
+        {
+            Destroy(hazard);
+        }
+
+        if (hazardsCoroutine != null)
+        {
+            StopCoroutine(hazardsCoroutine);
+        }
+
+        score = 0;
+        timer = 0;
+        scoreText.text = "0";
+
+        player.GetComponent<Player>().ResetState();
+
+        hazardsCoroutine = StartCoroutine(SpawnHazards());
+
+        if (Time.timeScale < 1)
+        {
+            Resume();
+        }
+    }
+
+    public void ExitGame()
+    {
+#if UNITY_EDITOR
+        EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private IEnumerator SpawnHazards()
@@ -121,7 +162,7 @@ public class GameManager : MonoBehaviour
             var drag = Random.Range(maxHazardDrag, minHazardDrag);
 
             var hazard = Instantiate(hazardPrefab, new Vector3(x, 11, 0), Quaternion.identity);
-            hazard.GetComponent<Rigidbody>().drag = drag;
+            hazard.GetComponent<Rigidbody>().linearDamping = drag;
         }
         
 

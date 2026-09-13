@@ -1,15 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 public class GameOverMenu : MonoBehaviour
 {
     private LTDescr restartAnimation;
     [SerializeField]
     private TMPro.TextMeshProUGUI highScore;
-    
-    private void OnEnable() 
+    [SerializeField]
+    private GameObject firstSelected;
+
+    private void OnEnable()
     {
         highScore.text = $"High Score: {GameManager.Instance.HighScore}";
 
@@ -25,6 +30,19 @@ public class GameOverMenu : MonoBehaviour
                 .setLoopPingPong();
         }
         restartAnimation.resume();
+
+        EventSystem.current.SetSelectedGameObject(null);
+        EventSystem.current.SetSelectedGameObject(firstSelected);
+    }
+
+    private void Update()
+    {
+        var current = EventSystem.current.currentSelectedGameObject;
+
+        if (current == null || !current.activeInHierarchy)
+        {
+            EventSystem.current.SetSelectedGameObject(firstSelected);
+        }
     }
 
     public void Restart()
