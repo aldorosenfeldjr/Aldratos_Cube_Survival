@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SpeedBoost
   m_EditorClassIdentifier: NewAssembly::SpeedBoostDefinition
   displayName: Speed Boost
-  icon: {fileID: 0}
+  icon: {fileID: 227274895356813187, guid: 7c9d95dc1d9c5a64185168864ebbb9e9, type: 3}
   duration: 6
   multiplier: 1.6
