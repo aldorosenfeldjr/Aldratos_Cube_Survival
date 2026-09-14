@@ -55,9 +55,11 @@ public class Player : MonoBehaviour
             horizontalInput = Input.GetAxis("Horizontal");
         }
         
-        if (rb.linearVelocity.magnitude <= maximumVelocity)
+        var speedMultiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.SpeedMultiplier : 1f;
+
+        if (rb.linearVelocity.magnitude <= maximumVelocity * speedMultiplier)
         {
-            rb.AddForce(new Vector3(horizontalInput * forceMultiplier * Time.deltaTime, 0, 0));
+            rb.AddForce(new Vector3(horizontalInput * forceMultiplier * speedMultiplier * Time.deltaTime, 0, 0));
         }
 
         if (isGrounded && Time.timeScale > 0 && Input.GetKeyDown(KeyCode.Space))
@@ -115,6 +117,18 @@ public class Player : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Hazard"))
         {
+            if (PowerUpManager.Instance != null && PowerUpManager.Instance.IsInvincible)
+            {
+                Destroy(collision.gameObject);
+                return;
+            }
+
+            if (PowerUpManager.Instance != null && PowerUpManager.Instance.TryConsumeShield())
+            {
+                Destroy(collision.gameObject);
+                return;
+            }
+
             GameOver();
             Instantiate(deathParticles, transform.position, Quaternion.identity);
             cinemachineImpulseSource.GenerateImpulse();
