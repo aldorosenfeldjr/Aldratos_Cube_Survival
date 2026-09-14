@@ -8,12 +8,15 @@ public class PowerUpHUDIcon : MonoBehaviour
     private Image iconImage;
     [SerializeField]
     private TMPro.TextMeshProUGUI countdownText;
+    [SerializeField]
+    private TMPro.TextMeshProUGUI nameText;
 
     private float remainingTime;
     private bool hasTimer;
 
-    public void Initialize(Sprite icon, float duration)
+    public void Initialize(string displayName, Sprite icon, float duration)
     {
+        nameText.text = displayName;
         iconImage.sprite = icon;
         hasTimer = duration > 0f;
         remainingTime = duration;
