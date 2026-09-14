@@ -23,6 +23,12 @@ public class PowerUpHUD : MonoBehaviour
     {
         powerUpManager.OnPowerUpGranted -= HandleGranted;
         powerUpManager.OnPowerUpExpired -= HandleExpired;
+
+        foreach (var icon in activeIcons.Values)
+        {
+            Destroy(icon.gameObject);
+        }
+        activeIcons.Clear();
     }
 
     private void HandleGranted(PowerUpDefinition definition, float duration)

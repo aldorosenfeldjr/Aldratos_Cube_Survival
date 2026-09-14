@@ -2299,8 +2299,8 @@ MonoBehaviour:
   spawnMinX: -7
   spawnMaxX: 7
   spawnHeight: 11
-  minDrag: 0
-  maxDrag: 0
+  minDrag: 2
+  maxDrag: 0.5
 --- !u!1001 &412970896
 PrefabInstance:
   m_ObjectHideFlags: 0

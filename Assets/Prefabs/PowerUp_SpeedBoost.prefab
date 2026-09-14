@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4845280093899485581}
   - component: {fileID: 2488140388594681994}
   - component: {fileID: 128458981099422574}
+  - component: {fileID: 2037494215340210870}
   m_Layer: 0
   m_Name: PowerUp_SpeedBoost
   m_TagString: PowerUp
@@ -156,3 +157,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::PowerUpPickup
   definition: {fileID: 11400000, guid: aa565cdb27009ec4c827bce9eef22d48, type: 2}
+--- !u!114 &2037494215340210870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8177416960485180663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b752601102760c0439abbb0730eb99ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::AutoDestroyer
+  delay: 12

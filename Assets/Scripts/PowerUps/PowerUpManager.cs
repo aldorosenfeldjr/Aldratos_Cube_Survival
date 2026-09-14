@@ -15,14 +15,14 @@ public class PowerUpManager : MonoBehaviour
     public event Action<PowerUpDefinition, float> OnPowerUpGranted;
     public event Action<PowerUpDefinition> OnPowerUpExpired;
 
-    protected class ActivePowerUp
+    private class ActivePowerUp
     {
         public PowerUpDefinition Definition;
         public IPowerUpEffect Effect;
         public float RemainingTime;
     }
 
-    protected readonly List<ActivePowerUp> activePowerUps = new List<ActivePowerUp>();
+    private readonly List<ActivePowerUp> activePowerUps = new List<ActivePowerUp>();
 
     private void Awake()
     {
