@@ -2,9 +2,9 @@ name: Unity Compile Check
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   push:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
   group: unity-compile-check-${{ github.ref }}
