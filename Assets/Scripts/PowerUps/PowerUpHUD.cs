@@ -35,12 +35,12 @@ public class PowerUpHUD : MonoBehaviour
     {
         if (activeIcons.TryGetValue(definition, out var existingIcon))
         {
-            existingIcon.Initialize(definition.Icon, duration);
+            existingIcon.Initialize(definition.DisplayName, definition.Icon, duration);
             return;
         }
 
         var icon = Instantiate(iconPrefab, container);
-        icon.Initialize(definition.Icon, duration);
+        icon.Initialize(definition.DisplayName, definition.Icon, duration);
         activeIcons[definition] = icon;
     }
 
