@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level_Grass.unity
     guid: 2e36a860c02d6ac4481b40a309354f97
+  - enabled: 1
+    path: Assets/Scenes/Level_KayKit.unity
+    guid: 87f8a62c7a9b3bf4c8ef9744764f390e
   m_configObjects: {}
