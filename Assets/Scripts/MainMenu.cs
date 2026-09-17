@@ -9,6 +9,9 @@ public class MainMenu : MonoBehaviour
     private GameManager gameManager;
 
     [SerializeField]
+    private GameObject levelSelect;
+
+    [SerializeField]
     private RectTransform scoreRectTransform;
 
     [SerializeField]
@@ -55,7 +58,7 @@ public class MainMenu : MonoBehaviour
             .LeanMoveY(-72f, 0.75f)
             .setEaseOutBounce();
 
-        gameManager.Enable();
+        levelSelect.SetActive(true);
         Destroy(gameObject);
     }
 }
