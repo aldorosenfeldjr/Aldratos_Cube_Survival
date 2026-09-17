@@ -268,4 +268,10 @@ public class GameManager : MonoBehaviour
     {
         gameObject.SetActive(true);
     }
+
+    public void ApplyTheme(LevelTheme theme)
+    {
+        hazardPrefab = theme.HazardPrefab;
+        powerUpSpawner.ApplyTheme(theme);
+    }
 }
