@@ -16,6 +16,8 @@ public class LevelSelect : MonoBehaviour
     private Transform tileContainer;
     [SerializeField]
     private CanvasGroup canvasGroup;
+    [SerializeField]
+    private GameObject menuBackground;
 
     private string loadedLevelSceneName;
 
@@ -92,6 +94,7 @@ public class LevelSelect : MonoBehaviour
         }
 
         canvasGroup.alpha = 0f;
+        menuBackground.SetActive(false);
         gameManager.Enable();
         gameObject.SetActive(false);
     }
