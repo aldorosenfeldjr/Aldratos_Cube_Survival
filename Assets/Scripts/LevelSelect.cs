@@ -81,6 +81,16 @@ public class LevelSelect : MonoBehaviour
 
         gameManager.ApplyTheme(levelInfo.Theme);
 
+        foreach (var hazard in GameObject.FindGameObjectsWithTag("Hazard"))
+        {
+            Destroy(hazard);
+        }
+
+        foreach (var powerUp in GameObject.FindGameObjectsWithTag("PowerUp"))
+        {
+            Destroy(powerUp);
+        }
+
         canvasGroup.alpha = 0f;
         gameManager.Enable();
         gameObject.SetActive(false);

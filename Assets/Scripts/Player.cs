@@ -109,6 +109,12 @@ public class Player : MonoBehaviour
 
     private void GameOver()
     {
+        if (GameManager.Instance == null)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
         GameManager.Instance.GameOver();
         gameObject.SetActive(false);
     }
