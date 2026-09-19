@@ -2,9 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 public class GameOverMenu : MonoBehaviour
 {
@@ -16,16 +13,6 @@ public class GameOverMenu : MonoBehaviour
     private GameObject scoreHud;
     [SerializeField]
     private GameObject firstSelected;
-    [SerializeField]
-    private GameObject quitButton;
-
-    private void Awake()
-    {
-        if (Application.isMobilePlatform)
-        {
-            quitButton.SetActive(false);
-        }
-    }
 
     private void OnEnable()
     {
@@ -75,10 +62,6 @@ public class GameOverMenu : MonoBehaviour
 
     public void Quit()
     {
-#if UNITY_EDITOR
-        EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        GameManager.Instance.ReturnToMainMenu();
     }
 }

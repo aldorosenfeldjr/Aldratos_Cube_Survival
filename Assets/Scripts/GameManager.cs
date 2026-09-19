@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -223,6 +224,12 @@ public class GameManager : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    public void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Core", LoadSceneMode.Single);
     }
 
     private IEnumerator SpawnHazards()

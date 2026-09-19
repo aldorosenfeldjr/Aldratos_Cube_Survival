@@ -6,17 +6,6 @@ public class PauseMenu : MonoBehaviour
     [SerializeField]
     private GameObject firstSelected;
 
-    [SerializeField]
-    private GameObject exitButton;
-
-    private void Awake()
-    {
-        if (Application.isMobilePlatform)
-        {
-            exitButton.SetActive(false);
-        }
-    }
-
     private void OnEnable()
     {
         EventSystem.current.SetSelectedGameObject(null);
@@ -31,5 +20,10 @@ public class PauseMenu : MonoBehaviour
         {
             EventSystem.current.SetSelectedGameObject(firstSelected);
         }
+    }
+
+    public void Quit()
+    {
+        GameManager.Instance.ReturnToMainMenu();
     }
 }

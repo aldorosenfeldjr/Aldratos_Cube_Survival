@@ -845,7 +845,6 @@ MonoBehaviour:
   finalScoreText: {fileID: 1473947168}
   scoreHud: {fileID: 873174967}
   firstSelected: {fileID: 632820639}
-  quitButton: {fileID: 2132985760}
 --- !u!225 &187574111
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2865,7 +2864,7 @@ GameObject:
   - component: {fileID: 900000022}
   - component: {fileID: 900000021}
   m_Layer: 5
-  m_Name: Exit
+  m_Name: Quit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2935,13 +2934,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 402352957}
-        m_TargetAssemblyTypeName: GameManager, NewAssembly
-        m_MethodName: ExitGame
-        m_Mode: 1
+      - m_Target: {fileID: 900000028}
+        m_TargetAssemblyTypeName: PauseMenu, NewAssembly
+        m_MethodName: Quit
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -3042,7 +3041,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Exit
+  m_text: Quit
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: cfede42d86e5c884a88ba23317baba80, type: 2}
   m_sharedMaterial: {fileID: 5342581158915347302, guid: cfede42d86e5c884a88ba23317baba80, type: 2}
@@ -3135,7 +3134,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   firstSelected: {fileID: 900000001}
-  exitButton: {fileID: 900000019}
 --- !u!1 &904378709
 GameObject:
   m_ObjectHideFlags: 0
@@ -3528,7 +3526,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 0aa3ea6d07fd0c4469065930a6f8b8fd, type: 2}
     - target: {fileID: 9500000, guid: 756b0c574f380324a85262e736c0418b, type: 3}
       propertyPath: m_CullingMode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9500000, guid: 756b0c574f380324a85262e736c0418b, type: 3}
       propertyPath: m_ApplyRootMotion
@@ -3537,6 +3535,10 @@ PrefabInstance:
     - target: {fileID: 13700000, guid: 756b0c574f380324a85262e736c0418b, type: 3}
       propertyPath: m_Quality
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700000, guid: 756b0c574f380324a85262e736c0418b, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700000, guid: 756b0c574f380324a85262e736c0418b, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
