@@ -8,15 +8,19 @@ public class MenuBackgroundEffect : MonoBehaviour
     [SerializeField]
     private Sprite particleSprite;
     [SerializeField]
-    private int particleCount = 10;
+    private int particleCount = 14;
     [SerializeField]
     private float minDuration = 6f;
     [SerializeField]
     private float maxDuration = 12f;
     [SerializeField]
-    private float minSize = 10f;
+    private float minSize = 18f;
     [SerializeField]
-    private float maxSize = 28f;
+    private float maxSize = 46f;
+    [SerializeField]
+    private float minAlpha = 0.35f;
+    [SerializeField]
+    private float maxAlpha = 0.65f;
 
     private RectTransform[] particles;
 
@@ -63,7 +67,7 @@ public class MenuBackgroundEffect : MonoBehaviour
             var image = go.AddComponent<Image>();
             image.sprite = particleSprite;
             image.raycastTarget = false;
-            image.color = new Color(1f, 1f, 1f, Random.Range(0.15f, 0.35f));
+            image.color = new Color(1f, 1f, 1f, Random.Range(minAlpha, maxAlpha));
 
             particles[i] = rectTransform;
         }
