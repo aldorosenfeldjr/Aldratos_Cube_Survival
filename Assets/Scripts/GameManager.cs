@@ -56,6 +56,17 @@ public class GameManager : MonoBehaviour
     public int HighScore => highScore;
     public int Score => score;
 
+    public static void ClearHighScore()
+    {
+        PlayerPrefs.DeleteKey(HighScorePreferenceKey);
+        PlayerPrefs.Save();
+
+        if (instance != null)
+        {
+            instance.highScore = 0;
+        }
+    }
+
     private void Awake()
     {
         instance = this;

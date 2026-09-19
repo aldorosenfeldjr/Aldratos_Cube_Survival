@@ -61,4 +61,9 @@ public class MainMenu : MonoBehaviour
         levelSelect.SetActive(true);
         Destroy(gameObject);
     }
+
+    public void ClearHighScore()
+    {
+        GameManager.ClearHighScore();
+    }
 }
