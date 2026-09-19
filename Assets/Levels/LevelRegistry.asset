@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: LevelRegistry
   m_EditorClassIdentifier: NewAssembly::LevelRegistry
   levelEntries:
-  - sceneName: Level_Grass
-    displayName: Grass
-  - sceneName: Level_KayKit
-    displayName: KayKit
+  - sceneName: Level_Meadow
+    displayName: Meadow
+  - sceneName: Level_Playground
+    displayName: Playground
