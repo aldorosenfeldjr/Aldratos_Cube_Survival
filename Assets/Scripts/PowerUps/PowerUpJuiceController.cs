@@ -13,21 +13,53 @@ public class PowerUpJuiceController : MonoBehaviour
 
     private float baseFieldOfView;
     private bool hasCapturedBaseFov;
+    private bool subscribed;
+    private bool loggedMissingManagerWarning;
 
     private void OnEnable()
     {
+        TrySubscribe(logIfMissing: true);
+    }
+
+    private void Update()
+    {
+        // PowerUpManager.Instance may not be set yet if Awake/OnEnable ordering
+        // put this object first; keep retrying until we successfully subscribe.
+        if (!subscribed)
+        {
+            TrySubscribe(logIfMissing: false);
+        }
+    }
+
+    private void TrySubscribe(bool logIfMissing)
+    {
+        if (subscribed)
+        {
+            return;
+        }
+
         if (PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.OnPowerUpGranted += HandleGranted;
+            subscribed = true;
+            loggedMissingManagerWarning = false;
+        }
+        else if (logIfMissing && !loggedMissingManagerWarning)
+        {
+            Debug.LogWarning(
+                "[PowerUpJuiceController] PowerUpManager.Instance was null on enable; will retry each frame until it becomes available.",
+                this);
+            loggedMissingManagerWarning = true;
         }
     }
 
     private void OnDisable()
     {
-        if (PowerUpManager.Instance != null)
+        if (subscribed && PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.OnPowerUpGranted -= HandleGranted;
         }
+        subscribed = false;
     }
 
     private void HandleGranted(PowerUpDefinition definition, float duration)
@@ -42,10 +74,19 @@ public class PowerUpJuiceController : MonoBehaviour
 
         LeanTween.cancel(gameObject);
 
+        // A power-up grant takes ownership of Time.timeScale away from GameManager's
+        // pause tween, if one happens to be mid-flight, so the two systems don't fight
+        // over the same value.
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.CancelPauseTween();
+        }
+
         impulseSource.GenerateImpulseWithForce(preset.shakeAmplitude);
 
+        var currentFov = mainVCam.Lens.FieldOfView;
         var targetFov = baseFieldOfView - preset.zoomPunchFovDelta;
-        LeanTween.value(gameObject, baseFieldOfView, targetFov, preset.zoomDuration)
+        LeanTween.value(gameObject, currentFov, targetFov, preset.zoomDuration)
             .setOnUpdate(SetFieldOfView)
             .setEase(LeanTweenType.easeOutQuad)
             .setIgnoreTimeScale(true)

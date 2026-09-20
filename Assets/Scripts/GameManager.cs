@@ -53,6 +53,7 @@ public class GameManager : MonoBehaviour
     private Coroutine hazardsCoroutine;
     private bool gameOver;
     private bool celebratedNewBest;
+    private int pauseTweenId = -1;
     private static GameManager instance;
     public static GameManager Instance => instance;
     private const string HighScorePreferenceKey = "HighScore";
@@ -167,18 +168,42 @@ public class GameManager : MonoBehaviour
 
     private void Pause()
     {
-        LeanTween.value(1, 0, PauseDuration)
+        LeanTween.cancel(pauseTweenId);
+
+        // A power-up slowdown tween mid-flight would otherwise keep fighting this
+        // pause tween for ownership of Time.timeScale; reset it to the known "1"
+        // starting point this tween assumes before taking over.
+        if (powerUpJuiceController != null)
+        {
+            powerUpJuiceController.ForceResetTimeScale();
+        }
+
+        pauseTweenId = LeanTween.value(1, 0, PauseDuration)
             .setOnUpdate(SetTimeScale)
-            .setIgnoreTimeScale(true);
+            .setIgnoreTimeScale(true)
+            .id;
         backgroundMenu.gameObject.SetActive(true);
     }
 
     public void Resume()
     {
-        LeanTween.value(0, 1, PauseDuration)
+        LeanTween.cancel(pauseTweenId);
+        pauseTweenId = LeanTween.value(0, 1, PauseDuration)
             .setOnUpdate(SetTimeScale)
-            .setIgnoreTimeScale(true);
+            .setIgnoreTimeScale(true)
+            .id;
         backgroundMenu.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Cancels this manager's in-flight pause/resume timescale tween without touching
+    /// anything else, so another system (e.g. <see cref="PowerUpJuiceController"/>)
+    /// can take ownership of <see cref="Time.timeScale"/> without the two fighting.
+    /// </summary>
+    public void CancelPauseTween()
+    {
+        LeanTween.cancel(pauseTweenId);
+        pauseTweenId = -1;
     }
 
     public void RestartGame()
@@ -216,14 +241,25 @@ public class GameManager : MonoBehaviour
         {
             PowerUpManager.Instance.ResetAll();
         }
+
+        // Unconditionally clear any in-flight/stuck pause tween and hide the pause
+        // overlay BEFORE forcing the timescale reset below. This must run before
+        // ForceResetTimeScale(): doing it after would leave the old "if (Time.timeScale
+        // < 1) Resume();" guard unreachable (ForceResetTimeScale already forces
+        // Time.timeScale to 1) while Pause()'s tween keeps writing toward 0 afterward
+        // with nothing left to counter it and the overlay still visible.
+        //
+        // Deliberately NOT calling Resume() here: Resume() starts its own new 0->1
+        // tween, which would keep animating (and briefly dragging Time.timeScale back
+        // down) for up to PauseDuration seconds after this method returns, fighting
+        // the instant reset ForceResetTimeScale() is about to perform. A direct
+        // cancel + hide gives an immediate, non-animated recovery instead.
+        CancelPauseTween();
+        backgroundMenu.gameObject.SetActive(false);
+
         if (powerUpJuiceController != null)
         {
             powerUpJuiceController.ForceResetTimeScale();
-        }
-
-        if (Time.timeScale < 1)
-        {
-            Resume();
         }
     }
 
