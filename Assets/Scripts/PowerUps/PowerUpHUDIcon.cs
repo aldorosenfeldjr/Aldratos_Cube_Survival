@@ -10,8 +10,11 @@ public class PowerUpHUDIcon : MonoBehaviour
     private TMPro.TextMeshProUGUI countdownText;
     [SerializeField]
     private TMPro.TextMeshProUGUI nameText;
+    [SerializeField]
+    private Image fillBar;
 
     private float remainingTime;
+    private float totalDuration;
     private bool hasTimer;
 
     public void Initialize(string displayName, Sprite icon, float duration)
@@ -20,8 +23,11 @@ public class PowerUpHUDIcon : MonoBehaviour
         iconImage.sprite = icon;
         hasTimer = duration > 0f;
         remainingTime = duration;
+        totalDuration = duration;
         countdownText.gameObject.SetActive(hasTimer);
+        fillBar.gameObject.SetActive(hasTimer);
         UpdateCountdownText();
+        UpdateFillBar();
     }
 
     private void Update()
@@ -37,6 +43,7 @@ public class PowerUpHUDIcon : MonoBehaviour
             remainingTime = 0f;
         }
         UpdateCountdownText();
+        UpdateFillBar();
     }
 
     private void UpdateCountdownText()
@@ -44,6 +51,14 @@ public class PowerUpHUDIcon : MonoBehaviour
         if (hasTimer)
         {
             countdownText.text = Mathf.CeilToInt(remainingTime).ToString();
+        }
+    }
+
+    private void UpdateFillBar()
+    {
+        if (hasTimer && totalDuration > 0f)
+        {
+            fillBar.fillAmount = remainingTime / totalDuration;
         }
     }
 }
