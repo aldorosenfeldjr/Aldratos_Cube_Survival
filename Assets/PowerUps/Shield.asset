@@ -15,3 +15,4 @@ MonoBehaviour:
   displayName: Shield
   icon: {fileID: -3682116446546204375, guid: 3f7d39944e7581747875fa72a6770b77, type: 3}
   duration: 0
+  importance: 0

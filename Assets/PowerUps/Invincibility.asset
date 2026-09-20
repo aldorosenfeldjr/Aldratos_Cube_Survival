@@ -15,3 +15,4 @@ MonoBehaviour:
   displayName: Invincibility
   icon: {fileID: -3692212330812203667, guid: 14ca5ad871b52f24dacb00d4d2a8f112, type: 3}
   duration: 6
+  importance: 2
