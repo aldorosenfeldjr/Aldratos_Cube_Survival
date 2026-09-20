@@ -32,6 +32,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField]
     private PowerUpSpawner powerUpSpawner;
+    [SerializeField]
+    private PowerUpJuiceController powerUpJuiceController;
 
     [SerializeField]
     private GameObject mainVCam;
@@ -107,6 +109,10 @@ public class GameManager : MonoBehaviour
         if (PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.ResetAll();
+        }
+        if (powerUpJuiceController != null)
+        {
+            powerUpJuiceController.ForceResetTimeScale();
         }
     }
 
@@ -209,6 +215,10 @@ public class GameManager : MonoBehaviour
         if (PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.ResetAll();
+        }
+        if (powerUpJuiceController != null)
+        {
+            powerUpJuiceController.ForceResetTimeScale();
         }
 
         if (Time.timeScale < 1)
