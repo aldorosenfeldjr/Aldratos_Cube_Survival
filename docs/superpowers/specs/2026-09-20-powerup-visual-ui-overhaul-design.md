@@ -25,9 +25,18 @@ one is independent — no files shared with the other three.
 - `PowerUpPickup`/`PowerUpDefinition`/`PowerUpManager`/`PowerUpHUD`/`PowerUpHUDIcon`
   in `Assets/Scripts/PowerUps/` — data-driven, one `ScriptableObject` per type.
   No changes to this data model's public shape; this overhaul is additive.
-- World meshes: `PowerUp_Shield` (Heart_Full), `PowerUp_SpeedBoost` (Coin),
-  `PowerUp_Invincibility` (Star), each rotated flat (local X ≈ -90°, lying
-  face-up) at `m_LocalScale (1,1,1)`.
+- World meshes — **two full prefab sets, one per level theme**
+  (`LevelTheme.SpeedBoostPrefab`/`InvincibilityPrefab`/`ShieldPrefab`,
+  swapped by `PowerUpSpawner.ApplyTheme`), both need the same treatment:
+  - Meadow (`PowerUp_Shield`/`PowerUp_SpeedBoost`/`PowerUp_Invincibility`,
+    Platformer Pack `Heart_Full`/`Coin`/`Star` meshes) — rotated flat (local
+    X ≈ -90°, lying face-up) at `m_LocalScale (1,1,1)`.
+  - Playground (`KayKit_Shield`/`KayKit_SpeedBoost`/`KayKit_Invincibility`,
+    KayKit_Platformer_Pack `heart_blue`/`diamond_blue`/`star_blue` meshes) —
+    rotation near-identity (already close to upright) at `m_LocalScale (1,1,1)`.
+  - `KayKit_Hazard` (Playground's hazard) is from the same KayKit_Platformer_Pack
+    as the Playground power-ups, which is why they currently read as
+    near-identical props.
 - Main Camera (`Core.unity`): position `(0, 2.75, -10)`, rotation identity
   (looking down +Z, no tilt), FOV 60, perspective. Not top-down — a slightly
   elevated, forward-facing view.
@@ -41,19 +50,28 @@ one is independent — no files shared with the other three.
 
 ## 3. World pickup visual
 
-Each power-up prefab gets a new pivot structure:
+Applies identically to **all six** prefabs (both theme sets). Each gets the
+same new pivot structure:
 
 ```
-PowerUp_<Type>              (root, pickup collider/rigidbody/PowerUpPickup stay here)
- └─ VisualPivot              (rotated ~-50° to -60° on X — tilts the item to
-    │                          face the camera's elevated-forward view,
-    │                          instead of the current flat -90° lying-face-up)
+<PowerUp prefab root>       (pickup collider/rigidbody/PowerUpPickup stay here)
+ └─ VisualPivot              (rotated to tilt the item toward the camera's
+    │                          elevated-forward Cinemachine-follow view — the
+    │                          Meadow set goes from flat -90° to ~-50°/-60° on
+    │                          X; the Playground set, already near-upright,
+    │                          only needs a small tilt adjustment, not a full
+    │                          rotation change)
     ├─ BadgeFrame             (shield_badge.fbx from KayKit_Adventurers_2.0_FREE,
-    │                          not yet imported — import just this mesh;
-    │                          material tinted per type: gold=Invincibility,
-    │                          blue=Shield, green=SpeedBoost)
-    └─ ItemMesh                (existing Heart_Full/Coin/Star, scaled to 90%
-                                 of current size, nested in front of the badge)
+    │                          not yet imported — import just this mesh once,
+    │                          reused by all six prefabs; material tinted per
+    │                          type — gold=Invincibility, blue=Shield,
+    │                          green=SpeedBoost — same tint regardless of
+    │                          theme, so the type-color meaning stays
+    │                          consistent across levels)
+    └─ ItemMesh                (existing Heart_Full/Coin/Star or
+                                 heart_blue/diamond_blue/star_blue, scaled to
+                                 90% of current size, nested in front of the
+                                 badge)
 ```
 
 `VisualPivot` gets a slow idle spin (Y-axis) + gentle bob (LeanTween,
@@ -61,11 +79,9 @@ looping) so it reads as "collectible" at rest, not a static prop — further
 separating it from the inert hazard crates at a glance, independent of the
 badge/tint work.
 
-Badge tint is a per-`PowerUpDefinition`-subclass concern (each type already
-has its own concrete class), so no new data field is required — the existing
-subclasses (`ShieldDefinition`, `SpeedBoostDefinition`,
-`InvincibilityDefinition`) each reference their own tinted `BadgeFrame`
-material.
+Badge tint is per-type, not per-theme, and applied at the prefab level (each
+of the six prefabs gets its own tinted `BadgeFrame` material instance
+matching its type) — no new `PowerUpDefinition` field required.
 
 ## 4. Tiered juice system (camera + time effects)
 
@@ -83,11 +99,23 @@ no per-item tuning. Current roster: `SpeedBoostDefinition` = `Minor`,
 is reserved for a future power-up stronger than the basics but short of
 Invincibility — the tier exists now so later additions don't need new plumbing.
 
+**Cinemachine note:** the game's Main Camera is driven live by Cinemachine
+(`GameManager.mainVCam`/`zoomVCam`, `CinemachineCamera` + `CinemachineFollow`
+following the player; `zoomVCam` already swaps in on game-over). Tweening the
+Camera GameObject's transform/FOV directly would be overwritten every frame
+by the `CinemachineBrain`. Juice effects must instead use Cinemachine's own
+mechanisms: `mainVCam.Lens.FieldOfView` (a live-read field, safe to tween
+directly) for the zoom punch, and a `CinemachineImpulseSource` +
+`CinemachineImpulseListener` pair (Cinemachine's built-in shake system) for
+the shake, not manual position tweening.
+
 ### PowerUpJuiceSettings (new ScriptableObject, single instance)
 
 One preset per tier, each with:
-- `shakeAmount` / `shakeDuration`
-- `zoomPunchAmount` (FOV or camera local-Z punch-in) / `zoomDuration`
+- `shakeAmplitude` / `shakeFrequency` / `shakeDuration` (fed to
+  `CinemachineImpulseSource.GenerateImpulseWithForce`/impulse definition)
+- `zoomPunchFovDelta` (subtracted from `mainVCam.Lens.FieldOfView` for the
+  punch-in) / `zoomDuration`
 - `slowdownTimeScale` / `slowdownHoldDuration` / `slowdownEaseBackDuration`
   (`slowdownTimeScale = 1` for tiers that shouldn't dip time, if ever needed)
 
@@ -99,15 +127,26 @@ signaling the bigger moment without a different mechanic. `Major` sits
 between. Tuning is designer-editable on this one asset, not scattered across
 power-up definitions.
 
-### PowerUpJuiceController (new, sits on/near Main Camera)
+### PowerUpJuiceController (new, sits on `GameManager`'s GameObject alongside `mainVCam`)
 
-Subscribes to `PowerUpManager.OnPowerUpGranted`. On grant:
+Holds a reference to `mainVCam` (`CinemachineCamera`) and a
+`CinemachineImpulseSource` (added to the same object). Subscribes to
+`PowerUpManager.OnPowerUpGranted`. On grant:
 1. Look up the preset for `definition.Importance` in `PowerUpJuiceSettings`.
-2. Cancel any in-flight shake/zoom/slowdown LeanTween IDs it owns, then start
-   new ones — never stacks concurrent tweens from rapid/overlapping grants.
-3. All tweens run on **unscaled time** (LeanTween's unscaled-time mode), so
-   the slowdown doesn't slow down its own ease-back.
-4. On `PowerUpManager.ResetAll()` (game-over/restart), force `Time.timeScale
+2. Cancel any in-flight zoom/slowdown LeanTween IDs it owns, then start new
+   ones — never stacks concurrent tweens from rapid/overlapping grants
+   (`mainVCam.Lens.FieldOfView` tweened from base 60 down by
+   `zoomPunchFovDelta` and back, via `LeanTween.value(float,float,float)`
+   driving the Lens field on update).
+3. Call `impulseSource.GenerateImpulseWithForce(shakeAmplitude)` for the
+   shake — Cinemachine's own impulse system, picked up automatically by a
+   `CinemachineImpulseListener` added to `mainVCam` (and `zoomVCam`, so a
+   shake during the game-over zoom swap still reads). No manual position
+   tweening.
+4. All LeanTween tweens (zoom FOV, slowdown value) run on **unscaled time**
+   (LeanTween's unscaled-time mode), so the slowdown doesn't slow down its
+   own ease-back.
+5. On `PowerUpManager.ResetAll()` (game-over/restart), force `Time.timeScale
    = 1` immediately — safety net so a death mid-slowdown can never leave the
    game stuck slow.
 
