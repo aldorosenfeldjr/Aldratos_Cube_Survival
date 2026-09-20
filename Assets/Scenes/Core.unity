@@ -5977,6 +5977,7 @@ GameObject:
   - component: {fileID: 2079229863}
   - component: {fileID: 2079229864}
   - component: {fileID: 2079229865}
+  - component: {fileID: 2079229866}
   m_Layer: 0
   m_Name: PowerUpHUDContainer
   m_TagString: Untagged
@@ -6018,6 +6019,7 @@ MonoBehaviour:
   powerUpManager: {fileID: 1554429174}
   iconPrefab: {fileID: 3500990000033079833, guid: a211710e198def442a06800c703f4175, type: 3}
   container: {fileID: 2079229863}
+  collectFX: {fileID: 2079229866}
 --- !u!114 &2079229865
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6044,6 +6046,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &2079229866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2079229862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd41f6403858ce4b9888033329fb055, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::PowerUpCollectFX
+  flyInLabelPrefab: {fileID: 513614717550535307, guid: 7202dee60f1c3e54aa97dace5e3488f4, type: 3}
+  canvasRoot: {fileID: 88040020}
 --- !u!1 &2127895959
 GameObject:
   m_ObjectHideFlags: 0

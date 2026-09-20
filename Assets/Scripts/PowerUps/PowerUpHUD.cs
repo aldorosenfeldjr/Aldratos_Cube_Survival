@@ -10,6 +10,8 @@ public class PowerUpHUD : MonoBehaviour
     private PowerUpHUDIcon iconPrefab;
     [SerializeField]
     private Transform container;
+    [SerializeField]
+    private PowerUpCollectFX collectFX;
 
     private readonly Dictionary<PowerUpDefinition, PowerUpHUDIcon> activeIcons = new Dictionary<PowerUpDefinition, PowerUpHUDIcon>();
 
@@ -36,11 +38,17 @@ public class PowerUpHUD : MonoBehaviour
         if (activeIcons.TryGetValue(definition, out var existingIcon))
         {
             existingIcon.Initialize(definition.DisplayName, definition.Icon, duration);
+            collectFX.PlayRefreshPulse((RectTransform)existingIcon.transform);
             return;
         }
 
         var icon = Instantiate(iconPrefab, container);
-        icon.Initialize(definition.DisplayName, definition.Icon, duration);
+        icon.gameObject.SetActive(false);
+        collectFX.PlayNewGrant(definition, (RectTransform)container, () =>
+        {
+            icon.gameObject.SetActive(true);
+            icon.Initialize(definition.DisplayName, definition.Icon, duration);
+        });
         activeIcons[definition] = icon;
     }
 
