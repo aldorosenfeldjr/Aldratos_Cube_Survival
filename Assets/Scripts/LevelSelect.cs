@@ -67,7 +67,27 @@ public class LevelSelect : MonoBehaviour
             yield return SceneManager.UnloadSceneAsync(loadedLevelSceneName);
         }
 
-        yield return SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+        // A level scene left open in the Editor (or otherwise already loaded) would
+        // otherwise stack on top of the chosen one, so only one level may be live.
+        foreach (var entry in registry.LevelEntries)
+        {
+            if (entry.SceneName == sceneName)
+            {
+                continue;
+            }
+
+            var other = SceneManager.GetSceneByName(entry.SceneName);
+            if (other.isLoaded)
+            {
+                yield return SceneManager.UnloadSceneAsync(other);
+            }
+        }
+
+        if (!SceneManager.GetSceneByName(sceneName).isLoaded)
+        {
+            yield return SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+        }
+
         loadedLevelSceneName = sceneName;
 
         var levelScene = SceneManager.GetSceneByName(sceneName);
