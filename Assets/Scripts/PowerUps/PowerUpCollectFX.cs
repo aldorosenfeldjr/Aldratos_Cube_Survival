@@ -24,7 +24,8 @@ public class PowerUpCollectFX : MonoBehaviour
             .setEase(LeanTweenType.easeOutBack)
             .setOnComplete(() =>
             {
-                LeanTween.move(label, targetSlot.position, 0.25f)
+                var targetAnchored = (Vector3)(Vector2)canvasRoot.InverseTransformPoint(targetSlot.position);
+                LeanTween.move(label, targetAnchored, 0.25f)
                     .setEase(LeanTweenType.easeInQuad);
                 LeanTween.scale(label, Vector3.one * 0.3f, 0.25f)
                     .setEase(LeanTweenType.easeInQuad)

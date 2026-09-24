@@ -311,6 +311,10 @@ public class GameManager : MonoBehaviour
 
         if (Time.timeScale < 1)
         {
+            if (powerUpJuiceController != null)
+            {
+                powerUpJuiceController.ForceResetTimeScale();
+            }
             Resume();
         }
 
