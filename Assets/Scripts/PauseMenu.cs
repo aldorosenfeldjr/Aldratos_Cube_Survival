@@ -22,6 +22,17 @@ public class PauseMenu : MonoBehaviour
         }
     }
 
+    // Button targets live inside this menu so the prefab has no scene references.
+    public void Resume()
+    {
+        GameManager.Instance.Resume();
+    }
+
+    public void Restart()
+    {
+        GameManager.Instance.RestartGame();
+    }
+
     public void Quit()
     {
         GameManager.Instance.ReturnToMainMenu();
