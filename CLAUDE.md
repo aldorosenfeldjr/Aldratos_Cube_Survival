@@ -19,6 +19,7 @@ Editor/console output, and solid performance on real hardware, not just "works i
 the Editor."
 
 ## Project map (read this instead of exploring)
+Pending work and the restructuring plan: `docs/pending-and-restructuring-plan.md`.
 Scenes are huge YAML (Core ~6.6k lines, Level_Meadow ~8k). **Never read `.unity`/`.prefab`
 files whole** — query the live Editor (unity-editor-mcp `eval`, `get_component_properties`)
 or grep for one field. Levels are additive scenes loaded into `Core` by `LevelSelect`; each
