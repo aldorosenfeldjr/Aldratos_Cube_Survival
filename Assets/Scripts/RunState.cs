@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Score and high score for the current run. Plain C#, owned by <see cref="GameManager"/>.</summary>
 public class RunState
 {
-    private const string HighScorePreferenceKey = "HighScore";
+    public const string HighScorePreferenceKey = "HighScore";
 
     private float timer;
 

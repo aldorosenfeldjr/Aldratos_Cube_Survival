@@ -73,7 +73,7 @@ time constants). `LevelTheme` keeps only what genuinely differs per level.
 edits and AI reads stay small. Level scenes (~8k / ~1.9k lines) are mostly decoration: only restructure
 with you present (see memory: level-design scope feedback).
 
-**Phase 4: cheap verification (S)**
+**Phase 4: cheap verification (S): smoke test DONE 2026-09-25** (`Tools/Smoke Test/Run Play Smoke Test`; EditMode tests still deferred to the test-suite session)
 - An editor menu "Play Smoke Test" that runs the standard checks (enter play, grant each power-up, drop a
   crate, restart, game over) and prints a 5-line report. Replaces the long throwaway `eval` scripts.
 - EditMode tests for `PowerUpManager` and `TimeScaleController` (fits the deferred test-suite session).

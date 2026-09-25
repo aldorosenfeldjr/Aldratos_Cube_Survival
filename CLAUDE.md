@@ -45,8 +45,12 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 - New pickup type/level look: edit the table in `PowerUpPickupBuilder`, run the menu item.
 - Do only what was asked. Do not add unrequested behavior (e.g. idle spin/bob) — stated
   visual directions (e.g. "face the camera, no rotation") are requirements, not suggestions.
-- Verify cheaply: recompile + `console` (level=error, small `tail`), then one targeted
-  `eval` measurement. Avoid dumping full console logs (stack traces are huge) and avoid
+- Verify cheaply: recompile + `console` (level=error, small `tail`), then run the flow check:
+  unity-editor-mcp `menu` -> `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read
+  `console` (tail 2): one "SMOKE TEST PASS/FAIL n/n" entry, failures named. Covers menus,
+  score, every power-up + HUD, hazards, pause-in-slowdown, restart, game over. When a feature
+  adds a flow, add a check block to `Assets/Editor/PlaySmokeTest.cs`. For anything narrower,
+  one targeted `eval` measurement (first `eval` right after entering play mode often fails: retry). Avoid dumping full console logs (stack traces are huge) and avoid
   multi-agent review loops for small changes.
 - Scene state gotchas: hazards can end a test run; disabling the player collider makes it
   fall. Editor "open scenes" persist in `Library/LastSceneManagerSetup.txt`.
