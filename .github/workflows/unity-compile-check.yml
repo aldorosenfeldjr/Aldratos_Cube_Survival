@@ -14,12 +14,25 @@ jobs:
   compile:
     name: Compile (Windows target)
     runs-on: ubuntu-latest
+    env:
+      # Secrets cannot be tested in a step `if:` directly, so expose "are they all set?" as a flag.
+      # Also empty on PRs from forks, where the check is skipped rather than failed.
+      HAS_UNITY_LICENSE: ${{ secrets.UNITY_LICENSE != '' && secrets.UNITY_EMAIL != '' && secrets.UNITY_PASSWORD != '' }}
     steps:
+      - name: Explain skipped compile check
+        if: env.HAS_UNITY_LICENSE != 'true'
+        run: >-
+          echo "::warning title=Compile check SKIPPED::Unity license secrets are not all set
+          (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD). Nothing was compiled. Add them under
+          Settings > Secrets and variables > Actions and this check starts running by itself."
+
       - uses: actions/checkout@v4
+        if: env.HAS_UNITY_LICENSE == 'true'
         with:
           lfs: true
 
       - uses: actions/cache@v4
+        if: env.HAS_UNITY_LICENSE == 'true'
         with:
           path: Library
           key: Library-${{ github.repository }}
@@ -27,6 +40,7 @@ jobs:
             Library-
 
       - name: Compile project
+        if: env.HAS_UNITY_LICENSE == 'true'
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
