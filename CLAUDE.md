@@ -18,6 +18,16 @@ one: consistent UI/UX patterns (fonts, sizes, animations) across all menus, clea
 Editor/console output, and solid performance on real hardware, not just "works in
 the Editor."
 
+## Token budget (sessions were costing ~0.4-1B tokens each; keep them small)
+- **One task per session.** Finish, update the handoff doc, commit; the next task starts in a fresh
+  session. Context is capped by `autoCompactWindow: 200k` in `.claude/settings.json`.
+- **Screenshots only when the user asks** or a visual check truly needs one (each stays in context for
+  the rest of the session). Prefer one `eval` measurement.
+- **Console reads:** `level=error` (or `warn`), `tail` <= 5. Never `level=log` with a big tail.
+- **No subagents or review loops unless the user asks.** Never read session transcripts or plugin skill files.
+- The Unity plugin (`unity@unity-agent-plugin`, ~13k tokens/turn of skill listings) is disabled in
+  `.claude/settings.json`; re-enable it only for a task that needs it (IAP/ads, URP migration).
+
 ## Project map (read this instead of exploring)
 Pending work and the restructuring plan: `docs/pending-and-restructuring-plan.md`.
 Scenes are huge YAML (Core ~6.6k lines, Level_Meadow ~8k). **Never read `.unity`/`.prefab`

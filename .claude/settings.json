@@ -1,5 +1,6 @@
 {
   "enabledPlugins": {
-    "unity@unity-agent-plugin": true
-  }
+    "unity@unity-agent-plugin": false
+  },
+  "autoCompactWindow": "200k"
 }

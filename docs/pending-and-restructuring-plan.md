@@ -45,6 +45,8 @@ When 2 and 3 start, give them the same table-driven builder pattern (`PowerUpPic
 
 ## 4. Working agreement
 
+- Follow the "Token budget" rules in `CLAUDE.md` (one task per session; no screenshots, log dumps or
+  subagents unless asked).
 - Read `CLAUDE.md` and this file first. Never read whole `.unity`/`.prefab` files; query the live Editor or
   grep one field.
 - Do only what is asked; treat stated visual directions as requirements.
