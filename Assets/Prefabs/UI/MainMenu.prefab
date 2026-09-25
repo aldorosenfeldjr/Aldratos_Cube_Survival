@@ -447,10 +447,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: ClearHighScore
       objectReference: {fileID: 0}
-    - target: {fileID: 7053222151667774399, guid: cb151986f62effb4ba4289defd48b132, type: 3}
-      propertyPath: m_Color.a
-      value: 0.55
-      objectReference: {fileID: 0}
     - target: {fileID: 7491196425850037654, guid: cb151986f62effb4ba4289defd48b132, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1
