@@ -78,7 +78,7 @@ with you present (see memory: level-design scope feedback).
   crate, restart, game over) and prints a 5-line report. Replaces the long throwaway `eval` scripts.
 - EditMode tests for `PowerUpManager` and `TimeScaleController` (fits the deferred test-suite session).
 
-**Phase 5: same pattern for other content (S each)**
+**Phase 5: same pattern for other content (S each): hazards + level themes DONE 2026-09-25** (`HazardBuilder`, `LevelBuilder`; characters/companions get the same treatment when those roadmap items start)
 Editor builders like `PowerUpPickupBuilder` for hazards and level themes; new characters/companions become
 table entries, not hand-edited prefabs.
 

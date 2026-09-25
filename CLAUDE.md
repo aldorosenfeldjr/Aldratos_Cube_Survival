@@ -43,6 +43,11 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 - **One source of truth per setting.** Never copy tuning (shake, badge size, ...) into each
   prefab/level. Put it in one script/asset, and make levels reference it.
 - New pickup type/level look: edit the table in `PowerUpPickupBuilder`, run the menu item.
+- New hazard: make the prefab (mesh + material), add a row to `HazardBuilder`, run *Tools > Hazards >
+  Rebuild Hazard Prefabs* (adds tag, rigidbody, `Hazard`, breaking effect, collider).
+- New level: author the scene with a `LevelInfo`, add a row to `LevelBuilder`, run *Tools > Levels >
+  Rebuild Level Assets* (creates the `LevelTheme` asset, `LevelRegistry` entry and Build Settings entry;
+  warns if the scene's `LevelInfo` does not point at the theme). Both builders are idempotent.
 - Do only what was asked. Do not add unrequested behavior (e.g. idle spin/bob) — stated
   visual directions (e.g. "face the camera, no rotation") are requirements, not suggestions.
 - Verify cheaply: recompile + `console` (level=error, small `tail`), then run the flow check:
