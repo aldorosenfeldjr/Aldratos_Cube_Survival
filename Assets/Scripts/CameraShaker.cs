@@ -10,12 +10,6 @@ public class CameraShaker : MonoBehaviour
 
     [SerializeField]
     private CinemachineImpulseSource impulseSource;
-    [SerializeField]
-    [Tooltip("Scales every impact force. 1 = raw force; ~0.06 gives a subtle crate-landing shake.")]
-    private float impactShakeScale = 0.06f;
-    [SerializeField]
-    [Tooltip("Force of the shake when the player dies. Not scaled by impactShakeScale.")]
-    private float deathShakeForce = 0.6f;
 
     private void Awake()
     {
@@ -24,11 +18,11 @@ public class CameraShaker : MonoBehaviour
 
     public void ShakeImpact(float force)
     {
-        impulseSource.GenerateImpulseWithForce(force * impactShakeScale);
+        impulseSource.GenerateImpulseWithForce(force * GameConfig.Instance.ImpactShakeScale);
     }
 
     public void ShakeDeath()
     {
-        impulseSource.GenerateImpulseWithForce(deathShakeForce);
+        impulseSource.GenerateImpulseWithForce(GameConfig.Instance.DeathShakeForce);
     }
 }

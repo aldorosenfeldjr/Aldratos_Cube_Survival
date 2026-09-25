@@ -1106,7 +1106,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da0be147d86168940889766eb75c8758, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::TimeScaleController
-  pauseDuration: 0.5
 --- !u!4 &293144873
 Transform:
   m_ObjectHideFlags: 0
@@ -1331,13 +1330,6 @@ MonoBehaviour:
   - {fileID: 8177416960485180663, guid: fe6abd9f24472fb4eb1db0b20de5b35b, type: 3}
   - {fileID: 6849938047571833967, guid: bfffe30c4b47b4341a86705d3856fac6, type: 3}
   - {fileID: 7976951101115416493, guid: e7067ee02edca174c930c5e94bb39daa, type: 3}
-  minSpawnInterval: 4
-  maxSpawnInterval: 6
-  spawnMinX: -7
-  spawnMaxX: 7
-  spawnHeight: 11
-  minDrag: 2
-  maxDrag: 0.5
 --- !u!114 &402352960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1351,9 +1343,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::HazardSpawner
   hazardPrefab: {fileID: 8112962851509513234, guid: 6e989956cc298fa4a81c7929524519bf, type: 3}
-  maxHazardsToSpawn: 3
-  minDrag: 2
-  maxDrag: 0.5
 --- !u!1 &464385524
 GameObject:
   m_ObjectHideFlags: 0
@@ -4245,10 +4234,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1c661fdd4def734aa29b82cf8f4f649, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 1600
-  maximumVelocity: 4
-  jumpForce: 6
-  fallGravityMultiplier: 2.5
   deathParticles: {fileID: 1229821644636618595, guid: b3d02ec8ab68d1b48809ccc7cb304281, type: 3}
 --- !u!1 &1180079315
 GameObject:
@@ -5544,8 +5529,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::CameraShaker
   impulseSource: {fileID: 1796181064}
-  impactShakeScale: 0.06
-  deathShakeForce: 0.6
 --- !u!1 &1870055197
 GameObject:
   m_ObjectHideFlags: 0
@@ -6857,10 +6840,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1c661fdd4def734aa29b82cf8f4f649, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 1600
-  maximumVelocity: 4
-  jumpForce: 6
-  fallGravityMultiplier: 2.5
   deathParticles: {fileID: 1229821644636618595, guid: b3d02ec8ab68d1b48809ccc7cb304281, type: 3}
 --- !u!54 &3572068279513053523
 Rigidbody:

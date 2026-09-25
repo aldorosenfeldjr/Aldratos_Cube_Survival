@@ -33,6 +33,7 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 | `Time.timeScale` / `fixedDeltaTime` (pause, power-up slowdown, reset) | `TimeScaleController` — the only writer; own root object in Core |
 | Level loading (one level live at a time) | `LevelSelect`, `LevelRegistry`, `LevelInfo`, `LevelTheme` |
 | Power-ups (data-driven, one asset per type) | `Scripts/PowerUps/` — `PowerUpDefinition` (+ `PowerUpImportance` tier), `PowerUpManager`, `PowerUpHUD`, `PowerUpJuiceController` |
+| **Gameplay tunables** (player, spawn timing/area, drag, shake, pause fade) | `Assets/Resources/GameConfig.asset` via `GameConfig.Instance` — edit values there, never in scripts/prefabs/scenes |
 | Power-up camera juice strength | `Assets/PowerUps/PowerUpJuiceSettings.asset` (one preset per tier) |
 | Camera shake from landings | `CameraShaker` in Core (single owner; hazards call `ShakeImpact(force)`) |
 | Pickup prefab look (all 6) | `Assets/Editor/PowerUpPickupBuilder.cs` -> menu *Tools > PowerUps > Rebuild Pickup Prefabs* |

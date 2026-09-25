@@ -5,12 +5,6 @@ public class HazardSpawner : MonoBehaviour
 {
     [SerializeField]
     private GameObject hazardPrefab;
-    [SerializeField]
-    private int maxHazardsToSpawn = 3;
-    [SerializeField]
-    private float minDrag;
-    [SerializeField]
-    private float maxDrag;
 
     private Coroutine spawnCoroutine;
 
@@ -46,18 +40,20 @@ public class HazardSpawner : MonoBehaviour
     {
         while (true)
         {
-            var hazardsToSpawn = Random.Range(1, maxHazardsToSpawn);
+            var config = GameConfig.Instance;
+            var hazardsToSpawn = Random.Range(1, config.MaxHazardsPerWave);
 
             for (int i = 0; i < hazardsToSpawn; i++)
             {
-                var x = Random.Range(-7, 7);
-                var drag = Random.Range(maxDrag, minDrag);
+                // Integer range on purpose: hazards land on whole-number columns.
+                var x = Random.Range((int)config.SpawnMinX, (int)config.SpawnMaxX);
+                var drag = Random.Range(config.HazardMaxDrag, config.HazardMinDrag);
 
-                var hazard = Instantiate(hazardPrefab, new Vector3(x, 11, 0), Quaternion.identity);
+                var hazard = Instantiate(hazardPrefab, new Vector3(x, config.SpawnHeight, 0), Quaternion.identity);
                 hazard.GetComponent<Rigidbody>().linearDamping = drag;
             }
 
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(config.HazardWaveInterval);
         }
     }
 }

@@ -11,9 +11,6 @@ public class TimeScaleController : MonoBehaviour
 {
     private const float BaseFixedDeltaTime = 0.02f;
 
-    [SerializeField]
-    private float pauseDuration = 0.5f;
-
     private float pauseFactor = 1f;
     private float effectScale = 1f;
     private Coroutine pauseRoutine;
@@ -39,13 +36,13 @@ public class TimeScaleController : MonoBehaviour
     public void Pause()
     {
         IsPaused = true;
-        RestartRoutine(ref pauseRoutine, Tween(pauseFactor, 0f, pauseDuration, SetPauseFactor));
+        RestartRoutine(ref pauseRoutine, Tween(pauseFactor, 0f, GameConfig.Instance.PauseFadeDuration, SetPauseFactor));
     }
 
     public void Resume()
     {
         IsPaused = false;
-        RestartRoutine(ref pauseRoutine, Tween(pauseFactor, 1f, pauseDuration, SetPauseFactor));
+        RestartRoutine(ref pauseRoutine, Tween(pauseFactor, 1f, GameConfig.Instance.PauseFadeDuration, SetPauseFactor));
     }
 
     /// <summary>Dips the effect layer to <paramref name="scale"/>, holds, then eases back to 1. Real-time durations.</summary>

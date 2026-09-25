@@ -64,7 +64,7 @@ file and is verified with one command.
 - Extract `HazardSpawner` (mirror `PowerUpSpawner`) and `RunState` (score, high score).
 - Keep `GameManager` as a thin coordinator.
 
-**Phase 2: one config asset (S)**
+**Phase 2: one config asset (S): DONE 2026-09-25** (`GameConfig`, see CLAUDE.md map)
 A `GameConfig` ScriptableObject for tunables now scattered in code/prefabs (shake scales, spawn intervals,
 time constants). `LevelTheme` keeps only what genuinely differs per level.
 

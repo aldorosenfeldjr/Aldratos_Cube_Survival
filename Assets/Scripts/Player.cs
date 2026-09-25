@@ -6,14 +6,6 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     [SerializeField]
-    private float forceMultiplier = 3f;
-    [SerializeField]
-    private float maximumVelocity = 3f;
-    [SerializeField]
-    private float jumpForce = 6f;
-    [SerializeField]
-    private float fallGravityMultiplier = 2.5f;
-    [SerializeField]
     private ParticleSystem deathParticles;
 
     private Rigidbody rb;
@@ -55,14 +47,15 @@ public class Player : MonoBehaviour
         
         var speedMultiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.SpeedMultiplier : 1f;
 
-        if (rb.linearVelocity.magnitude <= maximumVelocity * speedMultiplier)
+        var config = GameConfig.Instance;
+        if (rb.linearVelocity.magnitude <= config.MaxSpeed * speedMultiplier)
         {
-            rb.AddForce(new Vector3(horizontalInput * forceMultiplier * speedMultiplier * Time.deltaTime, 0, 0));
+            rb.AddForce(new Vector3(horizontalInput * config.MoveForce * speedMultiplier * Time.deltaTime, 0, 0));
         }
 
         if (isGrounded && Time.timeScale > 0 && Input.GetKeyDown(KeyCode.Space))
         {
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, config.JumpForce, rb.linearVelocity.z);
         }
     }
 
@@ -70,7 +63,7 @@ public class Player : MonoBehaviour
     {
         if (rb.linearVelocity.y < 0)
         {
-            rb.AddForce(Vector3.up * Physics.gravity.y * (fallGravityMultiplier - 1f), ForceMode.Acceleration);
+            rb.AddForce(Vector3.up * Physics.gravity.y * (GameConfig.Instance.FallGravityMultiplier - 1f), ForceMode.Acceleration);
         }
 
         isGrounded = false;

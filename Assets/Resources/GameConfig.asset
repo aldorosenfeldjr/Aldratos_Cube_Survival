@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8562490609f73164bae16d65293adc6b, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: NewAssembly::GameConfig
+  moveForce: 1600
+  maxSpeed: 4
+  jumpForce: 6
+  fallGravityMultiplier: 2.5
+  spawnMinX: -7
+  spawnMaxX: 7
+  spawnHeight: 11
+  maxHazardsPerWave: 3
+  hazardWaveInterval: 1
+  hazardMinDrag: 2
+  hazardMaxDrag: 0.5
+  pickupMinInterval: 4
+  pickupMaxInterval: 6
+  pickupMinDrag: 2
+  pickupMaxDrag: 0.5
+  impactShakeScale: 0.06
+  deathShakeForce: 0.6
+  pauseFadeDuration: 0.5
