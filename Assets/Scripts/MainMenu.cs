@@ -62,6 +62,13 @@ public class MainMenu : MonoBehaviour
         Destroy(gameObject);
     }
 
+    // Button targets live inside this menu so the prefab has no scene references.
+    // Uses the wired field: GameManager.Instance is not set until the first run starts.
+    public void Exit()
+    {
+        gameManager.ExitGame();
+    }
+
     public void ClearHighScore()
     {
         GameManager.ClearHighScore();
