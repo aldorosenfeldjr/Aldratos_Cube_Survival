@@ -9,12 +9,10 @@ public class Hazard : MonoBehaviour
 
     [SerializeField] 
     private ParticleSystem breakingEffect;
-    private Unity.Cinemachine.CinemachineImpulseSource cinemachineImpulseSource;
     private Player player;
-    
-    private void Start() 
+
+    private void Start()
     {
-        cinemachineImpulseSource = GetComponent<Unity.Cinemachine.CinemachineImpulseSource>();
         player = FindAnyObjectByType<Player>();
 
         var xRotation = Random.Range(90f, 180f);
@@ -33,12 +31,12 @@ public class Hazard : MonoBehaviour
                 Destroy(gameObject);
                 Instantiate(breakingEffect, transform.position, Quaternion.identity);
 
-                if (player != null)
+                if (player != null && CameraShaker.Instance != null)
                 {
                     var distance = Vector3.Distance(transform.position, player.transform.position);
                     var force = 1f / Mathf.Max(distance, 1f);
 
-                    cinemachineImpulseSource.GenerateImpulse(force);
+                    CameraShaker.Instance.ShakeImpact(force);
                 }
             }
     }

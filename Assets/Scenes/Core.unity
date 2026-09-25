@@ -5191,6 +5191,7 @@ GameObject:
   - component: {fileID: 1796181064}
   - component: {fileID: 1796181065}
   - component: {fileID: 1796181066}
+  - component: {fileID: 1796181067}
   m_Layer: 0
   m_Name: Main VCam
   m_TagString: Untagged
@@ -5391,6 +5392,20 @@ MonoBehaviour:
   mainVCam: {fileID: 1796181063}
   impulseSource: {fileID: 1796181064}
   juiceSettings: {fileID: 11400000, guid: 906fe0e68283b4a4e8b0df8c8dcbc89c, type: 2}
+--- !u!114 &1796181067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1796181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a75d8c5cb80f6194e822097e64a42d5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::CameraShaker
+  impulseSource: {fileID: 1796181064}
+  impactShakeScale: 0.06
 --- !u!1 &1870055197
 GameObject:
   m_ObjectHideFlags: 0
