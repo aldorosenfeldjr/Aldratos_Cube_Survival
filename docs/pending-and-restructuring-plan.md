@@ -68,7 +68,7 @@ file and is verified with one command.
 A `GameConfig` ScriptableObject for tunables now scattered in code/prefabs (shake scales, spawn intervals,
 time constants). `LevelTheme` keeps only what genuinely differs per level.
 
-**Phase 3: smaller scenes (M, supervised)**
+**Phase 3: smaller scenes (M, supervised): UI DONE 2026-09-25** (Core 6.6k -> 2.5k lines; menus/HUD are prefabs in `Assets/Prefabs/UI/`; level scenes deliberately untouched, only with you present)
 `Core.unity` (~6.6k lines): move Main Menu, HUD, Pause, Game Over, Level Select into prefabs so scene
 edits and AI reads stay small. Level scenes (~8k / ~1.9k lines) are mostly decoration: only restructure
 with you present (see memory: level-design scope feedback).
