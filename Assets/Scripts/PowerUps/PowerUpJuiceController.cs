@@ -74,14 +74,6 @@ public class PowerUpJuiceController : MonoBehaviour
 
         LeanTween.cancel(gameObject);
 
-        // A power-up grant takes ownership of Time.timeScale away from GameManager's
-        // pause tween, if one happens to be mid-flight, so the two systems don't fight
-        // over the same value.
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.CancelPauseTween();
-        }
-
         impulseSource.GenerateImpulseWithForce(preset.shakeAmplitude);
 
         var currentFov = mainVCam.Lens.FieldOfView;
@@ -98,16 +90,8 @@ public class PowerUpJuiceController : MonoBehaviour
                     .setIgnoreTimeScale(true);
             });
 
-        LeanTween.value(gameObject, Time.timeScale, preset.slowdownTimeScale, 0.02f)
-            .setOnUpdate(SetTimeScale)
-            .setIgnoreTimeScale(true)
-            .setOnComplete(() =>
-            {
-                LeanTween.value(gameObject, preset.slowdownTimeScale, 1f, preset.slowdownEaseBackDuration)
-                    .setDelay(preset.slowdownHoldDuration)
-                    .setOnUpdate(SetTimeScale)
-                    .setIgnoreTimeScale(true);
-            });
+        TimeScaleController.Instance.PlaySlowdown(
+            preset.slowdownTimeScale, 0.02f, preset.slowdownHoldDuration, preset.slowdownEaseBackDuration);
     }
 
     private void SetFieldOfView(float value)
@@ -117,17 +101,9 @@ public class PowerUpJuiceController : MonoBehaviour
         mainVCam.Lens = lens;
     }
 
-    private void SetTimeScale(float value)
-    {
-        Time.timeScale = value;
-        Time.fixedDeltaTime = 0.02f * value;
-    }
-
-    public void ForceResetTimeScale()
+    public void ResetCamera()
     {
         LeanTween.cancel(gameObject);
-        Time.timeScale = 1f;
-        Time.fixedDeltaTime = 0.02f;
         if (hasCapturedBaseFov)
         {
             SetFieldOfView(baseFieldOfView);

@@ -27,7 +27,10 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 
 | Concern | Where |
 |---|---|
-| Run loop, score, pause, theme apply | `GameManager` (also owns time-scale pause tween) |
+| Run loop, score UI, pause input, theme apply | `GameManager` (thin coordinator) |
+| Score + high score (PlayerPrefs) | `RunState` (plain C#, owned by `GameManager`) |
+| Hazard spawning | `HazardSpawner` (on the GameManager object) |
+| `Time.timeScale` / `fixedDeltaTime` (pause, power-up slowdown, reset) | `TimeScaleController` — the only writer; own root object in Core |
 | Level loading (one level live at a time) | `LevelSelect`, `LevelRegistry`, `LevelInfo`, `LevelTheme` |
 | Power-ups (data-driven, one asset per type) | `Scripts/PowerUps/` — `PowerUpDefinition` (+ `PowerUpImportance` tier), `PowerUpManager`, `PowerUpHUD`, `PowerUpJuiceController` |
 | Power-up camera juice strength | `Assets/PowerUps/PowerUpJuiceSettings.asset` (one preset per tier) |

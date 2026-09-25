@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,12 +5,13 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
+/// <summary>
+/// Thin run coordinator: starts/restarts/ends a run and drives the score UI, cameras and menus.
+/// Score lives in <see cref="RunState"/>, hazards in <see cref="HazardSpawner"/>,
+/// time scale in <see cref="TimeScaleController"/>.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject hazardPrefab;
-    [SerializeField]
-    private int maxHazardsToSpawn = 3;
     [SerializeField]
     private TMPro.TextMeshProUGUI scoreText;
     [SerializeField]
@@ -23,13 +22,9 @@ public class GameManager : MonoBehaviour
     private Color newBestScoreColor = new Color(1f, 0.4f, 0.1f);
     [SerializeField]
     private Image backgroundMenu;
-    [SerializeField]
-    private float PauseDuration;
-    [SerializeField]
-    private float minHazardDrag;
-    [SerializeField]
-    private float maxHazardDrag;
 
+    [SerializeField]
+    private HazardSpawner hazardSpawner;
     [SerializeField]
     private PowerUpSpawner powerUpSpawner;
     [SerializeField]
@@ -41,42 +36,33 @@ public class GameManager : MonoBehaviour
     private GameObject zoomVCam;
     [SerializeField]
     private GameObject gameOverMenu;
-    [SerializeField] 
+    [SerializeField]
     private GameObject NewRecordScreen;
-//    [SerializeField] 
-//    private GameObject NewRecord;
     [SerializeField]
     private GameObject player;
-    private int highScore;
-    private int score;
-    private float timer;
-    private Coroutine hazardsCoroutine;
+
+    private RunState run;
     private bool gameOver;
     private bool celebratedNewBest;
-    private int pauseTweenId = -1;
     private static GameManager instance;
     public static GameManager Instance => instance;
-    private const string HighScorePreferenceKey = "HighScore";
-    public int HighScore => highScore;
-    public int Score => score;
+    public int HighScore => run.HighScore;
+    public int Score => run.Score;
 
     public static void ClearHighScore()
     {
-        PlayerPrefs.DeleteKey(HighScorePreferenceKey);
-        PlayerPrefs.Save();
+        RunState.DeleteSavedHighScore();
 
         if (instance != null)
         {
-            instance.highScore = 0;
+            instance.run.ClearHighScore();
         }
     }
 
     private void Awake()
     {
         instance = this;
-
-        highScore = PlayerPrefs.GetInt(HighScorePreferenceKey);
-        //highScore = 0;
+        run = new RunState();
     }
 
     // Start is called before the first frame update
@@ -86,7 +72,7 @@ public class GameManager : MonoBehaviour
         Application.targetFrameRate = 120;
     }
 
-    private void OnEnable() 
+    private void OnEnable()
     {
         NewRecordScreen.SetActive(false);
         player.SetActive(true);
@@ -95,26 +81,8 @@ public class GameManager : MonoBehaviour
         zoomVCam.SetActive(false);
 
         gameOver = false;
-        score = 0;
-        timer = 0;
-        celebratedNewBest = false;
-
-        scoreText.text = "0";
-        scoreText.color = normalScoreColor;
-        highScoreText.text = $"Best: {highScore}";
+        BeginRun();
         highScoreText.gameObject.SetActive(true);
-
-        hazardsCoroutine = StartCoroutine(SpawnHazards());
-
-        powerUpSpawner.BeginSpawning();
-        if (PowerUpManager.Instance != null)
-        {
-            PowerUpManager.Instance.ResetAll();
-        }
-        if (powerUpJuiceController != null)
-        {
-            powerUpJuiceController.ForceResetTimeScale();
-        }
     }
 
     private void OnDisable()
@@ -125,15 +93,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void Update() 
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (Time.timeScale == 0)
+            if (TimeScaleController.Instance.IsPaused)
             {
                 Resume();
             }
-            if (Time.timeScale == 1)
+            else
             {
                 Pause();
             }
@@ -141,17 +109,14 @@ public class GameManager : MonoBehaviour
 
         if (gameOver)
             return;
-        
-        timer += Time.deltaTime;
 
-        if (timer >= 1f)
+        if (run.Tick(Time.deltaTime))
         {
-            score++;
-            scoreText.text = score.ToString();
+            scoreText.text = run.Score.ToString();
 
-            if (score > highScore)
+            if (run.IsNewBest)
             {
-                highScoreText.text = $"Best: {score}";
+                highScoreText.text = $"Best: {run.Score}";
 
                 if (!celebratedNewBest)
                 {
@@ -161,105 +126,61 @@ public class GameManager : MonoBehaviour
                         .setLoopPingPong(1);
                 }
             }
-
-            timer = 0;
         }
     }
 
     private void Pause()
     {
-        LeanTween.cancel(pauseTweenId);
-
-        // A power-up slowdown tween mid-flight would otherwise keep fighting this
-        // pause tween for ownership of Time.timeScale; reset it to the known "1"
-        // starting point this tween assumes before taking over.
-        if (powerUpJuiceController != null)
-        {
-            powerUpJuiceController.ForceResetTimeScale();
-        }
-
-        pauseTweenId = LeanTween.value(1, 0, PauseDuration)
-            .setOnUpdate(SetTimeScale)
-            .setIgnoreTimeScale(true)
-            .id;
+        TimeScaleController.Instance.Pause();
         backgroundMenu.gameObject.SetActive(true);
     }
 
     public void Resume()
     {
-        LeanTween.cancel(pauseTweenId);
-        pauseTweenId = LeanTween.value(0, 1, PauseDuration)
-            .setOnUpdate(SetTimeScale)
-            .setIgnoreTimeScale(true)
-            .id;
+        TimeScaleController.Instance.Resume();
         backgroundMenu.gameObject.SetActive(false);
-    }
-
-    /// <summary>
-    /// Cancels this manager's in-flight pause/resume timescale tween without touching
-    /// anything else, so another system (e.g. <see cref="PowerUpJuiceController"/>)
-    /// can take ownership of <see cref="Time.timeScale"/> without the two fighting.
-    /// </summary>
-    public void CancelPauseTween()
-    {
-        LeanTween.cancel(pauseTweenId);
-        pauseTweenId = -1;
     }
 
     public void RestartGame()
     {
-        foreach (var hazard in GameObject.FindGameObjectsWithTag("Hazard"))
-        {
-            Destroy(hazard);
-        }
+        hazardSpawner.ClearAll();
 
         foreach (var powerUp in GameObject.FindGameObjectsWithTag("PowerUp"))
         {
             Destroy(powerUp);
         }
 
-        if (hazardsCoroutine != null)
-        {
-            StopCoroutine(hazardsCoroutine);
-        }
+        scoreText.transform.localScale = Vector3.one;
+        player.GetComponent<Player>().ResetState();
+        backgroundMenu.gameObject.SetActive(false);
 
-        score = 0;
-        timer = 0;
+        BeginRun();
+    }
+
+    private void BeginRun()
+    {
+        run.Reset();
         celebratedNewBest = false;
 
         scoreText.text = "0";
         scoreText.color = normalScoreColor;
-        scoreText.transform.localScale = Vector3.one;
-        highScoreText.text = $"Best: {highScore}";
+        highScoreText.text = $"Best: {run.HighScore}";
 
-        player.GetComponent<Player>().ResetState();
-
-        hazardsCoroutine = StartCoroutine(SpawnHazards());
-
+        hazardSpawner.BeginSpawning();
         powerUpSpawner.BeginSpawning();
         if (PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.ResetAll();
         }
+        ResetTimeAndCamera();
+    }
 
-        // Unconditionally clear any in-flight/stuck pause tween and hide the pause
-        // overlay BEFORE forcing the timescale reset below. This must run before
-        // ForceResetTimeScale(): doing it after would leave the old "if (Time.timeScale
-        // < 1) Resume();" guard unreachable (ForceResetTimeScale already forces
-        // Time.timeScale to 1) while Pause()'s tween keeps writing toward 0 afterward
-        // with nothing left to counter it and the overlay still visible.
-        //
-        // Deliberately NOT calling Resume() here: Resume() starts its own new 0->1
-        // tween, which would keep animating (and briefly dragging Time.timeScale back
-        // down) for up to PauseDuration seconds after this method returns, fighting
-        // the instant reset ForceResetTimeScale() is about to perform. A direct
-        // cancel + hide gives an immediate, non-animated recovery instead.
-        CancelPauseTween();
-        backgroundMenu.gameObject.SetActive(false);
-
+    private void ResetTimeAndCamera()
+    {
+        TimeScaleController.Instance.ResetAll();
         if (powerUpJuiceController != null)
         {
-            powerUpJuiceController.ForceResetTimeScale();
+            powerUpJuiceController.ResetCamera();
         }
     }
 
@@ -274,54 +195,20 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f;
+        TimeScaleController.Instance.ResetAll();
         SceneManager.LoadScene("Core", LoadSceneMode.Single);
-    }
-
-    private IEnumerator SpawnHazards()
-    {
-        var hazardsToSpawn = Random.Range(1, maxHazardsToSpawn);
-
-        for (int i = 0; i < hazardsToSpawn; i++)
-        {
-            var x = Random.Range(-7, 7);
-            var drag = Random.Range(maxHazardDrag, minHazardDrag);
-
-            var hazard = Instantiate(hazardPrefab, new Vector3(x, 11, 0), Quaternion.identity);
-            hazard.GetComponent<Rigidbody>().linearDamping = drag;
-        }
-        
-
-        yield return new WaitForSeconds(1f);
-
-        yield return SpawnHazards();
-    }
-
-    private void SetTimeScale(float value)
-    {
-        Time.timeScale = value;
-        Time.fixedDeltaTime = 0.02f * value;
     }
 
     public void GameOver()
     {
-        StopCoroutine(hazardsCoroutine);
+        hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
         gameOver = true;
 
-        if (Time.timeScale < 1)
-        {
-            if (powerUpJuiceController != null)
-            {
-                powerUpJuiceController.ForceResetTimeScale();
-            }
-            Resume();
-        }
+        ResetTimeAndCamera();
 
-        if (score > highScore)
+        if (run.CommitHighScore())
         {
-            highScore = score;
-            PlayerPrefs.SetInt(HighScorePreferenceKey, highScore);
             NewRecordScreen.SetActive(true);
         }
 
@@ -329,7 +216,7 @@ public class GameManager : MonoBehaviour
         zoomVCam.SetActive(true);
 
         gameObject.SetActive(false);
-        gameOverMenu.SetActive(true); 
+        gameOverMenu.SetActive(true);
     }
 
     public void Enable()
@@ -339,7 +226,7 @@ public class GameManager : MonoBehaviour
 
     public void ApplyTheme(LevelTheme theme)
     {
-        hazardPrefab = theme.HazardPrefab;
+        hazardSpawner.ApplyTheme(theme);
         powerUpSpawner.ApplyTheme(theme);
     }
 }
