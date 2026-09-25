@@ -17,14 +17,12 @@ public class Player : MonoBehaviour
     private ParticleSystem deathParticles;
 
     private Rigidbody rb;
-    private Unity.Cinemachine.CinemachineImpulseSource cinemachineImpulseSource;
     private bool isGrounded;
 
     // Start is called before the first frame update
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        cinemachineImpulseSource = GetComponent<Unity.Cinemachine.CinemachineImpulseSource>();
     }
 
     // Update is called once per frame
@@ -137,7 +135,10 @@ public class Player : MonoBehaviour
 
             GameOver();
             Instantiate(deathParticles, transform.position, Quaternion.identity);
-            cinemachineImpulseSource.GenerateImpulse();
+            if (CameraShaker.Instance != null)
+            {
+                CameraShaker.Instance.ShakeDeath();
+            }
         }
     }
 

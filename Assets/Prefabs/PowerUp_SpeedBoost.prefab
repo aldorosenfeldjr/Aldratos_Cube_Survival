@@ -224,9 +224,9 @@ GameObject:
   m_Component:
   - component: {fileID: 25409480679689535}
   - component: {fileID: 4845280093899485581}
-  - component: {fileID: 2488140388594681994}
   - component: {fileID: 128458981099422574}
   - component: {fileID: 2037494215340210870}
+  - component: {fileID: 8490434993334157087}
   m_Layer: 0
   m_Name: PowerUp_SpeedBoost
   m_TagString: PowerUp
@@ -277,28 +277,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 3
---- !u!64 &2488140388594681994
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8177416960485180663}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -5216581434543980006, guid: ae4677c09ee5e134fae41974a7d5aaed, type: 3}
 --- !u!114 &128458981099422574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -325,3 +303,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::AutoDestroyer
   delay: 12
+--- !u!65 &8490434993334157087
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8177416960485180663}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.59602094, y: 0.62669367, z: 0.18751985}
+  m_Center: {x: 0, y: 0, z: 0}

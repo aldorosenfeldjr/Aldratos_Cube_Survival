@@ -225,6 +225,7 @@ GameObject:
   - component: {fileID: 9089188381343591946}
   - component: {fileID: 6116081468212290745}
   - component: {fileID: 479350170134439760}
+  - component: {fileID: 4702736914248625325}
   m_Layer: 0
   m_Name: KayKit_SpeedBoost
   m_TagString: PowerUp
@@ -310,3 +311,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::PowerUpPickup
   definition: {fileID: 11400000, guid: aa565cdb27009ec4c827bce9eef22d48, type: 2}
+--- !u!114 &4702736914248625325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9197794759855201050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b752601102760c0439abbb0730eb99ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::AutoDestroyer
+  delay: 12

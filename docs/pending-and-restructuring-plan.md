@@ -17,6 +17,12 @@ Start by reading `CLAUDE.md` (project map + rules). Do not re-explore the projec
 
 ## 2. Pending fixes and decisions (small)
 
+**Status 2026-09-25:** Phase 1 done (fixes 1, 5, 6). Also done: 2 (top-right "II" pause button, `GameManager.pauseButton`),
+3 (`CameraShaker.deathShakeForce` = 0.6), 4 (Meadow pickups get a BoxCollider fitted to the upright item, via the builder),
+8 (decided: keep the tweens slowing with time scale), 9 (HUD prefab raycastTarget off, juice refs guarded, `PickupLifetime`
+12s set by the builder on all six pickups; `GetComponentInChildren` left as is: one Image per label, once per grant;
+`Major` tier left for future use). Still open: 7, 10.
+
 | # | Item | Size | Notes |
 |---|---|---|---|
 | 1 | Escape-to-pause does nothing during a power-up slowdown | S | `GameManager.Update` infers state from `Time.timeScale == 0/1` (float equality). Use an explicit `isPaused`. Folded into Phase 1. |

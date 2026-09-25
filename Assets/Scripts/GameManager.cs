@@ -22,6 +22,9 @@ public class GameManager : MonoBehaviour
     private Color newBestScoreColor = new Color(1f, 0.4f, 0.1f);
     [SerializeField]
     private Image backgroundMenu;
+    [SerializeField]
+    [Tooltip("On-screen pause button (the only pause entry point on mobile). Shown only during a run.")]
+    private GameObject pauseButton;
 
     [SerializeField]
     private HazardSpawner hazardSpawner;
@@ -83,6 +86,7 @@ public class GameManager : MonoBehaviour
         gameOver = false;
         BeginRun();
         highScoreText.gameObject.SetActive(true);
+        pauseButton.SetActive(true);
     }
 
     private void OnDisable()
@@ -90,6 +94,10 @@ public class GameManager : MonoBehaviour
         if (highScoreText != null)
         {
             highScoreText.gameObject.SetActive(false);
+        }
+        if (pauseButton != null)
+        {
+            pauseButton.SetActive(false);
         }
     }
 
@@ -129,16 +137,22 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void Pause()
+    public void Pause()
     {
         TimeScaleController.Instance.Pause();
-        backgroundMenu.gameObject.SetActive(true);
+        ShowPauseMenu(true);
     }
 
     public void Resume()
     {
         TimeScaleController.Instance.Resume();
-        backgroundMenu.gameObject.SetActive(false);
+        ShowPauseMenu(false);
+    }
+
+    private void ShowPauseMenu(bool show)
+    {
+        backgroundMenu.gameObject.SetActive(show);
+        pauseButton.SetActive(!show);
     }
 
     public void RestartGame()
@@ -152,7 +166,7 @@ public class GameManager : MonoBehaviour
 
         scoreText.transform.localScale = Vector3.one;
         player.GetComponent<Player>().ResetState();
-        backgroundMenu.gameObject.SetActive(false);
+        ShowPauseMenu(false);
 
         BeginRun();
     }

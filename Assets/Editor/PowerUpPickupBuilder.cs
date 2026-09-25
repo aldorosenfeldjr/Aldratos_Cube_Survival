@@ -6,13 +6,15 @@ using UnityEngine;
 // not six prefab edits. Prefabs are modified in place, so GUIDs and LevelTheme references survive.
 //
 // Layout (camera looks down +Z, so the camera-facing side is -Z):
-//   root (Rigidbody, MeshCollider, PowerUpPickup)
+//   root (Rigidbody, MeshCollider or fitted BoxCollider, PowerUpPickup)
 //    └ VisualPivot            identity - pickups do not rotate
 //        ├ ItemMesh           oriented so its face points at the camera
 //        └ BadgeFrame         flat, larger, sits behind the item
 public static class PowerUpPickupBuilder
 {
     private const float ItemScale = 0.8f;
+    // Uncollected pickups despawn after this many seconds, in every level.
+    private const float PickupLifetime = 12f;
     private static readonly Vector3 BadgeScale = new Vector3(1.5f, 1.5f, 0.35f);
     private static readonly Vector3 BadgePosition = new Vector3(0f, 0f, 0.45f);
 
@@ -29,12 +31,16 @@ public static class PowerUpPickupBuilder
         public string PrefabPath;
         public Vector3 ItemEuler;
         public string BadgeMaterial;
+        // Flat-authored items: the item-mesh MeshCollider would stay lying down while the
+        // visual stands upright, so they get a BoxCollider fitted to the rotated item instead.
+        public bool FitBoxCollider;
 
         public Entry(string prefabPath, Vector3 itemEuler, string badgeMaterial)
         {
             PrefabPath = prefabPath;
             ItemEuler = itemEuler;
             BadgeMaterial = badgeMaterial;
+            FitBoxCollider = itemEuler == FlatItem;
         }
     }
 
@@ -89,10 +95,53 @@ public static class PowerUpPickupBuilder
         badge.localScale = BadgeScale;
         badge.GetComponent<MeshRenderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(entry.BadgeMaterial);
 
+        if (entry.FitBoxCollider)
+        {
+            FitBoxColliderToItem(root, item);
+        }
+
+        var autoDestroyer = root.GetComponent<AutoDestroyer>();
+        if (autoDestroyer == null)
+        {
+            autoDestroyer = root.AddComponent<AutoDestroyer>();
+        }
+        var destroyerSettings = new SerializedObject(autoDestroyer);
+        destroyerSettings.FindProperty("delay").floatValue = PickupLifetime;
+        destroyerSettings.ApplyModifiedPropertiesWithoutUndo();
+
         // A tumbling pickup would turn its face away from the camera.
         root.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
 
         PrefabUtility.SaveAsPrefabAsset(root, entry.PrefabPath);
         PrefabUtility.UnloadPrefabContents(root);
+    }
+
+    private static void FitBoxColliderToItem(GameObject root, Transform item)
+    {
+        var meshCollider = root.GetComponent<MeshCollider>();
+        if (meshCollider != null)
+        {
+            Object.DestroyImmediate(meshCollider, true);
+        }
+
+        var box = root.GetComponent<BoxCollider>();
+        if (box == null)
+        {
+            box = root.AddComponent<BoxCollider>();
+        }
+
+        // Item mesh bounds, carried through the item's local transform into root space.
+        var meshBounds = item.GetComponent<MeshFilter>().sharedMesh.bounds;
+        var toRoot = root.transform.worldToLocalMatrix * item.localToWorldMatrix;
+        var fitted = new Bounds(toRoot.MultiplyPoint3x4(meshBounds.center), Vector3.zero);
+        for (int i = 0; i < 8; i++)
+        {
+            var corner = meshBounds.center + Vector3.Scale(meshBounds.extents,
+                new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+            fitted.Encapsulate(toRoot.MultiplyPoint3x4(corner));
+        }
+
+        box.center = fitted.center;
+        box.size = fitted.size;
     }
 }

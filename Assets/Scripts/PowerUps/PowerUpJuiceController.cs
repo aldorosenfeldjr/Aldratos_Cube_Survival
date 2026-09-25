@@ -64,6 +64,12 @@ public class PowerUpJuiceController : MonoBehaviour
 
     private void HandleGranted(PowerUpDefinition definition, float duration)
     {
+        if (mainVCam == null || impulseSource == null || juiceSettings == null)
+        {
+            Debug.LogWarning("[PowerUpJuiceController] Missing serialized reference; skipping power-up juice.", this);
+            return;
+        }
+
         if (!hasCapturedBaseFov)
         {
             baseFieldOfView = mainVCam.Lens.FieldOfView;
@@ -104,7 +110,7 @@ public class PowerUpJuiceController : MonoBehaviour
     public void ResetCamera()
     {
         LeanTween.cancel(gameObject);
-        if (hasCapturedBaseFov)
+        if (hasCapturedBaseFov && mainVCam != null)
         {
             SetFieldOfView(baseFieldOfView);
         }

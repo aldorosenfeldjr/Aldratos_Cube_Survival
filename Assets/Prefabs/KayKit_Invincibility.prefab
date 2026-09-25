@@ -225,6 +225,7 @@ GameObject:
   - component: {fileID: 4265263746973561591}
   - component: {fileID: 8858170695370808890}
   - component: {fileID: 2939813356578422024}
+  - component: {fileID: 7196883635294726266}
   m_Layer: 0
   m_Name: KayKit_Invincibility
   m_TagString: PowerUp
@@ -310,3 +311,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::PowerUpPickup
   definition: {fileID: 11400000, guid: 78002c221497ff544a1f098a15788a25, type: 2}
+--- !u!114 &7196883635294726266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8407729519534285363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b752601102760c0439abbb0730eb99ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::AutoDestroyer
+  delay: 12
