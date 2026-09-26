@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: LevelTheme_Playground
   m_EditorClassIdentifier: NewAssembly::LevelTheme
   displayName: Playground
+  targetSeconds: 90
+  firstClearReward: 150
+  repeatClearReward: 20
   hazardPrefab: {fileID: 1808193317489985619, guid: 49cabb4fc9d1edb4e88375b620bf393b, type: 3}
   speedBoostPrefab: {fileID: 9197794759855201050, guid: f6a2bfc715c2b2143abafd42c62d1198, type: 3}
   invincibilityPrefab: {fileID: 8407729519534285363, guid: 4b6c9c88bf2bacb48b82cacec6b8b4f2, type: 3}

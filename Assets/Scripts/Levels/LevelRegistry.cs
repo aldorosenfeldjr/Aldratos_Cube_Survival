@@ -12,9 +12,12 @@ public class LevelRegistry : ScriptableObject
         private string sceneName;
         [SerializeField]
         private string displayName;
+        [SerializeField]
+        private LevelTheme theme;
 
         public string SceneName => sceneName;
         public string DisplayName => displayName;
+        public LevelTheme Theme => theme;
     }
 
     [SerializeField]

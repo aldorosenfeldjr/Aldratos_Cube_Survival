@@ -45,29 +45,45 @@ public class GameManager : MonoBehaviour
     private GameObject NewRecordScreen;
     [SerializeField]
     private GameObject player;
+    [SerializeField]
+    private LevelRegistry registry;
+    [SerializeField]
+    private LevelSelect levelSelect;
+    [SerializeField]
+    private GameObject successMenu;
 
-    private RunState run;
+    private readonly RunState run = new RunState();
     private bool gameOver;
     private bool celebratedNewBest;
+    private bool successShown;
+    private bool clearedThisRun;
+    private LevelTheme currentTheme;
     private static GameManager instance;
     public static GameManager Instance => instance;
     public int HighScore => run.HighScore;
     public int Score => run.Score;
+    public string LevelName => currentTheme != null ? currentTheme.DisplayName : string.Empty;
+    public int TargetSeconds => TargetSecondsOverride > 0 ? TargetSecondsOverride : (currentTheme != null ? currentTheme.TargetSeconds : 0);
+    public LevelProgression.ClearResult LastClear { get; private set; }
+    public bool HasNextLevel => LevelProgression.NextLevelId(registry, run.LevelId) != null;
+
+    /// <summary>Test hook: when above 0, replaces the level's clear target (seconds).</summary>
+    public int TargetSecondsOverride { get; set; }
 
     public static void ClearHighScore()
     {
-        RunState.DeleteSavedHighScore();
+        SaveService.ClearBestScores();
 
         if (instance != null)
         {
-            instance.run.ClearHighScore();
+            instance.run.RefreshHighScore();
         }
     }
 
     private void Awake()
     {
         instance = this;
-        run = new RunState();
+        successMenu.SetActive(false);
     }
 
     // Start is called before the first frame update
@@ -105,7 +121,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame && !successShown)
         {
             if (TimeScaleController.Instance.IsPaused)
             {
@@ -131,6 +147,11 @@ public class GameManager : MonoBehaviour
         {
             scoreText.text = run.Score.ToString();
 
+            if (!clearedThisRun && TargetSeconds > 0 && run.Score >= TargetSeconds)
+            {
+                ClearLevel();
+            }
+
             if (run.IsNewBest)
             {
                 highScoreText.text = $"Best: {run.Score}";
@@ -143,6 +164,56 @@ public class GameManager : MonoBehaviour
                         .setLoopPingPong(1);
                 }
             }
+        }
+    }
+
+    private void ClearLevel()
+    {
+        clearedThisRun = true;
+        run.CommitHighScore();
+        LastClear = LevelProgression.Clear(registry, run.LevelId, currentTheme);
+
+        successShown = true;
+        TimeScaleController.Instance.Pause();
+        pauseButton.SetActive(false);
+        successMenu.SetActive(true);
+    }
+
+    public void KeepGoing()
+    {
+        CloseSuccess();
+        TimeScaleController.Instance.Resume();
+        pauseButton.SetActive(true);
+    }
+
+    public void NextLevel()
+    {
+        var nextLevelId = LevelProgression.NextLevelId(registry, run.LevelId);
+        CloseSuccess();
+        hazardSpawner.StopSpawning();
+        powerUpSpawner.StopSpawning();
+        ClearFallingObjects();
+        scoreText.transform.localScale = Vector3.one;
+        player.GetComponent<Player>().ResetState();
+        ResetTimeAndCamera();
+
+        gameObject.SetActive(false);
+        levelSelect.PlayLevel(nextLevelId);
+    }
+
+    private void CloseSuccess()
+    {
+        successShown = false;
+        successMenu.SetActive(false);
+    }
+
+    private void ClearFallingObjects()
+    {
+        hazardSpawner.ClearAll();
+
+        foreach (var powerUp in GameObject.FindGameObjectsWithTag("PowerUp"))
+        {
+            Destroy(powerUp);
         }
     }
 
@@ -166,12 +237,7 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        hazardSpawner.ClearAll();
-
-        foreach (var powerUp in GameObject.FindGameObjectsWithTag("PowerUp"))
-        {
-            Destroy(powerUp);
-        }
+        ClearFallingObjects();
 
         scoreText.transform.localScale = Vector3.one;
         player.GetComponent<Player>().ResetState();
@@ -184,6 +250,7 @@ public class GameManager : MonoBehaviour
     {
         run.Reset();
         celebratedNewBest = false;
+        clearedThisRun = false;
 
         scoreText.text = "0";
         scoreText.color = normalScoreColor;
@@ -227,6 +294,7 @@ public class GameManager : MonoBehaviour
         hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
         gameOver = true;
+        CloseSuccess();
 
         ResetTimeAndCamera();
 
@@ -247,8 +315,10 @@ public class GameManager : MonoBehaviour
         gameObject.SetActive(true);
     }
 
-    public void ApplyTheme(LevelTheme theme)
+    public void ApplyLevel(string levelId, LevelTheme theme)
     {
+        currentTheme = theme;
+        run.SetLevel(levelId);
         hazardSpawner.ApplyTheme(theme);
         powerUpSpawner.ApplyTheme(theme);
     }

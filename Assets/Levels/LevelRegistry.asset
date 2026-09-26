@@ -15,5 +15,7 @@ MonoBehaviour:
   levelEntries:
   - sceneName: Level_Meadow
     displayName: Meadow
+    theme: {fileID: 11400000, guid: 41255f66c9991c94eb0b143d11af90d1, type: 2}
   - sceneName: Level_Playground
     displayName: Playground
+    theme: {fileID: 11400000, guid: 1069fcd62f7e900438ee42bd77c66eed, type: 2}

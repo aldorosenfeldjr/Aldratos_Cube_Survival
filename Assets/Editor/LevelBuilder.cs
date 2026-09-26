@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
+// Table columns include the clear target and rewards (later levels: +30 s target, +50 first / +5 repeat reward).
 // Keeps a level's three bookkeeping assets in step from the single table below: its LevelTheme
 // asset, its LevelRegistry entry and its Build Settings scene entry. New level: author the scene
 // (with a LevelInfo pointing at the theme asset this creates), add a row, run
@@ -15,6 +16,9 @@ public static class LevelBuilder
     {
         public string DisplayName;
         public string SceneName;
+        public int TargetSeconds;
+        public int FirstClearReward;
+        public int RepeatClearReward;
         public string Hazard;
         public string SpeedBoost;
         public string Invincibility;
@@ -30,6 +34,7 @@ public static class LevelBuilder
         new Row
         {
             DisplayName = "Meadow", SceneName = "Level_Meadow",
+            TargetSeconds = 60, FirstClearReward = 100, RepeatClearReward = 15,
             Hazard = "Assets/Prefabs/Crate.prefab",
             SpeedBoost = "Assets/Prefabs/PowerUp_SpeedBoost.prefab",
             Invincibility = "Assets/Prefabs/PowerUp_Invincibility.prefab",
@@ -38,6 +43,7 @@ public static class LevelBuilder
         new Row
         {
             DisplayName = "Playground", SceneName = "Level_Playground",
+            TargetSeconds = 90, FirstClearReward = 150, RepeatClearReward = 20,
             Hazard = "Assets/Prefabs/KayKit_Hazard.prefab",
             SpeedBoost = "Assets/Prefabs/KayKit_SpeedBoost.prefab",
             Invincibility = "Assets/Prefabs/KayKit_Invincibility.prefab",
@@ -78,6 +84,9 @@ public static class LevelBuilder
 
         var themeFields = new SerializedObject(theme);
         themeFields.FindProperty("displayName").stringValue = row.DisplayName;
+        themeFields.FindProperty("targetSeconds").intValue = row.TargetSeconds;
+        themeFields.FindProperty("firstClearReward").intValue = row.FirstClearReward;
+        themeFields.FindProperty("repeatClearReward").intValue = row.RepeatClearReward;
         foreach (var (field, path) in new[]
         {
             ("hazardPrefab", row.Hazard), ("speedBoostPrefab", row.SpeedBoost),
@@ -103,7 +112,7 @@ public static class LevelBuilder
             return;
         }
 
-        EnsureRegistryEntry(row);
+        EnsureRegistryEntry(row, theme);
         EnsureInBuildSettings(scenePath);
 
         var themeGuid = AssetDatabase.AssetPathToGUID(themePath);
@@ -113,7 +122,7 @@ public static class LevelBuilder
         }
     }
 
-    private static void EnsureRegistryEntry(Row row)
+    private static void EnsureRegistryEntry(Row row, LevelTheme theme)
     {
         var registry = AssetDatabase.LoadAssetAtPath<LevelRegistry>(RegistryPath);
         var registryFields = new SerializedObject(registry);
@@ -137,6 +146,7 @@ public static class LevelBuilder
         }
 
         entry.FindPropertyRelative("displayName").stringValue = row.DisplayName;
+        entry.FindPropertyRelative("theme").objectReferenceValue = theme;
         if (registryFields.ApplyModifiedPropertiesWithoutUndo())
         {
             EditorUtility.SetDirty(registry);

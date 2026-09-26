@@ -20,9 +20,26 @@ public class LevelSelect : MonoBehaviour
     private GameObject menuBackground;
 
     private string loadedLevelSceneName;
+    private string pendingSceneName;
+
+    /// <summary>Loads a level straight from a run (e.g. the Success screen's Next level), skipping the tile menu.</summary>
+    public void PlayLevel(string sceneName)
+    {
+        pendingSceneName = sceneName;
+        gameObject.SetActive(true);
+    }
 
     private void OnEnable()
     {
+        if (pendingSceneName != null)
+        {
+            var sceneName = pendingSceneName;
+            pendingSceneName = null;
+            canvasGroup.alpha = 0f;
+            SelectLevel(sceneName);
+            return;
+        }
+
         canvasGroup.alpha = 1f;
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
@@ -33,14 +50,18 @@ public class LevelSelect : MonoBehaviour
         }
 
         GameObject firstTile = null;
-        foreach (var entry in registry.LevelEntries)
+        for (var i = 0; i < registry.LevelEntries.Count; i++)
         {
+            var entry = registry.LevelEntries[i];
+            var unlocked = LevelProgression.IsUnlocked(registry, i);
             var tile = Instantiate(levelTilePrefab, tileContainer);
             var label = tile.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-            label.text = entry.DisplayName;
+            label.text = $"{entry.DisplayName}\n<size=45%>{TileSubtitle(i, unlocked)}</size>";
 
+            var button = tile.GetComponent<UnityEngine.UI.Button>();
+            button.interactable = unlocked;
             var capturedSceneName = entry.SceneName;
-            tile.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(() => SelectLevel(capturedSceneName));
+            button.onClick.AddListener(() => SelectLevel(capturedSceneName));
 
             if (firstTile == null)
             {
@@ -50,6 +71,20 @@ public class LevelSelect : MonoBehaviour
 
         EventSystem.current.SetSelectedGameObject(null);
         EventSystem.current.SetSelectedGameObject(firstTile);
+    }
+
+    private string TileSubtitle(int index, bool unlocked)
+    {
+        if (!unlocked)
+        {
+            var previous = registry.LevelEntries[index - 1];
+            return $"Locked: survive {previous.Theme.TargetSeconds} s in {previous.DisplayName}";
+        }
+
+        var entry = registry.LevelEntries[index];
+        var best = SaveService.BestScore(entry.SceneName);
+        var goal = SaveService.IsCleared(entry.SceneName) ? "Cleared" : $"Goal {entry.Theme.TargetSeconds} s";
+        return best > 0 ? $"{goal}, best {best}" : goal;
     }
 
     public void SelectLevel(string sceneName)
@@ -101,7 +136,7 @@ public class LevelSelect : MonoBehaviour
             }
         }
 
-        gameManager.ApplyTheme(levelInfo.Theme);
+        gameManager.ApplyLevel(sceneName, levelInfo.Theme);
 
         foreach (var hazard in GameObject.FindGameObjectsWithTag("Hazard"))
         {

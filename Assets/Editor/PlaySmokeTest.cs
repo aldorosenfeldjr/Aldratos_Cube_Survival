@@ -9,7 +9,7 @@ using UnityEngine.UI;
 // One-click end-to-end check of the main game flow: Tools > Smoke Test > Run Play Smoke Test.
 // Enters play mode, drives the real UI (menu -> level -> run), exercises score, every power-up,
 // hazards, pause during a slowdown, restart and game over, then exits play mode and prints a short
-// report to the console (filter on "SMOKE TEST"). Restores the saved high score afterwards.
+// report to the console (filter on "SMOKE TEST"). Runs against a temp save file (never the real save) and restores the legacy PlayerPrefs high score afterwards.
 // Needs the Core scene open. Adding a check = one block in Run().
 [InitializeOnLoad]
 public static class PlaySmokeTest
@@ -18,6 +18,10 @@ public static class PlaySmokeTest
     private const string HadHighScoreKey = "PlaySmokeTest.HadHighScore";
     private const string SavedHighScoreKey = "PlaySmokeTest.SavedHighScore";
     private const double WaitTimeout = 10.0;
+    private const string MeadowId = "Level_Meadow";
+    private const string PlaygroundId = "Level_Playground";
+
+    private static string TempSavePath => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "cube_survival_smoketest_save.json");
 
     private sealed class Until
     {
@@ -50,8 +54,8 @@ public static class PlaySmokeTest
         }
 
         SessionState.SetBool(PendingKey, true);
-        SessionState.SetBool(HadHighScoreKey, PlayerPrefs.HasKey(RunState.HighScorePreferenceKey));
-        SessionState.SetInt(SavedHighScoreKey, PlayerPrefs.GetInt(RunState.HighScorePreferenceKey));
+        SessionState.SetBool(HadHighScoreKey, PlayerPrefs.HasKey(SaveService.LegacyHighScoreKey));
+        SessionState.SetInt(SavedHighScoreKey, PlayerPrefs.GetInt(SaveService.LegacyHighScoreKey));
         EditorApplication.EnterPlaymode();
     }
 
@@ -77,8 +81,15 @@ public static class PlaySmokeTest
         startedAt = EditorApplication.timeSinceStartup;
         steps = Run();
         current = null;
+        UseFreshTempSave();
         Application.logMessageReceived += OnLog;
         EditorApplication.update += Tick;
+    }
+
+    private static void UseFreshTempSave()
+    {
+        System.IO.File.Delete(TempSavePath);
+        SaveService.UseFile(TempSavePath);
     }
 
     private static void OnLog(string message, string stackTrace, LogType type)
@@ -192,15 +203,17 @@ public static class PlaySmokeTest
         EditorApplication.update -= Tick;
         Application.logMessageReceived -= OnLog;
         steps = null;
+        SaveService.UseFile(null);
+        System.IO.File.Delete(TempSavePath);
 
         // Game over during the run may have saved a high score; put the player's own back.
         if (SessionState.GetBool(HadHighScoreKey, false))
         {
-            PlayerPrefs.SetInt(RunState.HighScorePreferenceKey, SessionState.GetInt(SavedHighScoreKey, 0));
+            PlayerPrefs.SetInt(SaveService.LegacyHighScoreKey, SessionState.GetInt(SavedHighScoreKey, 0));
         }
         else
         {
-            PlayerPrefs.DeleteKey(RunState.HighScorePreferenceKey);
+            PlayerPrefs.DeleteKey(SaveService.LegacyHighScoreKey);
         }
         PlayerPrefs.Save();
     }
@@ -233,11 +246,21 @@ public static class PlaySmokeTest
         var powerUps = PowerUpManager.Instance;
         var time = TimeScaleController.Instance;
 
+        // 0. Old PlayerPrefs high score migrates into Meadow's best (no clear granted), then the key is gone.
+        PlayerPrefs.SetInt(SaveService.LegacyHighScoreKey, 42);
+        SaveService.UseFile(TempSavePath);
+        var migratedBest = SaveService.BestScore(MeadowId);
+        Check("high score migration", migratedBest == 42 && !SaveService.IsCleared(MeadowId) && !PlayerPrefs.HasKey(SaveService.LegacyHighScoreKey),
+            $"best={migratedBest} keyLeft={PlayerPrefs.HasKey(SaveService.LegacyHighScoreKey)}");
+        UseFreshTempSave();
+
         // 1. Menu flow, using the real buttons.
         Click("MainMenu/Play");
         yield return WaitUntil(() => levelSelect.gameObject.activeInHierarchy);
         Check("main menu -> level select", !timedOut);
-        levelSelect.GetComponentInChildren<Button>(false).onClick.Invoke();
+        var tiles = levelSelect.GetComponentInChildren<GridLayoutGroup>(true).GetComponentsInChildren<Button>();
+        Check("level select locks level 2", tiles.Length >= 2 && tiles[0].interactable && !tiles[1].interactable, $"tiles={tiles.Length}");
+        tiles[0].onClick.Invoke();
         yield return WaitUntil(() => gameManager.isActiveAndEnabled);
         Check("level select -> run starts", !timedOut);
         if (timedOut)
@@ -323,5 +346,53 @@ public static class PlaySmokeTest
         yield return WaitUntil(() => gameManager.isActiveAndEnabled);
         hazardSpawner.StopSpawning();
         Check("game over -> restart", shown && !timedOut && !gameOverMenu.gameObject.activeSelf, $"menuShown={shown} runRestarted={!timedOut}");
+
+        // 8. Level clear: reaching the (shortened) target credits the first-clear reward, unlocks level 2 and
+        // pauses on the Success screen. Keep going resumes the same run without a second clear.
+        var registry = AssetDatabase.LoadAssetAtPath<LevelRegistry>("Assets/Levels/LevelRegistry.asset");
+        var successMenu = CanvasChild("SuccessMenu");
+        gameManager.TargetSecondsOverride = 3;
+        gameManager.RestartGame();
+        hazardSpawner.StopSpawning();
+        powerUpSpawner.StopSpawning();
+        yield return WaitUntil(() => successMenu.gameObject.activeInHierarchy);
+        var cleared = !timedOut;
+        yield return 1f;
+        var firstReward = registry.LevelEntries[0].Theme.FirstClearReward;
+        Check("clear at target: reward, unlock, pause", cleared && Wallet.Balance == firstReward && SaveService.IsCleared(MeadowId)
+            && LevelProgression.IsUnlocked(registry, 1) && time.IsPaused && Time.timeScale < 0.01f && SaveService.BestScore(MeadowId) >= 3,
+            $"shown={cleared} gems={Wallet.Balance}/{firstReward} cleared={SaveService.IsCleared(MeadowId)} paused={time.IsPaused} best={SaveService.BestScore(MeadowId)}");
+
+        Click("SuccessMenu/KeepGoing");
+        yield return WaitUntil(() => Time.timeScale > 0.999f);
+        var resumed = !timedOut;
+        var scoreAfterResume = gameManager.Score;
+        yield return 1.5f;
+        Check("keep going resumes run, no second clear", resumed && gameManager.Score > scoreAfterResume && !successMenu.gameObject.activeSelf && Wallet.Balance == firstReward,
+            $"resumed={resumed} score {scoreAfterResume}->{gameManager.Score} gems={Wallet.Balance}");
+
+        // 9. Save round trip: what is in memory equals what comes back from disk.
+        var gemsBefore = Wallet.Balance;
+        SaveService.Save();
+        SaveService.Load();
+        Check("save round trip", Wallet.Balance == gemsBefore && SaveService.IsCleared(MeadowId) && SaveService.BestScore(MeadowId) >= 3,
+            $"gems={Wallet.Balance}/{gemsBefore} cleared={SaveService.IsCleared(MeadowId)}");
+
+        // 10. Repeat clear pays the small reward; Next level loads the following level and starts a run.
+        gameManager.RestartGame();
+        hazardSpawner.StopSpawning();
+        powerUpSpawner.StopSpawning();
+        yield return WaitUntil(() => successMenu.gameObject.activeInHierarchy);
+        var repeatShown = !timedOut;
+        var repeatReward = registry.LevelEntries[0].Theme.RepeatClearReward;
+        var repeatPaid = Wallet.Balance == firstReward + repeatReward;
+        Click("SuccessMenu/NextLevel");
+        yield return WaitUntil(() => gameManager.isActiveAndEnabled && gameManager.LevelName == registry.LevelEntries[1].DisplayName);
+        var loadedNext = !timedOut;
+        hazardSpawner.StopSpawning();
+        yield return 0.3f;
+        Check("repeat clear reward + next level", repeatShown && repeatPaid && loadedNext && Mathf.Approximately(Time.timeScale, 1f) && gameManager.Score <= 1,
+            $"shown={repeatShown} repeatPaid={repeatPaid} nextLoaded={loadedNext} timeScale={Time.timeScale:0.00} score={gameManager.Score}");
+        gameManager.TargetSecondsOverride = 0;
     }
 }
