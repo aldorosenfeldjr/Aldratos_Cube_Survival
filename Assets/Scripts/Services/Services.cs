@@ -1,6 +1,8 @@
+using UnityEngine;
+
 /// <summary>
-/// Where game code finds the ad and store services. The Editor defaults to fakes (so trials and purchases can be
-/// tried and tested); every other build defaults to "unavailable". Mobile adapters replace them at startup
+/// Where game code finds the ad and store services. The Editor and development builds default to fakes (so trials and
+/// purchases can be tried on a device before the real adapters exist); release builds default to "unavailable". Mobile adapters replace them at startup
 /// (economy step 5). The UI decides what to show from each service's <c>IsAvailable</c>, never from platform checks.
 /// </summary>
 public static class Services
@@ -25,7 +27,7 @@ public static class Services
 #if UNITY_EDITOR
         return new FakeAdService();
 #else
-        return new NullAdService();
+        return Debug.isDebugBuild ? (IAdService)new FakeAdService() : new NullAdService();
 #endif
     }
 
@@ -34,7 +36,7 @@ public static class Services
 #if UNITY_EDITOR
         return new FakeStoreService();
 #else
-        return new NullStoreService();
+        return Debug.isDebugBuild ? (IStoreService)new FakeStoreService() : new NullStoreService();
 #endif
     }
 }

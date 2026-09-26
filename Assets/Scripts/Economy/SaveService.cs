@@ -1,5 +1,8 @@
 using System.IO;
 using UnityEngine;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using System.Runtime.InteropServices;
+#endif
 
 /// <summary>
 /// Reads and writes save.json (JSON in <see cref="Application.persistentDataPath"/>). The only place that
@@ -10,6 +13,14 @@ public static class SaveService
 {
     public const string LegacyHighScoreKey = "HighScore";
     public const string MigratedLevelId = "Level_Meadow";
+
+    /// <summary>Gems a fresh save starts with in a development build on a device (never in the Editor, so tests and real play are unaffected).</summary>
+    public const int DevelopmentBuildStartingGems = 10000;
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern void FileSync_Flush();
+#endif
 
     private static SaveData data;
     private static string pathOverride;
@@ -61,6 +72,11 @@ public static class SaveService
         {
             MigrateLegacyHighScore();
         }
+
+        if (Debug.isDebugBuild && !Application.isEditor)
+        {
+            data.gems = DevelopmentBuildStartingGems;
+        }
     }
 
     public static void Save()
@@ -71,11 +87,29 @@ public static class SaveService
         File.WriteAllText(temp, JsonUtility.ToJson(Data));
         if (File.Exists(path))
         {
-            File.Replace(temp, path, null);
+            ReplaceFile(temp, path);
         }
         else
         {
             File.Move(temp, path);
+        }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        FileSync_Flush();
+#endif
+    }
+
+    // File.Replace is atomic where it exists; some platforms (WebGL) do not implement it, so fall back to copy + delete.
+    private static void ReplaceFile(string temp, string path)
+    {
+        try
+        {
+            File.Replace(temp, path, null);
+        }
+        catch (System.Exception)
+        {
+            File.Copy(temp, path, true);
+            File.Delete(temp);
         }
     }
 
