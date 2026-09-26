@@ -13,10 +13,35 @@ Updated 2026-09-25 at the end of the restructuring session. A fresh session star
   (batched promotions only). Merge convention: features -> `dev`.
 - **Verification:** menu `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read the console. 9/9 at the
   end of this session.
-- **Uncommitted, not from the AI, do not touch without asking:** `Assets/Scenes/Level_Playground.unity`
-  (the user's level design work), `ProjectSettings/EditorBuildSettings.asset`, untracked
-  `Assets/KayKit_Platformer_Pack/fbx(unity)*` and `New Folder.meta`. `LevelBuilder` never rewrites Build
-  Settings unless a scene is missing from it.
+- The user's Playground edits, renamed Build Settings scenes and `KayKit_Platformer_Pack/fbx(unity)` are
+  committed (8b67a9d on `feature/theme-polish-and-companion`). Untracked `New Folder.meta` is an orphan
+  (no folder); Unity deletes it on open. `LevelBuilder` never rewrites Build Settings unless a scene is
+  missing from it.
+
+## NEXT TASK: migrate to URP (clears Unity Hub's "Built-In Render Pipeline is deprecated")
+
+Branch `feature/urp-migration` (off 8b67a9d) is already created and checked out. Needs the Editor open
+with unity-editor-mcp connected. Facts already checked, do not re-explore:
+- Unity 6000.6.0f1. No pipeline asset anywhere (`GraphicsSettings`/`QualitySettings` customRenderPipeline 0).
+- `com.unity.postprocessing` 3.5.4 is in the manifest but **unused** (no PostProcessVolume/Layer in scenes,
+  prefabs or scripts): remove it.
+- No custom rendering code (no `OnRenderImage`, `Blit`, `CommandBuffer`, `Shader.Find`, `new Material`).
+- Custom shaders: only BOXOPHOBIC `Skybox Cubemap Blend/Extended` (skybox shaders, check they still
+  render) and LeanTween's archived example shader (unused). ~80 `.mat` files + KayKit fbx embedded materials.
+
+Steps:
+1. Add `com.unity.render-pipelines.universal` (let Package Manager pick the 6000.6 version), remove PPv2.
+2. Create `Assets/Settings/URP-Asset` + renderer. Carry over the current quality tuning (2 cascades, 60
+   shadow distance, 1 per-pixel additional light, no reflection probes); keep it mobile-friendly (SRP
+   Batcher on, no HDR/MSAA unless visibly needed). Assign as the default pipeline and on every quality level.
+3. Window > Rendering > Render Pipeline Converter, Built-in to URP: Rendering Settings, Material Upgrade,
+   Read-only Material (fbx), Animation Clip. Then grep `.mat` files for the Built-in Standard shader
+   (`guid: 0000000000000000f000000000000000`) and particle shaders to catch anything left pink.
+4. Check lights/ambient per level (URP lighting looks different), cameras get `UniversalAdditionalCameraData`.
+5. Verify: recompile + console (error), smoke test, one before/after screenshot per level (Main menu,
+   Meadow, Playground) since this is a visual change. Update `PowerUpPickupBuilder` / `HazardBuilder`
+   material paths only if the converter replaced materials rather than upgrading in place.
+6. Update the `project_performance` memory (no longer Built-in RP) and this doc, then commit.
 
 ## 2. Open items
 
