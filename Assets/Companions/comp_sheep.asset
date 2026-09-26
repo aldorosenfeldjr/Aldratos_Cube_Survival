@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5450a901e137794197d5b2732b1e51d, type: 3}
+  m_Name: comp_sheep
+  m_EditorClassIdentifier: NewAssembly::CompanionDefinition
+  id: comp.sheep
+  displayName: Woolly
+  category: 1
+  tier: 2
+  thumbnail: {fileID: 0}
+  isDefault: 0
+  prefab: {fileID: 5008524533754539229, guid: bb5b1695f45ae2445ab0920c53adab6d, type: 3}
+  worldSize: 0.8
+  wanders: 0
+  tileColor: {r: 0.92, g: 0.92, b: 0.9, a: 1}

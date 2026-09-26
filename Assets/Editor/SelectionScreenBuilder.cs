@@ -19,6 +19,7 @@ public static class SelectionScreenBuilder
     private const string GemCounterPath = UiFolder + "GemCounter.prefab";
     private const string TilePath = UiFolder + "UnlockTile.prefab";
     private const string ScreenPath = UiFolder + "SelectionScreen.prefab";
+    private const string CompanionScreenPath = UiFolder + "CompanionSelection.prefab";
     private const string MainMenuPath = UiFolder + "MainMenu.prefab";
     private const string GameOverPath = UiFolder + "GameOverMenu.prefab";
 
@@ -30,7 +31,8 @@ public static class SelectionScreenBuilder
     {
         var gemCounter = BuildGemCounter();
         var tile = BuildTile();
-        BuildScreen(gemCounter, tile);
+        BuildScreen(gemCounter, tile, UnlockCategory.Character, ScreenPath, "SelectionScreen", "Characters");
+        BuildScreen(gemCounter, tile, UnlockCategory.Companion, CompanionScreenPath, "CompanionScreen", "Companions");
         UpdateMainMenuPrefab(gemCounter);
         UpdateGameOverPrefab();
         AssetDatabase.SaveAssets();
@@ -48,27 +50,34 @@ public static class SelectionScreenBuilder
         }
 
         var scene = mainMenu.gameObject.scene;
-        var screen = Object.FindFirstObjectByType<SelectionScreen>(FindObjectsInactive.Include);
-        if (screen == null || screen.gameObject.scene != scene)
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScreenPath);
-            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, mainMenu.transform.parent);
-            instance.name = "SelectionScreen";
-            instance.SetActive(false);
-            var rect = (RectTransform)instance.transform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            screen = instance.GetComponent<SelectionScreen>();
-        }
-
         var fields = new SerializedObject(mainMenu);
-        fields.FindProperty("selectionScreen").objectReferenceValue = screen;
+        fields.FindProperty("selectionScreen").objectReferenceValue = EnsureScreenInstance(mainMenu, ScreenPath, "SelectionScreen");
+        fields.FindProperty("companionScreen").objectReferenceValue = EnsureScreenInstance(mainMenu, CompanionScreenPath, "CompanionScreen");
         fields.ApplyModifiedProperties();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log("Wired the selection screen into " + scene.name);
+        Debug.Log("Wired the selection screens into " + scene.name);
+    }
+
+    // One inactive, full-screen instance per screen prefab, next to the main menu.
+    private static SelectionScreen EnsureScreenInstance(MainMenu mainMenu, string prefabPath, string instanceName)
+    {
+        var existing = mainMenu.transform.parent.Find(instanceName);
+        if (existing != null)
+        {
+            return existing.GetComponent<SelectionScreen>();
+        }
+
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, mainMenu.transform.parent);
+        instance.name = instanceName;
+        instance.SetActive(false);
+        var rect = (RectTransform)instance.transform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        return instance.GetComponent<SelectionScreen>();
     }
 
     private static GameObject BuildGemCounter()
@@ -117,9 +126,9 @@ public static class SelectionScreenBuilder
         return saved.GetComponent<UnlockTile>();
     }
 
-    private static void BuildScreen(GameObject gemCounterPrefab, UnlockTile tilePrefab)
+    private static void BuildScreen(GameObject gemCounterPrefab, UnlockTile tilePrefab, UnlockCategory category, string path, string rootName, string titleText)
     {
-        var root = new GameObject("SelectionScreen", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        var root = new GameObject(rootName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         root.layer = LayerMask.NameToLayer("UI");
         Stretch((RectTransform)root.transform);
         root.GetComponent<Image>().color = PanelColor;
@@ -135,7 +144,7 @@ public static class SelectionScreenBuilder
         topBar.anchoredPosition = Vector2.zero;
         var back = AddButton(topBar, "Back", "Back");
         Place(back.transform, new Vector2(0f, 0.5f), new Vector2(24f, 0f), new Vector2(200f, 60f));
-        var title = AddLabel(topBar, "Title", "Characters", 56f);
+        var title = AddLabel(topBar, "Title", titleText, 56f);
         title.enableAutoSizing = true;
         title.fontSizeMin = 28f;
         title.fontSizeMax = 56f;
@@ -220,7 +229,7 @@ public static class SelectionScreenBuilder
         UnityEventTools.AddPersistentListener(restore.GetComponent<Button>().onClick, screen.Restore);
 
         var fields = new SerializedObject(screen);
-        fields.FindProperty("category").enumValueIndex = (int)UnlockCategory.Character;
+        fields.FindProperty("category").enumValueIndex = (int)category;
         fields.FindProperty("titleText").objectReferenceValue = title;
         fields.FindProperty("nameText").objectReferenceValue = nameText;
         fields.FindProperty("tierText").objectReferenceValue = tierText;
@@ -246,7 +255,7 @@ public static class SelectionScreenBuilder
         layoutFields.ApplyModifiedPropertiesWithoutUndo();
 
         root.SetActive(false);
-        Save(root, ScreenPath);
+        Save(root, path);
     }
 
     // The main menu keeps its own prefab: add a Characters button (between Play and Exit) and the gem counter.
@@ -265,9 +274,20 @@ public static class SelectionScreenBuilder
                 UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.OpenCharacters);
                 characters = instance.transform;
             }
-            SetRect(characters, new Vector2(0f, -80f), new Vector2(280f, 60f));
-            SetRect(contents.transform.Find("Exit"), new Vector2(0f, -160f), new Vector2(280f, 60f));
-            SetRect(contents.transform.Find("ClearHighScore"), new Vector2(0f, -250f), new Vector2(340f, 50f));
+            var companions = contents.transform.Find("Companions");
+            if (companions == null)
+            {
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ButtonPath), contents.transform);
+                instance.name = "Companions";
+                instance.GetComponentInChildren<TextMeshProUGUI>().text = "Companions";
+                UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.OpenCompanions);
+                companions = instance.transform;
+            }
+            // Vertical budget: the menu must stay inside the shortest canvas (about 864 units tall, i.e. +-432).
+            SetRect(characters, new Vector2(0f, -75f), new Vector2(340f, 60f));
+            SetRect(companions, new Vector2(0f, -150f), new Vector2(340f, 60f));
+            SetRect(contents.transform.Find("Exit"), new Vector2(0f, -225f), new Vector2(280f, 60f));
+            SetRect(contents.transform.Find("ClearHighScore"), new Vector2(0f, -300f), new Vector2(340f, 50f));
 
             var removeAds = contents.transform.Find("RemoveAds");
             if (removeAds == null)
@@ -278,7 +298,7 @@ public static class SelectionScreenBuilder
                 UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.RemoveAds);
                 removeAds = instance.transform;
             }
-            SetRect(removeAds, new Vector2(0f, -320f), new Vector2(400f, 60f));
+            SetRect(removeAds, new Vector2(0f, -365f), new Vector2(400f, 60f));
             var menuFields = new SerializedObject(menu);
             menuFields.FindProperty("removeAdsButton").objectReferenceValue = removeAds.gameObject;
             menuFields.ApplyModifiedPropertiesWithoutUndo();
@@ -418,7 +438,11 @@ public static class SelectionScreenBuilder
 
     private static void SetLayout(GameObject go, float minHeight = -1f, float preferredHeight = -1f, float flexibleHeight = -1f)
     {
-        var element = go.GetComponent<LayoutElement>() ?? go.AddComponent<LayoutElement>();
+        var element = go.GetComponent<LayoutElement>();
+        if (element == null)
+        {
+            element = go.AddComponent<LayoutElement>();
+        }
         element.minHeight = minHeight;
         element.preferredHeight = preferredHeight;
         element.flexibleHeight = flexibleHeight;

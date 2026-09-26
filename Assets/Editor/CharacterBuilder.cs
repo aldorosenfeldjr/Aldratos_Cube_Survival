@@ -10,7 +10,6 @@ using UnityEngine;
 public static class CharacterBuilder
 {
     private const string Folder = "Assets/Characters";
-    private const string CatalogPath = "Assets/Resources/UnlockCatalog.asset";
     private const string PlayerMaterialPath = "Assets/Materials/Player.mat";
 
     private struct Row
@@ -47,33 +46,15 @@ public static class CharacterBuilder
             AssetDatabase.CreateFolder("Assets", "Characters");
         }
 
-        var catalog = LoadOrCreateCatalog();
-        var catalogFields = new SerializedObject(catalog);
-        var items = catalogFields.FindProperty("items");
-        items.ClearArray();
-
+        var definitions = new System.Collections.Generic.List<UnlockableDefinition>();
         foreach (var row in Rows)
         {
-            var definition = BuildDefinition(row);
-            items.InsertArrayElementAtIndex(items.arraySize);
-            items.GetArrayElementAtIndex(items.arraySize - 1).objectReferenceValue = definition;
+            definitions.Add(BuildDefinition(row));
         }
 
-        catalogFields.ApplyModifiedPropertiesWithoutUndo();
-        EditorUtility.SetDirty(catalog);
+        UnlockCatalogWriter.SetCategory(UnlockCategory.Character, definitions);
         AssetDatabase.SaveAssets();
-        Debug.Log($"Rebuilt {Rows.Length} character rows and the unlock catalog.");
-    }
-
-    private static UnlockCatalog LoadOrCreateCatalog()
-    {
-        var catalog = AssetDatabase.LoadAssetAtPath<UnlockCatalog>(CatalogPath);
-        if (catalog == null)
-        {
-            catalog = ScriptableObject.CreateInstance<UnlockCatalog>();
-            AssetDatabase.CreateAsset(catalog, CatalogPath);
-        }
-        return catalog;
+        Debug.Log($"Rebuilt {Rows.Length} character rows in the unlock catalog.");
     }
 
     private static Material BuildMaterial(Row row)

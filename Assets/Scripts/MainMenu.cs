@@ -24,6 +24,9 @@ public class MainMenu : MonoBehaviour
     private SelectionScreen selectionScreen;
 
     [SerializeField]
+    private SelectionScreen companionScreen;
+
+    [SerializeField]
     private GameObject removeAdsButton;
 
     private void Start()
@@ -102,6 +105,12 @@ public class MainMenu : MonoBehaviour
     {
         gameObject.SetActive(false);
         selectionScreen.Open(() => gameObject.SetActive(true));
+    }
+
+    public void OpenCompanions()
+    {
+        gameObject.SetActive(false);
+        companionScreen.Open(() => gameObject.SetActive(true));
     }
 
     // Button targets live inside this menu so the prefab has no scene references.

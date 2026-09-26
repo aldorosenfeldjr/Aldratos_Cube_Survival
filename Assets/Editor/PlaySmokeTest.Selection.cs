@@ -306,7 +306,7 @@ public static partial class PlaySmokeTest
 
         // 4. Layout audit at real screen sizes.
         var problems = LayoutAudit();
-        Check($"selection layout fits {LayoutScreens.Length} screen sizes", problems.Count == 0, string.Join(" | ", problems));
+        Check($"both selection screens fit {LayoutScreens.Length} screen sizes", problems.Count == 0, string.Join(" | ", problems));
         yield return 0.1f;
         UseFreshTempSave();
     }
@@ -345,13 +345,15 @@ public static partial class PlaySmokeTest
         }
 
         var scaler = GameObject.Find("Canvas").GetComponent<CanvasScaler>();
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SelectionPrefabPath);
+        foreach (var prefabPath in new[] { SelectionPrefabPath, CompanionPrefabPath })
+        {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         foreach (var screenSize in LayoutScreens)
         {
             var log = Mathf.Lerp(Mathf.Log(screenSize.x / scaler.referenceResolution.x, 2f), Mathf.Log(screenSize.y / scaler.referenceResolution.y, 2f), scaler.matchWidthOrHeight);
             var scale = Mathf.Pow(2f, log);
             var canvasSize = new Vector2(screenSize.x / scale, screenSize.y / scale);
-            var label = $"{screenSize.x}x{screenSize.y}";
+            var label = $"{System.IO.Path.GetFileNameWithoutExtension(prefabPath)} {screenSize.x}x{screenSize.y}";
 
             var canvasObject = new GameObject("LayoutTestCanvas", typeof(Canvas));
             canvasObject.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
@@ -392,6 +394,7 @@ public static partial class PlaySmokeTest
 
             AuditOne(problems, label, scale, root, screen.Tiles, actions);
             Object.DestroyImmediate(canvasObject);
+        }
         }
         return problems;
     }
