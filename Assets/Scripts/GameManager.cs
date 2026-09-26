@@ -69,6 +69,7 @@ public class GameManager : MonoBehaviour
     public int Score => run.Score;
     public string LevelName => currentTheme != null ? currentTheme.DisplayName : string.Empty;
     public int TargetSeconds => TargetSecondsOverride > 0 ? TargetSecondsOverride : (currentTheme != null ? currentTheme.TargetSeconds : 0);
+    public bool ClearedThisRun => clearedThisRun;
     public int GemsCollected => run.GemsCollected;
     public int MultiplierBonus => run.MultiplierBonus;
     /// <summary>Clear reward earned in the run being shown (0 if the level was not cleared this run).</summary>
@@ -217,6 +218,7 @@ public class GameManager : MonoBehaviour
     {
         var nextLevelId = LevelProgression.NextLevelId(registry, run.LevelId);
         CloseSuccess();
+        NewRecordScreen.SetActive(false);
         hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
         gemSpawner.StopSpawning();

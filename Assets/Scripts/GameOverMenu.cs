@@ -12,6 +12,8 @@ public class GameOverMenu : MonoBehaviour
     [SerializeField]
     private TMPro.TextMeshProUGUI gemBreakdownText;
     [SerializeField]
+    private GameObject nextLevelButton;
+    [SerializeField]
     private GameObject scoreHud;
     [SerializeField]
     private GameObject firstSelected;
@@ -23,6 +25,7 @@ public class GameOverMenu : MonoBehaviour
         scoreHud.SetActive(false);
 
         var game = GameManager.Instance;
+        nextLevelButton.SetActive(game.ClearedThisRun && game.HasNextLevel);
         var total = game.GemsCollected + game.MultiplierBonus + game.ClearReward;
         gemBreakdownText.text = $"Gems collected: {game.GemsCollected}\nMultiplier bonus: {game.MultiplierBonus}\nClear reward: {game.ClearReward}\nTotal: +{total}";
 
@@ -64,6 +67,12 @@ public class GameOverMenu : MonoBehaviour
         gameObject.SetActive(false);
 
         GameManager.Instance.Enable();
+    }
+
+    public void NextLevel()
+    {
+        gameObject.SetActive(false);
+        GameManager.Instance.NextLevel();
     }
 
     public void Quit()
