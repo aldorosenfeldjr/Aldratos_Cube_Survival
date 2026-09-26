@@ -260,6 +260,7 @@ public static partial class PlaySmokeTest
         {
             yield return selection.Current;
         }
+        CharacterChecks();
         UseFreshTempSave();
 
         // 1. Menu flow, using the real buttons.

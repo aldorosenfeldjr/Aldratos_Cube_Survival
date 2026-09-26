@@ -124,6 +124,17 @@ public class Player : MonoBehaviour
         transform.position = new Vector3(0, 0.75f, 0);
         transform.rotation = Quaternion.identity;
         rb.linearVelocity = Vector3.zero;
+        ApplyLook();
+    }
+
+    /// <summary>Wears the selected character's material (the free default unless another is owned or on trial).</summary>
+    public void ApplyLook()
+    {
+        var character = UnlockService.Selected(UnlockCategory.Character) as CharacterDefinition;
+        if (character != null && character.Material != null)
+        {
+            GetComponent<Renderer>().sharedMaterial = character.Material;
+        }
     }
 
     private void GameOver()
