@@ -69,8 +69,8 @@ public static class CompanionBuilder
     [MenuItem("Tools/Companions/Place Companion Spawner In Core")]
     public static void PlaceSpawner()
     {
-        var spawner = Object.FindFirstObjectByType<CompanionSpawner>(FindObjectsInactive.Include);
-        var cat = Object.FindFirstObjectByType<CatWanderer>(FindObjectsInactive.Include);
+        var spawner = Object.FindAnyObjectByType<CompanionSpawner>(FindObjectsInactive.Include);
+        var cat = Object.FindAnyObjectByType<CatWanderer>(FindObjectsInactive.Include);
         if (spawner == null)
         {
             var position = cat != null ? cat.transform.position : new Vector3(-3.7f, 0.05f, -2.65f);

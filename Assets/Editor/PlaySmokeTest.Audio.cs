@@ -60,6 +60,19 @@ public static partial class PlaySmokeTest
 
         toggle.GetComponent<Button>().onClick.Invoke();
         Check("toggling again turns sound back on", toggle.GetComponentInChildren<TMP_Text>().text == "Sound: On" && !AudioManager.Muted && !audio.OutputMuted);
+
+        // The pause menu has the same toggle, both toggles agree, and the pause menu still fits with no overlaps.
+        var pauseToggle = CanvasChild("PauseMenu/SoundToggle");
+        Check("pause menu has a working Sound toggle", pauseToggle != null && pauseToggle.GetComponent<SoundToggle>() != null);
+        if (pauseToggle != null)
+        {
+            pauseToggle.GetComponent<Button>().onClick.Invoke();
+            var pauseMutes = AudioManager.Muted && audio.OutputMuted && pauseToggle.GetComponentInChildren<TMP_Text>().text == "Sound: Off";
+            pauseToggle.GetComponent<Button>().onClick.Invoke();
+            Check("the pause menu toggle mutes and unmutes the same setting", pauseMutes && !AudioManager.Muted && !audio.OutputMuted);
+            var pauseProblems = MenuLayoutProblems(CanvasChild("PauseMenu"), new[] { "Pause", "Resume", "Restart", "Quit", "SoundToggle" });
+            Check("pause menu fits the shortest canvas with no overlaps", pauseProblems.Count == 0, string.Join(" | ", pauseProblems));
+        }
         UseFreshTempSave();
     }
 

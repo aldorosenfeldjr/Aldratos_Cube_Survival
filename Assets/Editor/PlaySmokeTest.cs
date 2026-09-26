@@ -308,7 +308,7 @@ public static partial class PlaySmokeTest
         }
         Check("gem spawns on its own", UnityEngine.Object.FindAnyObjectByType<GemPickup>() != null);
         UnityEngine.Object.FindAnyObjectByType<GemSpawner>().StopSpawning(); // keep the wallet checks below deterministic
-        foreach (var stray in UnityEngine.Object.FindObjectsByType<GemPickup>(FindObjectsSortMode.None))
+        foreach (var stray in UnityEngine.Object.FindObjectsByType<GemPickup>())
         {
             UnityEngine.Object.Destroy(stray.gameObject);
         }
