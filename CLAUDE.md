@@ -45,6 +45,7 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 | Power-ups (data-driven, one asset per type) | `Scripts/PowerUps/` — `PowerUpDefinition` (+ `PowerUpImportance` tier), `PowerUpManager`, `PowerUpHUD`, `PowerUpJuiceController` |
 | **Gameplay tunables** (player, spawn timing/area, drag, shake, pause fade) | `Assets/Resources/GameConfig.asset` via `GameConfig.Instance` — edit values there, never in scripts/prefabs/scenes |
 | **UI** (menus, HUD, buttons) | Prefabs in `Assets/Prefabs/UI/`: `MenuButton` + `MenuLabel` (shared style: edit once), and one prefab per menu (`PauseMenu`, `GameOverMenu`, `MainMenu`, `LevelSelect`, `Score`, ...). Core only holds an instance of each: change UI in the prefab, not in Core. Menu buttons call methods on their own menu script (no scene refs inside prefabs). |
+| **Unlocks / selection screen** | `Scripts/Economy/` (`UnlockableDefinition`, `UnlockCatalog`, `UnlockService`, `SaveService`, `Wallet`) and `Scripts/Selection/` (`SelectionScreen`, `SelectionLayout`, `UnlockTile`, `GemCounter`). Prefabs `SelectionScreen`, `UnlockTile`, `GemCounter` in `Assets/Prefabs/UI/`. New character = a row in `CharacterBuilder` (*Tools > Characters > Rebuild Character Assets*); UI rebuilt by *Tools > UI > Rebuild Selection Screen*. Prices come from `EconomyConfig` tiers (mobile x2.5): never set on an item. |
 | Power-up camera juice strength | `Assets/PowerUps/PowerUpJuiceSettings.asset` (one preset per tier) |
 | Rendering (URP): shadows, MSAA, lights | `Assets/Settings/URP-Mobile.asset` (low tiers, Android/iOS) and `URP-PC.asset` (high tiers, PC) |
 | Post-processing | Shared look: `Assets/Settings/PostProcessLook` (global `PostProcessVolume` in Core). PC-only: DoF in `URP-PC_Volume`, SSAO feature on `URP-PC_Renderer` |
@@ -67,7 +68,7 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
   unity-editor-mcp `menu` -> `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read
   `console` (tail 2): one "SMOKE TEST PASS/FAIL n/n" entry, failures named. Covers menus,
   score, every power-up + HUD, hazards, pause-in-slowdown, restart, game over. When a feature
-  adds a flow, add a check block to `Assets/Editor/PlaySmokeTest.cs`. For anything narrower,
+  adds a flow, add a check block to `Assets/Editor/PlaySmokeTest.cs` (or a `PlaySmokeTest.<Feature>.cs` partial; the selection checks include a layout audit at 8 screen sizes: reuse it for new screens). For anything narrower,
   one targeted `eval` measurement (first `eval` right after entering play mode often fails: retry). Avoid dumping full console logs (stack traces are huge) and avoid
   multi-agent review loops for small changes.
 - Scene state gotchas: hazards can end a test run; disabling the player collider makes it

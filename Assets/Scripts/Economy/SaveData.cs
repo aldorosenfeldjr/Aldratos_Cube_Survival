@@ -10,6 +10,8 @@ public class SaveData
     public int version = CurrentVersion;
     public int gems;
     public List<LevelSave> levels = new List<LevelSave>();
+    public List<OwnedEntry> owned = new List<OwnedEntry>();
+    public List<SelectedEntry> selected = new List<SelectedEntry>();
 
     public LevelSave FindLevel(string id)
     {
@@ -35,4 +37,20 @@ public class LevelSave
     public string id;
     public bool cleared;
     public int bestScore;
+}
+
+/// <summary>An unlockable the player owns. <c>source</c> is "gems" or "purchase".</summary>
+[Serializable]
+public class OwnedEntry
+{
+    public string id;
+    public string source;
+}
+
+/// <summary>The selected item for one <see cref="UnlockCategory"/> (stored by name).</summary>
+[Serializable]
+public class SelectedEntry
+{
+    public string category;
+    public string id;
 }
