@@ -47,7 +47,7 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 | **UI** (menus, HUD, buttons) | Prefabs in `Assets/Prefabs/UI/`: `MenuButton` + `MenuLabel` (shared style: edit once), and one prefab per menu (`PauseMenu`, `GameOverMenu`, `MainMenu`, `LevelSelect`, `Score`, ...). Core only holds an instance of each: change UI in the prefab, not in Core. Menu buttons call methods on their own menu script (no scene refs inside prefabs). |
 | Power-up camera juice strength | `Assets/PowerUps/PowerUpJuiceSettings.asset` (one preset per tier) |
 | Rendering (URP): shadows, MSAA, lights | `Assets/Settings/URP-Mobile.asset` (low tiers, Android) and `URP-PC.asset` (high tiers, PC) |
-| Input (Input System package only; no `UnityEngine.Input`) | `Player` (steer/jump), `GameManager` (Esc/back = pause); UI via `InputSystemUIInputModule` in Core |
+| Input (Input System package only; no `UnityEngine.Input`) | `Player` (steer/jump), `GameManager` (Esc/back = pause); UI via `InputSystemUIInputModule` in Core with `Assets/Settings/UIInputActions` (default UI actions + Space as Submit) |
 | Camera shake from landings | `CameraShaker` in Core (single owner; hazards call `ShakeImpact(force)`) |
 | Pickup prefab look (all 6) | `Assets/Editor/PowerUpPickupBuilder.cs` -> menu *Tools > PowerUps > Rebuild Pickup Prefabs* |
 
