@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ea11cfd45b97674caddbb10d3f66888, type: 3}
+  m_Name: GemMultiplier
+  m_EditorClassIdentifier: NewAssembly::GemMultiplierDefinition
+  displayName: Gem Multiplier
+  icon: {fileID: 2634841557194024747, guid: d55cd3f5557cad74da7b680d7c2d70cd, type: 3}
+  duration: 10
+  importance: 0
+  multiplier: 2

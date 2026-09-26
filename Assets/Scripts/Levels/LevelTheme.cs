@@ -23,6 +23,8 @@ public class LevelTheme : ScriptableObject
     private GameObject invincibilityPrefab;
     [SerializeField]
     private GameObject shieldPrefab;
+    [SerializeField]
+    private GameObject gemMultiplierPrefab;
 
     public string DisplayName => displayName;
     public int TargetSeconds => targetSeconds;
@@ -32,4 +34,5 @@ public class LevelTheme : ScriptableObject
     public GameObject SpeedBoostPrefab => speedBoostPrefab;
     public GameObject InvincibilityPrefab => invincibilityPrefab;
     public GameObject ShieldPrefab => shieldPrefab;
+    public GameObject GemMultiplierPrefab => gemMultiplierPrefab;
 }

@@ -21,6 +21,7 @@ public static class PowerUpPickupBuilder
     private const string GoldBadge = "Assets/Materials/PowerUp_Badge_Gold.mat";
     private const string BlueBadge = "Assets/Materials/PowerUp_Badge_Blue.mat";
     private const string GreenBadge = "Assets/Materials/PowerUp_Badge_Green.mat";
+    private const string PurpleBadge = "Assets/Materials/PowerUp_Badge_Purple.mat";
 
     // Meadow items are authored lying flat (face up +Y); Playground items are already upright.
     private static readonly Vector3 FlatItem = new Vector3(-90f, 0f, 0f);
@@ -52,6 +53,8 @@ public static class PowerUpPickupBuilder
         new Entry("Assets/Prefabs/KayKit_Shield.prefab", UprightItem, BlueBadge),
         new Entry("Assets/Prefabs/KayKit_SpeedBoost.prefab", UprightItem, GreenBadge),
         new Entry("Assets/Prefabs/KayKit_Invincibility.prefab", UprightItem, GoldBadge),
+        new Entry("Assets/Prefabs/PowerUp_GemMultiplier.prefab", FlatItem, PurpleBadge),
+        new Entry("Assets/Prefabs/KayKit_GemMultiplier.prefab", UprightItem, PurpleBadge),
     };
 
     [MenuItem("Tools/PowerUps/Rebuild Pickup Prefabs")]

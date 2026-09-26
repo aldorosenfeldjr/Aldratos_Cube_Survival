@@ -25,7 +25,7 @@ public class PowerUpSpawner : MonoBehaviour
 
     public void ApplyTheme(LevelTheme theme)
     {
-        pickupPrefabs = new[] { theme.SpeedBoostPrefab, theme.InvincibilityPrefab, theme.ShieldPrefab };
+        pickupPrefabs = new[] { theme.SpeedBoostPrefab, theme.InvincibilityPrefab, theme.ShieldPrefab, theme.GemMultiplierPrefab };
     }
 
     private IEnumerator SpawnLoop()

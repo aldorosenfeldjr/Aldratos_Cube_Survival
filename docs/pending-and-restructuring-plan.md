@@ -218,8 +218,8 @@ estimate: re-tune the table after real playtests.
    banner, next-level unlock, locked levels in Level Select, per-level bests. `Wallet` + `EconomyConfig` +
    clear rewards credited, Success screen with `Keep going`. Smoke checks: clear at target (test override for a short target), next level
    unlocks, save round trip.
-2. Falling gem pickup + `GemSpawner` + Gem Multiplier power-up + HUD gem counter + game-over breakdown.
-   Smoke checks: gem pickup, multiplier doubles value.
+2. **DONE 2026-09-26 (branch `feature/economy-step2`; smoke test 17/17).** Falling gem pickup + `GemSpawner` + Gem Multiplier power-up + HUD gem counter + game-over breakdown.
+   Smoke checks: gem pickup, multiplier doubles value. Built by `Tools > Gems > Rebuild Gem Assets` (`GemBuilder`). Placeholder look: procedural octahedron gem and icon. Not built: game-over `Next level` after an endless continuation.
 3. `UnlockableDefinition`/`UnlockCatalog`/`UnlockService` + the `SelectionScreen` shell, tested with
    2-3 placeholder character rows. Add smoke checks for gem buy and select.
 4. `IAdService`/`IStoreService` + fakes + trial flow + trial-over panel + interstitial pacer. Add smoke checks

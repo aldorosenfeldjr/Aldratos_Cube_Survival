@@ -6,6 +6,8 @@ public class RunState
     public string LevelId { get; private set; }
     public int Score { get; private set; }
     public int HighScore { get; private set; }
+    public int GemsCollected { get; private set; }
+    public int MultiplierBonus { get; private set; }
     public bool IsNewBest => Score > HighScore;
 
     public void SetLevel(string levelId)
@@ -18,6 +20,17 @@ public class RunState
     {
         Score = 0;
         timer = 0;
+        GemsCollected = 0;
+        MultiplierBonus = 0;
+    }
+
+    /// <summary>Records a collected gem worth <paramref name="baseValue"/> x <paramref name="multiplier"/>; returns the gems earned.</summary>
+    public int AddGem(int baseValue, int multiplier)
+    {
+        var earned = baseValue * multiplier;
+        GemsCollected += baseValue;
+        MultiplierBonus += earned - baseValue;
+        return earned;
     }
 
     /// <summary>Advances the run clock; returns true when the score went up.</summary>

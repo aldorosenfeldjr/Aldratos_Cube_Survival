@@ -9,6 +9,7 @@ public class PowerUpManager : MonoBehaviour
     public static PowerUpManager Instance => instance;
 
     public float SpeedMultiplier { get; private set; } = 1f;
+    public int GemMultiplier { get; private set; } = 1;
     public bool IsInvincible { get; private set; }
     public bool HasShield { get; private set; }
 
@@ -99,6 +100,7 @@ public class PowerUpManager : MonoBehaviour
     }
 
     internal void SetSpeedMultiplier(float value) => SpeedMultiplier = value;
+    internal void SetGemMultiplier(int value) => GemMultiplier = value;
     internal void SetInvincible(bool value) => IsInvincible = value;
     internal void SetShieldActive(bool value) => HasShield = value;
 }

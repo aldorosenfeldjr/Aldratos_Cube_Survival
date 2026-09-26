@@ -47,6 +47,10 @@ public class GameConfig : ScriptableObject
     [SerializeField] private float pickupMinDrag = 2f;
     [SerializeField] private float pickupMaxDrag = 0.5f;
 
+    [Header("Gem pickups")]
+    [SerializeField] private float gemMinInterval = 4f;
+    [SerializeField] private float gemMaxInterval = 8f;
+
     [Header("Camera shake")]
     [Tooltip("Scales every impact force. 1 = raw force; ~0.06 gives a subtle crate-landing shake.")]
     [SerializeField] private float impactShakeScale = 0.06f;
@@ -72,6 +76,8 @@ public class GameConfig : ScriptableObject
     public float PickupMaxInterval => pickupMaxInterval;
     public float PickupMinDrag => pickupMinDrag;
     public float PickupMaxDrag => pickupMaxDrag;
+    public float GemMinInterval => gemMinInterval;
+    public float GemMaxInterval => gemMaxInterval;
     public float ImpactShakeScale => impactShakeScale;
     public float DeathShakeForce => deathShakeForce;
     public float PauseFadeDuration => pauseFadeDuration;

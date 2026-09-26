@@ -10,6 +10,8 @@ public class GameOverMenu : MonoBehaviour
     [SerializeField]
     private TMPro.TextMeshProUGUI finalScoreText;
     [SerializeField]
+    private TMPro.TextMeshProUGUI gemBreakdownText;
+    [SerializeField]
     private GameObject scoreHud;
     [SerializeField]
     private GameObject firstSelected;
@@ -19,6 +21,10 @@ public class GameOverMenu : MonoBehaviour
         highScore.text = $"High Score: {GameManager.Instance.HighScore}";
 
         scoreHud.SetActive(false);
+
+        var game = GameManager.Instance;
+        var total = game.GemsCollected + game.MultiplierBonus + game.ClearReward;
+        gemBreakdownText.text = $"Gems collected: {game.GemsCollected}\nMultiplier bonus: {game.MultiplierBonus}\nClear reward: {game.ClearReward}\nTotal: +{total}";
 
         finalScoreText.text = $"Score: {GameManager.Instance.Score}";
         finalScoreText.transform.localScale = Vector3.zero;
