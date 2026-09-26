@@ -1,6 +1,6 @@
 # Handoff: state, open items, roadmap
 
-Updated 2026-09-25 at the end of the restructuring session. A fresh session starts by reading `CLAUDE.md`
+Updated 2026-09-25 at the end of the URP + Input System session. A fresh session starts by reading `CLAUDE.md`
 (project map + rules), then this file. Do not re-explore the project.
 
 ## 1. State
@@ -13,10 +13,32 @@ Updated 2026-09-25 at the end of the restructuring session. A fresh session star
   (batched promotions only). Merge convention: features -> `dev`.
 - **Verification:** menu `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read the console. 9/9 at the
   end of this session.
-- **Uncommitted, not from the AI, do not touch without asking:** `Assets/Scenes/Level_Playground.unity`
-  (the user's level design work), `ProjectSettings/EditorBuildSettings.asset`, untracked
-  `Assets/KayKit_Platformer_Pack/fbx(unity)*` and `New Folder.meta`. `LevelBuilder` never rewrites Build
-  Settings unless a scene is missing from it.
+- The user's Playground edits, renamed Build Settings scenes and `KayKit_Platformer_Pack/fbx(unity)` are
+  committed (8b67a9d on `feature/theme-polish-and-companion`). Untracked `New Folder.meta` is an orphan
+  (no folder); Unity deletes it on open. `LevelBuilder` never rewrites Build Settings unless a scene is
+  missing from it.
+
+## Done 2026-09-25: URP migration + Input System (branch `feature/urp-migration`)
+
+- **URP 17.6**: `Assets/Settings/URP-Mobile` (Very Low..Medium, Android default) and `URP-PC` (High..Ultra,
+  Standalone default + Graphics default). Forward, SRP Batcher, no depth/opaque texture; PC has
+  soft shadows/2 cascades/60m/MSAA 2x, Mobile hard shadows/1 cascade/20m/no MSAA. Converter ran Material,
+  Read-only Material, Animation Clip. All renderers in the 3 scenes + game prefabs use URP-compatible shaders;
+  only unused LeanTween/TMP example materials still use legacy shaders. Core camera/light have URP data.
+- **Post-processing rebuilt in URP** (PPv2 had been active on Core's Main Camera: SMAA, DoF, AO, Color
+  Grading, Vignette). Shared look for all platforms: global `PostProcessVolume` in Core with
+  `Assets/Settings/PostProcessLook` (ACES tonemapping, exposure +1, hue +3, lift/gamma tint, vignette 0.4).
+  PC only: Bokeh DoF in `URP-PC_Volume` (the PC pipeline asset's own volume profile) and SSAO on
+  `URP-PC_Renderer` (ambient-only). Camera: SMAA, HDR on. Both URP assets: HDR + HDR grading (needed for
+  ACES/exposure). Old PPv2 profile deleted. Visual match checked against the pre-migration capture.
+- **iOS default quality** was already Medium (URP-Mobile), same as Android; no change was needed.
+- **Input System 1.20** (`activeInputHandler: 1`, new only): `Player` (Pointer = mouse/touch halves, keyboard
+  steer ramp from `GameConfig.KeyboardSteerRamp` matching the old axis feel, gamepad left stick, Space jump),
+  `GameManager` (Esc / Android back = pause). Core's EventSystem uses `InputSystemUIInputModule`.
+  TMP "Examples & Extras" scripts still call `UnityEngine.Input` (unused; they would throw if run).
+  Menus: `Assets/Settings/UIInputActions` = default UI actions + Space as Submit (old Input Manager parity).
+  During a live run `GameManager` clears UI selection so Space jumps instead of re-pressing the Pause button.
+- Smoke test 9/9 after each step.
 
 ## 2. Open items
 
@@ -27,6 +49,7 @@ Updated 2026-09-25 at the end of the restructuring session. A fresh session star
 | HUD container sits under `Score`, not the Canvas | optional | Intentional (hides with the score on game over via `GameOverMenu.scoreHud`); reparenting needs that coupling replicated. |
 | "Clear High Score" is smaller (340x50, 28pt) than other buttons | decided | User chose to keep it as is for now. |
 | EditMode tests (`PowerUpManager`, `TimeScaleController`) | later | Belongs to the separate test-suite session. |
+| Check post-processing on a phone | user | Mobile gets tonemapping/grading/vignette + SMAA + HDR (no DoF/SSAO). Profile on a real device; drop SMAA or HDR on URP-Mobile if it costs too much. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
 
 ## 3. Product roadmap (agreed order, none started)

@@ -27,6 +27,8 @@ public class GameConfig : ScriptableObject
     [SerializeField] private float maxSpeed = 4f;
     [SerializeField] private float jumpForce = 6f;
     [SerializeField] private float fallGravityMultiplier = 2.5f;
+    [Tooltip("How fast keyboard steering ramps between -1 and 1, per second (the old Input Manager 'Horizontal' axis used 3).")]
+    [SerializeField] private float keyboardSteerRamp = 3f;
 
     [Header("Spawn area (hazards and pickups)")]
     [SerializeField] private float spawnMinX = -7f;
@@ -58,6 +60,7 @@ public class GameConfig : ScriptableObject
     public float MaxSpeed => maxSpeed;
     public float JumpForce => jumpForce;
     public float FallGravityMultiplier => fallGravityMultiplier;
+    public float KeyboardSteerRamp => keyboardSteerRamp;
     public float SpawnMinX => spawnMinX;
     public float SpawnMaxX => spawnMaxX;
     public float SpawnHeight => spawnHeight;
