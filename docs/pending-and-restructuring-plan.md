@@ -34,7 +34,8 @@ Updated 2026-09-25 at the end of the restructuring session. A fresh session star
 1. **Unlock/economy core**: unlock state, save/load, "watch ad to trial", "buy to own", shared selection-screen
    shell. Ads/IAP decided 2026-09-26 (packages not installed yet):
    - **Ads: Google AdMob** (Google Mobile Ads Unity plugin). Formats: **rewarded** (trial unlocks) +
-     **interstitials between runs** (frequency-capped, e.g. every N game overs) + a **"Remove Ads" IAP**.
+     **interstitials between runs**: rare, roughly **one every ~10 game overs** (never every run; the count
+     goes in `GameConfig`, never at app launch or mid-run) + a **"Remove Ads" IAP**.
    - **IAP: Unity IAP** (`com.unity.purchasing`): character/companion purchases + Remove Ads.
    - Game code talks only to own `IAdService` / `IStoreService` interfaces. Editor/PC/smoke test use a fake
      (placeholder ad, instant reward); the AdMob/Unity IAP adapters exist only in mobile builds.
@@ -42,8 +43,8 @@ Updated 2026-09-25 at the end of the restructuring session. A fresh session star
    - **Audience: mixed / not sure**: neutral age question at first launch; under-13 players get
      non-personalised ads (AdMob under-age tag) and a parent check before purchases. Google Play Families
      policy applies (AdMob is Families-certified); UMP consent form for EU; ATT prompt on iOS (adults only).
-   - Still open for the economy session: whether mobile also earns by playing (coins/milestones) alongside
-     ads/IAP, prices, interstitial frequency.
+   - **Mobile also unlocks by playing**, but slowly: a long-term goal, not a fast way around ads/IAP.
+   - Still open for the economy session: the exact play-to-unlock curve (coins vs score milestones), prices.
 2. **Character selection**: 12 colour variants of the box player, playful names, thumbnails in the main menu.
 3. **Companion selection**: Farm Animals Animated (Quaternius) from `D:\Unity\Aldera_Assets\`; today the
    companion is one hardcoded `CatWanderer`.
