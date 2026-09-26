@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -118,6 +119,13 @@ public class GameManager : MonoBehaviour
 
         if (gameOver)
             return;
+
+        // No menu is open during play: drop UI focus so Space jumps instead of pressing the last clicked button.
+        if (!TimeScaleController.Instance.IsPaused && EventSystem.current != null
+            && EventSystem.current.currentSelectedGameObject != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
 
         if (run.Tick(Time.deltaTime))
         {

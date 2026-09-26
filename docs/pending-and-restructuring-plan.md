@@ -21,19 +21,23 @@ Updated 2026-09-25 at the end of the URP + Input System session. A fresh session
 ## Done 2026-09-25: URP migration + Input System (branch `feature/urp-migration`)
 
 - **URP 17.6**: `Assets/Settings/URP-Mobile` (Very Low..Medium, Android default) and `URP-PC` (High..Ultra,
-  Standalone default + Graphics default). Forward, SRP Batcher, no HDR, no depth/opaque texture; PC has
+  Standalone default + Graphics default). Forward, SRP Batcher, no depth/opaque texture; PC has
   soft shadows/2 cascades/60m/MSAA 2x, Mobile hard shadows/1 cascade/20m/no MSAA. Converter ran Material,
   Read-only Material, Animation Clip. All renderers in the 3 scenes + game prefabs use URP-compatible shaders;
   only unused LeanTween/TMP example materials still use legacy shaders. Core camera/light have URP data.
-- **PPv2 was not unused** (the old note was wrong): Core's Main Camera had a PostProcessLayer (SMAA) and a
-  global PostProcessVolume with `Assets/Scenes/SampleScene_Profiles/Main Camera Profile.asset` (Depth of Field,
-  Ambient Occlusion, Color Grading). Package removed, dead components stripped. Before/after captures look
-  nearly identical. The profile asset is kept (now unreadable) until a decision on recreating it as a URP
-  Volume + SSAO (see open items).
+- **Post-processing rebuilt in URP** (PPv2 had been active on Core's Main Camera: SMAA, DoF, AO, Color
+  Grading, Vignette). Shared look for all platforms: global `PostProcessVolume` in Core with
+  `Assets/Settings/PostProcessLook` (ACES tonemapping, exposure +1, hue +3, lift/gamma tint, vignette 0.4).
+  PC only: Bokeh DoF in `URP-PC_Volume` (the PC pipeline asset's own volume profile) and SSAO on
+  `URP-PC_Renderer` (ambient-only). Camera: SMAA, HDR on. Both URP assets: HDR + HDR grading (needed for
+  ACES/exposure). Old PPv2 profile deleted. Visual match checked against the pre-migration capture.
+- **iOS default quality** = Medium (URP-Mobile), same as Android.
 - **Input System 1.20** (`activeInputHandler: 1`, new only): `Player` (Pointer = mouse/touch halves, keyboard
   steer ramp from `GameConfig.KeyboardSteerRamp` matching the old axis feel, gamepad left stick, Space jump),
   `GameManager` (Esc / Android back = pause). Core's EventSystem uses `InputSystemUIInputModule`.
   TMP "Examples & Extras" scripts still call `UnityEngine.Input` (unused; they would throw if run).
+  Menus: `Assets/Settings/UIInputActions` = default UI actions + Space as Submit (old Input Manager parity).
+  During a live run `GameManager` clears UI selection so Space jumps instead of re-pressing the Pause button.
 - Smoke test 9/9 after each step.
 
 ## 2. Open items
@@ -45,9 +49,7 @@ Updated 2026-09-25 at the end of the URP + Input System session. A fresh session
 | HUD container sits under `Score`, not the Canvas | optional | Intentional (hides with the score on game over via `GameOverMenu.scoreHud`); reparenting needs that coupling replicated. |
 | "Clear High Score" is smaller (340x50, 28pt) than other buttons | decided | User chose to keep it as is for now. |
 | EditMode tests (`PowerUpManager`, `TimeScaleController`) | later | Belongs to the separate test-suite session. |
-| Test controls after an Editor restart | user | The new input backend only activates after restarting Unity (script restart did not work). Check arrows/A-D, mouse-hold halves, Space, Esc. Then on a phone: touch halves + Android back. |
-| Recreate old PPv2 look in URP? | user | Old profile: DoF + AO + Color Grading + SMAA. URP equivalents: Volume (DoF, Tonemapping) + SSAO renderer feature + camera SMAA. SSAO/DoF are costly on mobile: PC asset only, or drop. |
-| iOS default quality | user | `QualitySettings` has no iOS entry; Android uses Medium (URP-Mobile). Probably set iOS to Medium too. |
+| Check post-processing on a phone | user | Mobile gets tonemapping/grading/vignette + SMAA + HDR (no DoF/SSAO). Profile on a real device; drop SMAA or HDR on URP-Mobile if it costs too much. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
 
 ## 3. Product roadmap (agreed order, none started)
