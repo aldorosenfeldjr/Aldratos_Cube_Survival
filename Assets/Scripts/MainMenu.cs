@@ -20,6 +20,9 @@ public class MainMenu : MonoBehaviour
     [SerializeField]
     private GameObject exitButton;
 
+    [SerializeField]
+    private SelectionScreen selectionScreen;
+
     private void Start()
     {
         QualitySettings.vSyncCount = 0;
@@ -60,6 +63,12 @@ public class MainMenu : MonoBehaviour
 
         levelSelect.SetActive(true);
         Destroy(gameObject);
+    }
+
+    public void OpenCharacters()
+    {
+        gameObject.SetActive(false);
+        selectionScreen.Open(() => gameObject.SetActive(true));
     }
 
     // Button targets live inside this menu so the prefab has no scene references.

@@ -60,6 +60,10 @@ public class SelectionScreen : MonoBehaviour
     public void Focus(UnlockTile tile)
     {
         focused = tile;
+        if (EventSystem.current.currentSelectedGameObject != tile.gameObject)
+        {
+            EventSystem.current.SetSelectedGameObject(tile.gameObject);
+        }
         ShowPreview(tile.Definition);
         Refresh();
         EnsureVisible(tile);
@@ -87,6 +91,7 @@ public class SelectionScreen : MonoBehaviour
     {
         titleText.text = category == UnlockCategory.Character ? "Characters" : "Companions";
         BuildTiles();
+        GetComponent<SelectionLayout>().Apply();
         CreateStage();
         Wallet.Changed += OnWalletChanged;
 
@@ -97,9 +102,8 @@ public class SelectionScreen : MonoBehaviour
 
         var selected = UnlockService.Selected(category);
         var start = tiles.Find(tile => tile.Definition == selected) ?? tiles[0];
-        Focus(start);
         EventSystem.current.SetSelectedGameObject(null);
-        EventSystem.current.SetSelectedGameObject(start.gameObject);
+        Focus(start);
     }
 
     private void OnDisable()
@@ -246,7 +250,8 @@ public class SelectionScreen : MonoBehaviour
             return;
         }
 
-        Canvas.ForceUpdateCanvases();
+        // A freshly opened screen has not been laid out yet; measure only real positions.
+        LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform);
         var viewport = scroll.viewport;
         var tileRect = (RectTransform)tile.transform;
         var corners = new Vector3[4];

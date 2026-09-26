@@ -12,7 +12,7 @@ using UnityEngine.UI;
 // report to the console (filter on "SMOKE TEST"). Runs against a temp save file (never the real save) and restores the legacy PlayerPrefs high score afterwards.
 // Needs the Core scene open. Adding a check = one block in Run().
 [InitializeOnLoad]
-public static class PlaySmokeTest
+public static partial class PlaySmokeTest
 {
     private const string PendingKey = "PlaySmokeTest.Pending";
     private const string HadHighScoreKey = "PlaySmokeTest.HadHighScore";
@@ -252,6 +252,14 @@ public static class PlaySmokeTest
         var migratedBest = SaveService.BestScore(MeadowId);
         Check("high score migration", migratedBest == 42 && !SaveService.IsCleared(MeadowId) && !PlayerPrefs.HasKey(SaveService.LegacyHighScoreKey),
             $"best={migratedBest} keyLeft={PlayerPrefs.HasKey(SaveService.LegacyHighScoreKey)}");
+        UseFreshTempSave();
+
+        // 0b. Selection screen (opened from the main menu, so it must run before Play consumes the menu).
+        var selection = SelectionChecks();
+        while (selection.MoveNext())
+        {
+            yield return selection.Current;
+        }
         UseFreshTempSave();
 
         // 1. Menu flow, using the real buttons.
