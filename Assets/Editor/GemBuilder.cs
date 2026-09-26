@@ -100,6 +100,8 @@ public static class GemBuilder
         {
             material.EnableKeyword("_EMISSION");
             material.SetColor("_EmissionColor", color * 0.6f);
+            // Without this flag Unity treats the emission as black and strips the keyword whenever it validates the material.
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
         EditorUtility.SetDirty(material);
         return material;

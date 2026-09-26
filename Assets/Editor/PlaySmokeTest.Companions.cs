@@ -202,14 +202,17 @@ public static partial class PlaySmokeTest
     // phone), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
     private static List<string> MainMenuLayoutProblems(Transform mainMenu)
     {
-        var problems = new List<string>();
-        var removeAds = mainMenu.Find("RemoveAds");
-        removeAds.gameObject.SetActive(true);
+        mainMenu.Find("RemoveAds").gameObject.SetActive(true);
+        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "Characters", "Companions", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" });
+    }
 
+    private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names)
+    {
+        var problems = new List<string>();
         var canvas = new Vector2(968f, 864f);
         var limit = new Rect(-canvas.x / 2f, -canvas.y / 2f, canvas.x, canvas.y);
         var rects = new List<(string, Rect)>();
-        foreach (var name in new[] { "Title", "Play", "Characters", "Companions", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" })
+        foreach (var name in names)
         {
             var child = (RectTransform)mainMenu.Find(name);
             if (child == null)

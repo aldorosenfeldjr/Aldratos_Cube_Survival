@@ -42,7 +42,7 @@ public static class SelectionScreenBuilder
     [MenuItem("Tools/UI/Wire Selection Screen In Core")]
     public static void WireCore()
     {
-        var mainMenu = Object.FindFirstObjectByType<MainMenu>(FindObjectsInactive.Include);
+        var mainMenu = Object.FindAnyObjectByType<MainMenu>(FindObjectsInactive.Include);
         if (mainMenu == null)
         {
             Debug.LogError("Open the Core scene first: no MainMenu found.");

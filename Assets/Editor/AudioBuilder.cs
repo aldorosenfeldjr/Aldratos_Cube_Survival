@@ -18,6 +18,7 @@ public static class AudioBuilder
     private const string LibraryPath = "Assets/Resources/AudioLibrary.asset";
     private const string ButtonPath = "Assets/Prefabs/UI/MenuButton.prefab";
     private const string MainMenuPath = "Assets/Prefabs/UI/MainMenu.prefab";
+    private const string PauseMenuPath = "Assets/Prefabs/UI/PauseMenu.prefab";
     private const int Rate = 44100;
 
     [MenuItem("Tools/Audio/Rebuild Placeholder Audio")]
@@ -56,7 +57,8 @@ public static class AudioBuilder
 
         FillLibrary();
         AddClickSoundToButtonPrefab();
-        AddSoundToggleToMainMenu();
+        AddSoundToggle(MainMenuPath, topLeft: true);
+        AddSoundToggle(PauseMenuPath, topLeft: false);
         AssetDatabase.SaveAssets();
         Debug.Log("Placeholder audio ready.");
     }
@@ -64,8 +66,8 @@ public static class AudioBuilder
     [MenuItem("Tools/Audio/Place Audio Manager In Core")]
     public static void PlaceManager()
     {
-        var existing = UnityEngine.Object.FindFirstObjectByType<AudioManager>(FindObjectsInactive.Include);
-        var mainMenu = UnityEngine.Object.FindFirstObjectByType<MainMenu>(FindObjectsInactive.Include);
+        var existing = UnityEngine.Object.FindAnyObjectByType<AudioManager>(FindObjectsInactive.Include);
+        var mainMenu = UnityEngine.Object.FindAnyObjectByType<MainMenu>(FindObjectsInactive.Include);
         if (mainMenu == null)
         {
             Debug.LogError("Open the Core scene first.");
@@ -263,9 +265,10 @@ public static class AudioBuilder
         }
     }
 
-    private static void AddSoundToggleToMainMenu()
+    // Main menu: top-left, mirroring the gem counter on the top-right. Pause menu: centred, under its last button.
+    private static void AddSoundToggle(string prefabPath, bool topLeft)
     {
-        var contents = PrefabUtility.LoadPrefabContents(MainMenuPath);
+        var contents = PrefabUtility.LoadPrefabContents(prefabPath);
         try
         {
             var toggle = contents.transform.Find("SoundToggle");
@@ -282,15 +285,15 @@ public static class AudioBuilder
                 toggle = instance.transform;
             }
 
-            // Top-left, mirroring the gem counter on the top-right.
             var rect = (RectTransform)toggle;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(40f, -30f);
+            var anchor = topLeft ? new Vector2(0f, 1f) : new Vector2(0.5f, 0.5f);
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.anchoredPosition = topLeft ? new Vector2(40f, -30f) : new Vector2(0f, -190f);
             rect.sizeDelta = new Vector2(340f, 60f);
 
-            PrefabUtility.SaveAsPrefabAsset(contents, MainMenuPath);
+            PrefabUtility.SaveAsPrefabAsset(contents, prefabPath);
         }
         finally
         {
