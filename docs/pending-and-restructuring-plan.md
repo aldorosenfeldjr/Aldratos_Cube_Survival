@@ -62,7 +62,7 @@ Updated 2026-09-26 (economy core designed, section 3a). A fresh session starts b
    - **IAP: Unity IAP** (`com.unity.purchasing`): character/companion purchases + Remove Ads.
    - Game code talks only to own `IAdService` / `IStoreService` interfaces. Editor/PC/smoke test use a fake
      (placeholder ad, instant reward); the AdMob/Unity IAP adapters exist only in mobile builds.
-   - **PC: earn by playing** (score milestones or coins); no ad/store code in the PC build.
+   - **PC: earn by playing** (level clears + gems, see 3a); no ad/store code in the PC build.
    - **Audience: mixed / not sure**: neutral age question at first launch; under-13 players get
      non-personalised ads (AdMob under-age tag) and a parent check before purchases. Google Play Families
      policy applies (AdMob is Families-certified); UMP consent form for EU; ATT prompt on iOS (adults only).
@@ -81,35 +81,65 @@ When 2 and 3 start, give them the same table-driven builder pattern (`PowerUpPic
 ## 3a. Economy core design (2026-09-26, design only, nothing built)
 
 Facts it builds on: score = whole seconds survived (`RunState.Tick`), high score in PlayerPrefs, the app
-auto-rotates (portrait and landscape both allowed), and PC has no ad or store code.
+auto-rotates (portrait and landscape both allowed), PC has no ad or store code, and every level can be picked
+freely today.
 
-**Play-to-unlock: coins, not score milestones.**
-- Milestones unlock items in a fixed order and stop paying out once a player has passed them. Coins let the
-  player choose what to unlock, pay out every run, and give one number per platform to tune.
-- `coins earned = floor(score x coinsPerSecond)`, paid at every run end (game over, and quitting to the menu
-  from pause, so leaving a run never loses coins). No bonuses and no daily rewards in v1.
-- `coinsPerSecond`: **PC 1.0** (earning is the only way to unlock there), **mobile 0.4** (2.5x slower:
-  unlocking by play is a long-term goal next to ads and IAP). Both values live in `EconomyConfig`.
-- There are no coin packs for money: purchases buy items, never currency. This avoids pay-to-win optics and
+**Level progression (revised 2026-09-26 after user feedback).**
+- Each level has a **clear target**, `targetSeconds`. Surviving that long clears the level and unlocks the next
+  one. The first level is always open. Levels unlock only by playing: they cannot be bought or trialled.
+- The target and the level's gem rewards are new columns in the `LevelBuilder` table, stored on the level's
+  `LevelTheme` (one row per level, the only place they are set). Starting values: Meadow 60 s, Playground 90 s,
+  and each later level +30 s. Level difficulty (hazard rate per level) stays the same today; tuning it per level
+  is a separate item.
+- At the moment the target is reached, the run pauses (through `TimeScaleController`) on a **Success screen**.
+  The clear reward is credited, the next level unlocks and the save is written right away. The screen shows the
+  reward breakdown and three buttons: `Next level`, **`Keep going (endless)`** and `Menu`.
+- `Keep going` resumes the same run with no further target. The player keeps collecting gems until they die or
+  quit, and the game-over screen then shows the whole run's breakdown. A run clears its level at most once.
+- Level Select shows locked levels with a lock and the goal ("Survive 60 s in Meadow"). Cleared levels show a
+  check mark and that level's best score.
+- **High score becomes per level** (best score per level in the save). Game over and Level Select show that
+  level's best. "Clear High Score" clears the bests only, not gems or progress.
+
+**Gems: three sources, all identical on PC and mobile.**
+1. **Clear reward** per level: a big one the first time the level is cleared, and a small one for every repeat
+   clear. Starting values: Meadow 100 / 15, Playground 150 / 20, and each later level +50 / +5.
+2. **Falling gems:** a gem pickup (worth 1) falls like the other pickups, one every 4-8 s (spawn timing in
+   `GameConfig`, next to the other spawn tunables; spawn area shared). One gem look for every level; it
+   **spins** while falling (user's choice). Gems collected
+   are kept even when the run fails, so no run is wasted.
+3. **Gem Multiplier power-up:** a new `PowerUpDefinition` (x2 value for 10 s, applies to gems picked up
+   while it is active, not to the clear reward). It gets a normal pickup row in `PowerUpPickupBuilder`, a HUD
+   icon and a smoke-test check like the other power-ups.
+- The run HUD shows a gem counter next to the score. The game-over screen shows a breakdown (gems collected,
+  multiplier bonus, clear reward, total). After an endless continuation it also offers `Next level`.
+- Gems go into the wallet as they are earned. The save is written at run end and at the moment of a clear.
+- There are no gem packs for money: purchases buy items, never currency. This avoids pay-to-win optics and
   keeps the under-13 / Families policy side simple.
+- **Mobile is slower through prices, not earnings:** gameplay stays identical on both platforms, and every gem
+  price is multiplied by `mobilePriceMultiplier` = **2.5** (in `EconomyConfig`), rounded to the nearest 5.
 
-**Prices: one tier table; items pick a tier.** A price is never set on an item directly.
+**Prices: one tier table; items pick a tier.** A price is never set on an item directly. Play times assume
+about **10 gems per minute of play** (roughly 6 caught falling gems plus repeat-clear rewards). That is an
+estimate: re-tune the table after real playtests.
 
-| Tier | Coins | PC play time | Mobile play time | IAP price point |
-|---|---|---|---|---|
-| Free (defaults: current box colour, `CatWanderer` cat) | 0 | - | - | - |
-| Common | 300 | 5 min | 12.5 min | $0.99 |
-| Rare | 900 | 15 min | 37.5 min | $1.99 |
-| Epic | 2000 | 33 min | 83 min | $2.99 |
-| Legendary (companions only) | 4000 | 67 min | 2.8 h | $3.99 |
-| Remove Ads | - | - | - | $2.99 |
+| Tier | Gems PC | Gems mobile | PC play time | Mobile play time | IAP price point |
+|---|---|---|---|---|---|
+| Free (defaults: current box colour, `CatWanderer` cat) | 0 | 0 | - | - | - |
+| Common | 600 | 1500 | ~1 h | ~2.5 h | $0.99 |
+| Rare | 1800 | 4500 | ~3 h | ~7.5 h | $1.99 |
+| Epic | 3600 | 9000 | ~6 h | ~15 h | $2.99 |
+| Legendary (companions only) | 7200 | 18000 | ~12 h | ~30 h | $3.99 |
+| Remove Ads | - | - | - | - | $2.99 |
 
-- Characters (11 locked colours): 4 Common, 4 Rare, 3 Epic = 10,800 coins, about 3 h of survival time on PC
-  and 7.5 h on mobile. Companions use Rare to Legendary (3D models are the bigger reward); the split is set when
-  the companion list exists (roadmap item 3).
+- The first clears of Meadow and Playground (250 gems together) cover about 40% of the first Common unlock
+  on PC, so early progress feels quick before the longer grind.
+- Characters (11 locked colours): 4 Common, 4 Rare, 3 Epic = 20,400 gems on PC, about 34 h of play; about
+  85 h on mobile. Companions use Rare to Legendary (3D models are the bigger reward); the split is set when the
+  companion list exists (roadmap item 3).
 - Real-money prices are configured in the Play Console / App Store Connect. At runtime the game shows the
   store's localised price string, never a hardcoded one. The table only records the intended price points.
-- Every locked item can be bought with coins or with money: nothing is IAP-only.
+- Every locked character/companion can be bought with gems or with money: nothing is IAP-only.
 
 **Data model (same table-driven pattern as the other builders).**
 - `UnlockableDefinition` ScriptableObject: stable `id` (e.g. `char.red`, `comp.cow`; **never renamed**, because
@@ -117,29 +147,29 @@ auto-rotates (portrait and landscape both allowed), and PC has no ad or store co
   store product id (derived: `char_red`), `isDefault`. Character/companion subclasses add their own look fields.
 - `UnlockCatalog` asset lists every definition. It is created by the character/companion builders, one table
   row per item.
-- `EconomyConfig` asset (in `Resources`, like `GameConfig`): tier table, `coinsPerSecond` per platform,
+- `EconomyConfig` asset (in `Resources`, like `GameConfig`): tier table, `mobilePriceMultiplier`, gem value,
   `trialRuns`, `gameOversPerInterstitial` (the ads decision put this in `GameConfig`; it moves here next to the
   other economy tunables).
 
 **Saving.**
 - A single `SaveService` (plain C#) writes JSON to `Application.persistentDataPath/save.json`. It writes a temp
   file first and then replaces the old one, so a crash mid-write cannot corrupt the save.
-- Contents: `version`, `coins`, `owned` (id + source `coins`/`purchase`), `selected` per category, `trial` per
-  category (id + runs left), `gameOversSinceInterstitial`, `removeAds`, `ageGate` (under13 / adult / unset),
-  `highScore`.
-- **Migration:** on first load, `highScore` is copied from the `HighScore` PlayerPrefs key and the key is
-  deleted. After that, `RunState` reads and writes the high score through `SaveService`.
+- Contents: `version`, `gems`, `owned` (id + source `gems`/`purchase`), `selected` per category, `trial` per
+  category (id + runs left), `levels` (per level id: `cleared`, `bestScore`), `gameOversSinceInterstitial`,
+  `removeAds`, `ageGate` (under13 / adult / unset). Level ids are the scene names, which already never change.
+- **Migration:** on first load, the old global `HighScore` PlayerPrefs value becomes Meadow's `bestScore` and the
+  key is deleted. It grants no clears. After that, `RunState` reads and writes bests through `SaveService`.
 - Purchases are non-consumable, so the store is the source of truth. At startup, and from a
   **"Restore Purchases"** button (required on iOS, shown only when a store exists), owned products are granted
   again. Granting is idempotent. The local `purchase` flag lets the game work offline.
-- Coin unlocks exist only in the local save: deleting the app loses them. Cloud save (Play Games / iCloud) is a
+- Gem unlocks exist only in the local save: deleting the app loses them. Cloud save (Play Games / iCloud) is a
   later, separate item. There is no anti-tamper: the game is single-player, and editing the save only affects
   that player.
 - The smoke test uses a temp save path so it never touches the real save.
 
 **Services (game code sees only these).**
 - `Wallet`: balance, add, spend.
-- `UnlockService`: `IsOwned`, `TryBuyWithCoins`, `GrantPurchase`, `StartTrial`, `IsUsable` (owned or on
+- `UnlockService`: `IsOwned`, `TryBuyWithGems`, `GrantPurchase`, `StartTrial`, `IsUsable` (owned or on
   trial), `Select`/`Selected`.
 - `IAdService`: rewarded ready/show, interstitial show-if-ready.
 - `IStoreService`: localised price, buy, restore, owned products.
@@ -150,7 +180,7 @@ auto-rotates (portrait and landscape both allowed), and PC has no ad or store co
   each service's availability, never from `#if` platform checks.
 
 **"Watch ad to trial" flow (mobile, and the Editor fake).**
-1. A locked item is focused in the selection screen, showing its buttons: `Unlock (300 coins)` (disabled with
+1. A locked item is focused in the selection screen, showing its buttons: `Unlock (600 gems)` (disabled with
    "need N more" when short), `Buy <store price>`, `Try: watch ad`.
 2. `Try` shows a rewarded ad. The trial is granted only on the SDK's "user earned reward" callback: closing the
    ad early or a failed load grants nothing. When no ad is loaded, the button reads "Ad not ready" and is disabled.
@@ -158,19 +188,19 @@ auto-rotates (portrait and landscape both allowed), and PC has no ad or store co
    restarting the app does not lose or reset it. Only one trial per category runs at a time, and starting a new
    one replaces the old one.
 4. The count drops at each run end. When it reaches 0, the game-over screen adds a small "Trial over: keep
-   <name>?" panel with `Buy`, `Unlock (coins)` if affordable, and `Watch ad: 3 more runs`. Selection then goes
+   <name>?" panel with `Buy`, `Unlock (gems)` if affordable, and `Watch ad: 3 more runs`. Selection then goes
    back to the last owned item. That game over never also shows an interstitial.
-5. Trial runs earn coins as normal.
+5. Trial runs earn gems as normal.
 6. PC has no trial button. The selection screen's preview serves as the "try".
 7. Under-13 (age gate): rewarded ads stay, non-personalised. `Buy` and `Remove Ads` go through a parent check
    first (a simple arithmetic question).
 8. Remove Ads removes interstitials only. Rewarded ads stay, because the player opts into them.
 
 **Shared selection-screen shell (`SelectionScreen` prefab, used for Characters and Companions).**
-- **Top bar:** Back (left), title (centre), coin counter (right). The same coin counter prefab is also shown on
+- **Top bar:** Back (left), title (centre), gem counter (right). The same gem counter prefab is also shown on
   the main menu.
 - **Preview:** the focused item rendered by a small preview camera into a `RawImage`, seen from a static 3/4
-  view facing the camera. Adding rotation or idle animation is the user's call; it is not part of the design.
+  view facing the camera. **No rotation or idle animation** (user's choice).
 - **Info:** name, tier label, and status (`Owned`, `Selected`, `Trial: 2 runs left`, or the price).
 - **Action row:** `Select` for owned items; `Unlock` / `Buy` / `Try` for locked ones (following the service
   availability above). `Restore Purchases` sits in a corner when a store exists.
@@ -184,18 +214,24 @@ auto-rotates (portrait and landscape both allowed), and PC has no ad or store co
   it later if levels ever become unlockable (not planned).
 
 **Implementation order (each step its own session, smoke test green after each):**
-1. `SaveService` + high score migration + `Wallet` + `EconomyConfig`. Coins are earned at run end and shown on
-   the game-over screen and main menu.
-2. `UnlockableDefinition`/`UnlockCatalog`/`UnlockService` + the `SelectionScreen` shell, tested with
-   2-3 placeholder character rows. Add smoke checks for coin buy, select, and a save round trip.
-3. `IAdService`/`IStoreService` + fakes + trial flow + trial-over panel + interstitial pacer. Add smoke checks
+1. `SaveService` + migration + level progression: `targetSeconds` and clear rewards in `LevelBuilder`, clear
+   banner, next-level unlock, locked levels in Level Select, per-level bests. `Wallet` + `EconomyConfig` +
+   clear rewards credited, Success screen with `Keep going`. Smoke checks: clear at target (test override for a short target), next level
+   unlocks, save round trip.
+2. Falling gem pickup + `GemSpawner` + Gem Multiplier power-up + HUD gem counter + game-over breakdown.
+   Smoke checks: gem pickup, multiplier doubles value.
+3. `UnlockableDefinition`/`UnlockCatalog`/`UnlockService` + the `SelectionScreen` shell, tested with
+   2-3 placeholder character rows. Add smoke checks for gem buy and select.
+4. `IAdService`/`IStoreService` + fakes + trial flow + trial-over panel + interstitial pacer. Add smoke checks
    for trial start/expiry and the pacer count.
-4. Real adapters (AdMob, Unity IAP, UMP consent, ATT, age gate, parent check) on a mobile build. This step
+5. Real adapters (AdMob, Unity IAP, UMP consent, ATT, age gate, parent check) on a mobile build. This step
    re-enables the Unity plugin (see `CLAUDE.md`).
 
-**Open questions (the defaults above apply unless the user changes them):** the currency's name and icon;
-the mobile rate 0.4 (whether the first unlock at about 12 min of survival is too slow); trial length (3 runs);
-preview rotation; whether PC should get free trials.
+**User decisions (2026-09-26):** on reaching the target, the run ends on a Success screen with a `Keep going
+(endless)` option; PC prices doubled from the first proposal (Common ~1 h); mobile prices 2.5x; high score per
+level; currency named **Gems**; ad trial 3 runs; PC gets no trial (preview only); gem pickups spin, the
+selection preview stays static. Not asked, left at the defaults above: clear targets and rewards per level,
+gem multiplier x2 for 10 s, gem spawn every 4-8 s, levels unlock only by play.
 
 ## 4. Working agreement
 
