@@ -31,7 +31,7 @@ Updated 2026-09-25 at the end of the URP + Input System session. A fresh session
   PC only: Bokeh DoF in `URP-PC_Volume` (the PC pipeline asset's own volume profile) and SSAO on
   `URP-PC_Renderer` (ambient-only). Camera: SMAA, HDR on. Both URP assets: HDR + HDR grading (needed for
   ACES/exposure). Old PPv2 profile deleted. Visual match checked against the pre-migration capture.
-- **iOS default quality** = Medium (URP-Mobile), same as Android.
+- **iOS default quality** was already Medium (URP-Mobile), same as Android; no change was needed.
 - **Input System 1.20** (`activeInputHandler: 1`, new only): `Player` (Pointer = mouse/touch halves, keyboard
   steer ramp from `GameConfig.KeyboardSteerRamp` matching the old axis feel, gamepad left stick, Space jump),
   `GameManager` (Esc / Android back = pause). Core's EventSystem uses `InputSystemUIInputModule`.
