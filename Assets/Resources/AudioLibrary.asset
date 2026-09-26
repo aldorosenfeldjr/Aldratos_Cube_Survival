@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40ed2fcc3df050544b32808ef6c040e3, type: 3}
+  m_Name: AudioLibrary
+  m_EditorClassIdentifier: NewAssembly::AudioLibrary
+  music: {fileID: 8300000, guid: e2b2ca6628926fe47a95680c6eb516b8, type: 3}
+  musicVolume: 0.35
+  sfxVolume: 0.8
+  click: {fileID: 8300000, guid: 85eb3850f1cccdc4c8dac40fba18c9be, type: 3}
+  gem: {fileID: 8300000, guid: d0ed4b6a6a1cb9c48b91fc587a5138f6, type: 3}
+  powerUp: {fileID: 8300000, guid: 95ddf55ecedc565419051eba2ce3db90, type: 3}
+  land: {fileID: 8300000, guid: 813b0ec9abd7b8d439b7804a72ca81f0, type: 3}
+  gameOver: {fileID: 8300000, guid: 1a1e5233c05837349a29792df7604ed1, type: 3}
+  success: {fileID: 8300000, guid: 8a22a227d2f74724bb531cab41a101cc, type: 3}

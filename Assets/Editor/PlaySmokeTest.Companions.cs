@@ -101,11 +101,12 @@ public static partial class PlaySmokeTest
         Check("a companion without Walk/Run has no wanderer", spawner.Definition == pig && CompanionLooksRight(spawner, pig) && spawner.Current.GetComponent<CatWanderer>() == null && CompanionCount() == 1,
             DescribeCompanion(spawner));
 
-        var pose0 = PoseSignature(spawner.Current);
+        var pose0 = PoseSnapshot(spawner.Current);
         yield return 1.0f;
-        var pose1 = PoseSignature(spawner.Current);
+        var pose1 = PoseSnapshot(spawner.Current);
+        var poseChange = PoseDifference(pose0, pose1);
         Check("the idle animation actually plays (pose changes over time) and the animal stays in place",
-            Mathf.Abs(pose1 - pose0) > 0.001f && Vector3.Distance(pigStart, spawner.Current.transform.position) < 0.01f, $"pose {pose0:0.0000} -> {pose1:0.0000}");
+            poseChange > 0.0005f && Vector3.Distance(pigStart, spawner.Current.transform.position) < 0.01f, $"pose change {poseChange:0.00000}");
 
         Check("character selection is independent of the companion", UnlockService.Selected(UnlockCategory.Character) == characterBefore);
 
@@ -150,12 +151,13 @@ public static partial class PlaySmokeTest
         yield return 0.4f;
         var pigFraming = PreviewFraming(screenTransform);
         var previewAnimal = GameObject.Find("SelectionPreviewStage")?.transform.Find("Preview_comp.pig");
-        var previewPose0 = previewAnimal != null ? PoseSignature(previewAnimal.gameObject) : 0f;
+        var previewPose0 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
         yield return 0.5f;
-        var previewPose1 = previewAnimal != null ? PoseSignature(previewAnimal.gameObject) : 1f;
+        var previewPose1 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
+        var previewChange = previewAnimal != null ? PoseDifference(previewPose0, previewPose1) : -1f;
         Check("preview shows the focused animal and is static (paused, no rotation)",
-            previewAnimal != null && pigFraming.ok && Mathf.Abs(previewPose1 - previewPose0) < 0.0001f,
-            $"found={previewAnimal != null} {pigFraming.detail} pose {previewPose0:0.0000}->{previewPose1:0.0000}");
+            previewAnimal != null && pigFraming.ok && previewChange >= 0f && previewChange < 0.000001f,
+            $"found={previewAnimal != null} {pigFraming.detail} pose change {previewChange:0.0000000}");
 
         var framingProblems = new List<string>();
         foreach (var tile in screen.Tiles.ToList())
@@ -196,17 +198,18 @@ public static partial class PlaySmokeTest
         Check("main menu fits the shortest canvas with no overlaps", menuProblems.Count == 0, string.Join(" | ", menuProblems));
     }
 
+    // Positions every main-menu element from its anchors on a synthetic worst-case canvas (968 wide: portrait; 864 tall: a landscape
+    // phone), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
     private static List<string> MainMenuLayoutProblems(Transform mainMenu)
     {
         var problems = new List<string>();
-        var root = (RectTransform)mainMenu;
         var removeAds = mainMenu.Find("RemoveAds");
         removeAds.gameObject.SetActive(true);
-        Canvas.ForceUpdateCanvases();
 
-        var limit = new Rect(root.rect.center.x - 484f, root.rect.center.y - 432f, 968f, 864f);
+        var canvas = new Vector2(968f, 864f);
+        var limit = new Rect(-canvas.x / 2f, -canvas.y / 2f, canvas.x, canvas.y);
         var rects = new List<(string, Rect)>();
-        foreach (var name in new[] { "Title", "Play", "Characters", "Companions", "Exit", "ClearHighScore", "RemoveAds" })
+        foreach (var name in new[] { "Title", "Play", "Characters", "Companions", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" })
         {
             var child = (RectTransform)mainMenu.Find(name);
             if (child == null)
@@ -214,7 +217,10 @@ public static partial class PlaySmokeTest
                 problems.Add($"missing {name}");
                 continue;
             }
-            var rect = LocalRect(child, root);
+
+            var anchor = new Vector2(Mathf.Lerp(-canvas.x / 2f, canvas.x / 2f, child.anchorMin.x), Mathf.Lerp(-canvas.y / 2f, canvas.y / 2f, child.anchorMin.y));
+            var size = child.sizeDelta;
+            var rect = new Rect(anchor + child.anchoredPosition - Vector2.Scale(child.pivot, size), size);
             if (Outside(rect, limit))
             {
                 problems.Add($"{name} leaves the shortest canvas");
@@ -304,15 +310,34 @@ public static partial class PlaySmokeTest
         return $"{spawner.Current.name} size={CompanionDefinition.MaxExtent(spawner.Current):0.00} feetY={CompanionDefinition.WorldBounds(spawner.Current).min.y:0.00} groundY={spawner.transform.position.y:0.00}";
     }
 
-    // One number that changes whenever any bone rotates: enough to tell a playing animation from a frozen pose.
-    private static float PoseSignature(GameObject animal)
+    // Every bone rotation, in order: comparing two snapshots bone by bone tells a playing animation (some bone moved) from a frozen pose
+    // (identical to the last digit). A single summed number could cancel out and hide subtle idle motion.
+    private static float[] PoseSnapshot(GameObject animal)
     {
-        var sum = 0f;
+        var values = new List<float>();
         foreach (var bone in animal.GetComponentsInChildren<Transform>())
         {
             var rotation = bone.localRotation;
-            sum += rotation.x + rotation.y * 2f + rotation.z * 3f + rotation.w * 4f;
+            values.Add(rotation.x);
+            values.Add(rotation.y);
+            values.Add(rotation.z);
+            values.Add(rotation.w);
         }
-        return sum;
+        return values.ToArray();
+    }
+
+    private static float PoseDifference(float[] first, float[] second)
+    {
+        if (first == null || second == null || first.Length != second.Length)
+        {
+            return -1f;
+        }
+
+        var total = 0f;
+        for (var i = 0; i < first.Length; i++)
+        {
+            total += Mathf.Abs(first[i] - second[i]);
+        }
+        return total;
     }
 }

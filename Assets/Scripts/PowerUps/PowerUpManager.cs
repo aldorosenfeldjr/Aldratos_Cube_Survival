@@ -52,6 +52,7 @@ public class PowerUpManager : MonoBehaviour
 
     public void Grant(PowerUpDefinition definition)
     {
+        AudioManager.Play(Sfx.PowerUp);
         var existing = activePowerUps.Find(p => p.Definition.GetType() == definition.GetType());
         if (existing != null)
         {
