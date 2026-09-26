@@ -190,6 +190,7 @@ public class GameManager : MonoBehaviour
     {
         var multiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.GemMultiplier : 1;
         Wallet.Add(run.AddGem(EconomyConfig.Instance.GemValue, multiplier));
+        AudioManager.Play(Sfx.Gem);
         UpdateGemText();
     }
 
@@ -205,6 +206,7 @@ public class GameManager : MonoBehaviour
         LastClear = LevelProgression.Clear(registry, run.LevelId, currentTheme);
 
         successShown = true;
+        AudioManager.Play(Sfx.Success);
         TimeScaleController.Instance.Pause();
         pauseButton.SetActive(false);
         successMenu.SetActive(true);
@@ -330,6 +332,7 @@ public class GameManager : MonoBehaviour
         powerUpSpawner.StopSpawning();
         gemSpawner.StopSpawning();
         gameOver = true;
+        AudioManager.Play(Sfx.GameOver);
         var endedTrials = UnlockService.EndRunForTrials();
         TrialEnded = endedTrials.Count > 0 ? endedTrials[0] : null;
         InterstitialPacer.RegisterGameOver(TrialEnded != null);

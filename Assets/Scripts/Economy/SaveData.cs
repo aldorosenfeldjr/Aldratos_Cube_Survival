@@ -15,6 +15,7 @@ public class SaveData
     public List<TrialEntry> trials = new List<TrialEntry>();
     public int gameOversSinceInterstitial;
     public bool removeAds;
+    public bool muted;
 
     public LevelSave FindLevel(string id)
     {

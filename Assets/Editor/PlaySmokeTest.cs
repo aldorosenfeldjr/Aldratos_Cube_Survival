@@ -270,6 +270,13 @@ public static partial class PlaySmokeTest
         }
         UseFreshTempSave();
 
+        var audioChecks = AudioChecks();
+        while (audioChecks.MoveNext())
+        {
+            yield return audioChecks.Current;
+        }
+        UseFreshTempSave();
+
         // 1. Menu flow, using the real buttons.
         Click("MainMenu/Play");
         yield return WaitUntil(() => levelSelect.gameObject.activeInHierarchy);
@@ -340,13 +347,16 @@ public static partial class PlaySmokeTest
         yield return 1.2f;
         var gemGain = Wallet.Balance - gemStart;
         Check("gem pickup credits wallet", gemGain == EconomyConfig.Instance.GemValue && gameManager.GemsCollected >= 1, $"gain={gemGain}");
+        Check("gem pickup plays the gem sound", AudioManager.Instance != null && AudioManager.Instance.LastPlayed == Sfx.Gem, AudioManager.Instance != null ? AudioManager.Instance.LastPlayed.ToString() : "no audio manager");
 
         var multiplierDefinition = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:GemMultiplierDefinition")[0]));
         powerUps.Grant(multiplierDefinition);
+        var grantSoundPlayed = AudioManager.Instance.LastPlayed == Sfx.PowerUp;
         var doubledStart = Wallet.Balance;
         gameManager.CollectGem();
         var doubledGain = Wallet.Balance - doubledStart;
         Check("gem multiplier doubles value", doubledGain == EconomyConfig.Instance.GemValue * 2 && gameManager.MultiplierBonus >= EconomyConfig.Instance.GemValue, $"gain={doubledGain} bonus={gameManager.MultiplierBonus}");
+        Check("power-up grant plays the power-up sound", grantSoundPlayed);
         powerUps.ResetAll();
         UseFreshTempSave(); // the level-clear checks below expect an empty wallet
 
@@ -411,6 +421,7 @@ public static partial class PlaySmokeTest
         Check("clear at target: reward, unlock, pause", cleared && Wallet.Balance == firstReward && SaveService.IsCleared(MeadowId)
             && LevelProgression.IsUnlocked(registry, 1) && time.IsPaused && Time.timeScale < 0.01f && SaveService.BestScore(MeadowId) >= 3,
             $"shown={cleared} gems={Wallet.Balance}/{firstReward} cleared={SaveService.IsCleared(MeadowId)} paused={time.IsPaused} best={SaveService.BestScore(MeadowId)}");
+        Check("level clear plays the success sound", AudioManager.Instance.LastPlayed == Sfx.Success, AudioManager.Instance.LastPlayed.ToString());
 
         Click("SuccessMenu/KeepGoing");
         yield return WaitUntil(() => Time.timeScale > 0.999f);

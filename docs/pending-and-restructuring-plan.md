@@ -1,7 +1,8 @@
 # Handoff: state, open items, roadmap
 
-Updated 2026-09-26 (economy steps 1-3 done, section 3a; next is step 4). A fresh session starts by reading `CLAUDE.md`
-(project map + rules), then this file. Do not re-explore the project.
+Updated 2026-09-26 (economy steps 1-4, characters, companions, audio and the unit-test suite are done; only economy step 5,
+the real ad/store adapters, is open: see section 3a). A fresh session starts by reading `CLAUDE.md` (project map + rules),
+then this file. Do not re-explore the project.
 
 ## 1. State
 
@@ -11,8 +12,9 @@ Updated 2026-09-26 (economy steps 1-3 done, section 3a; next is step 4). A fresh
   CLAUDE.md map; git history has one commit per step.
 - **Branches:** `dev` has everything (theme polish, URP migration merged 2026-09-26), pushed to `origin/dev`. `main` is untouched
   (batched promotions only). Merge convention: features -> `dev`.
-- **Verification:** menu `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read the console. 9/9 at the
-  end of this session.
+- **Verification:** menu `Tools/Smoke Test/Run Play Smoke Test` (~45 s, ~110 checks incl. layout audits at 8 screen sizes
+  for both selection screens), then read the console; plus 54 EditMode unit tests (`run_tests`, mode editor). Both green at
+  the end of 2026-09-26. Sound itself is judged by ear (the test proves clips exist, are audible and are requested).
 - The user's Playground edits, renamed Build Settings scenes and `KayKit_Platformer_Pack/fbx(unity)` are
   committed (8b67a9d on `feature/theme-polish-and-companion`). Untracked `New Folder.meta` is an orphan
   (no folder); Unity deletes it on open. `LevelBuilder` never rewrites Build Settings unless a scene is
@@ -48,7 +50,11 @@ Updated 2026-09-26 (economy steps 1-3 done, section 3a; next is step 4). A fresh
 | Eyeball pickup badges while falling in a real run | user | Only checked statically and by script. |
 | HUD container sits under `Score`, not the Canvas | optional | Intentional (hides with the score on game over via `GameOverMenu.scoreHud`); reparenting needs that coupling replicated. |
 | "Clear High Score" is smaller (340x50, 28pt) than other buttons | decided | User chose to keep it as is for now. |
-| EditMode tests (`PowerUpManager`, `TimeScaleController`) | later | Belongs to the separate test-suite session. |
+| Unit tests for `PowerUpManager` / `TimeScaleController` | later | They need Play Mode (coroutines, singletons); covered by the smoke test only. The 54 EditMode tests cover the pure logic. No PlayMode test assembly yet. |
+| **Economy step 5: real ad/store adapters** | needs you | Not built: needs your AdMob app + ad unit IDs, store product setup (Play Console / App Store Connect) and a phone to test on. Also open: age question at first launch, parent check before purchases for under-13, UMP consent (EU), ATT (iOS). Game code is ready: implement `IAdService` / `IStoreService` and assign `Services.Ads` / `Services.Store` at startup on mobile. The Unity plugin must be re-enabled for this (see CLAUDE.md). |
+| **Placeholder audio** | user | All sounds and the music are generated tones (`Tools > Audio > Rebuild Placeholder Audio`). Drop real clips into `Assets/Resources/AudioLibrary.asset` (the rebuild never overwrites filled slots). Not tested by ear. No volume sliders (only Sound On/Off on the main menu; not on the pause menu). Hazard landing sound is wired but not covered by a test. |
+| Animals without Walk/Run | note | Pug, Piggy, Woolly and Llama only ship Idle and Jump animations, so they stand and idle instead of wandering. Only Daisy (cow), Bolt (horse) and Stripes (zebra) wander, like the cat. The cat's Idle clips do not loop (existing setup). |
+| Companion sizing | user | Each animal's on-screen size is a `WorldSize` column in `CompanionBuilder` (cat 0.52 = its old size). Values for the animals are a first guess: check them in a real run. `CatWanderer` also drives the new animals (name kept to avoid churn). |
 | Check post-processing on a phone | user | Mobile gets tonemapping/grading/vignette + SMAA + HDR (no DoF/SSAO). Profile on a real device; drop SMAA or HDR on URP-Mobile if it costs too much. |
 | **Gem look: emission is dropped by Unity** | later | `Assets/Gems/Gem.mat` has `m_LightmapFlags: 4` (emissive-is-black), so Unity strips `_EMISSION` whenever it validates the material and the gem glow disappears. `GemBuilder` should set `globalIlluminationFlags = RealtimeEmissive`. Found in step 3, not fixed (step-2 item). |
 | Selection preview lighting | user | The preview cube uses Core's sunset light/ambient, so it looks lavender next to the swatch's true blue. Faithful to gameplay lighting; decide if the preview needs its own neutral light. |
@@ -57,7 +63,12 @@ Updated 2026-09-26 (economy steps 1-3 done, section 3a; next is step 4). A fresh
 | `PlaySmokeTest.cs` deprecation warnings | optional | `FindObjectsByType(FindObjectsSortMode)` at ~line 288. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
 
-## 3. Product roadmap (agreed order, none started)
+## 3. Product roadmap (all built 2026-09-26 except step 5 of item 1; see status lines)
+
+Status: **1 done through step 4** (real adapters open), **2 done** (`CharacterBuilder`, 12 colours, `Player.ApplyLook`),
+**3 done** (`CompanionBuilder`, `CompanionSpawner`, `CompanionFitter`, 8 companions), **4 done as placeholders**
+(`Scripts/Audio/`, `AudioBuilder`), **5 done** (`Assets/Tests/EditMode`, 54 tests). The original plan text follows for reference.
+
 
 1. **Unlock/economy core**: unlock state, save/load, "watch ad to trial", "buy to own", shared selection-screen
    shell. Ads/IAP decided 2026-09-26 (packages not installed yet):
@@ -236,8 +247,11 @@ estimate: re-tune the table after real playtests.
    player (roadmap item 2). Everything the screen does is covered by smoke checks (mechanics, real button flow,
    preview pixel readback, layout audit at 8 screen sizes, portrait and landscape).
    **Next session: step 4** (ad/store interfaces + fakes + trial flow + interstitial pacer).
-4. `IAdService`/`IStoreService` + fakes + trial flow + trial-over panel + interstitial pacer. Add smoke checks
-   for trial start/expiry and the pacer count.
+4. **DONE 2026-09-26 (branch `feature/economy-step4`; smoke test 71/71 then).** `IAdService`/`IStoreService` (`Scripts/Services/`),
+   `Services` locator (Editor = fakes, every other build = "unavailable"), trials in `UnlockService` (3 runs, one per category,
+   returns to the last owned item), `InterstitialPacer` (every 10th game over, on leaving the screen; skipped after a rewarded
+   ad, a trial end or Remove Ads), Buy / Try / Restore on the selection screens, trial-over modal on game over, Remove Ads on
+   the main menu. Everything is driven by service availability, never `#if` platform checks (except the Editor default).
 5. Real adapters (AdMob, Unity IAP, UMP consent, ATT, age gate, parent check) on a mobile build. This step
    re-enables the Unity plugin (see `CLAUDE.md`).
 

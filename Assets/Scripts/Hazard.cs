@@ -30,6 +30,7 @@ public class Hazard : MonoBehaviour
             {
                 Destroy(gameObject);
                 Instantiate(breakingEffect, transform.position, Quaternion.identity);
+                AudioManager.Play(Sfx.Land, player != null ? Mathf.Clamp01(1f / Mathf.Max(Vector3.Distance(transform.position, player.transform.position), 1f) + 0.3f) : 0.5f);
 
                 if (player != null && CameraShaker.Instance != null)
                 {

@@ -36,6 +36,7 @@ public static partial class PlaySmokeTest
 
         // The last trial run ends: the prompt offers Buy, Unlock (affordable), Watch ad; the main buttons are locked meanwhile.
         foreach (var step in Steps(EndRun(gameManager, gameOverMenu))) { yield return step; }
+        Check("game over plays the game-over sound", AudioManager.Instance.LastPlayed == Sfx.GameOver, AudioManager.Instance.LastPlayed.ToString());
         var buy = panel.Find("Buy").GetComponent<Button>();
         var unlock = panel.Find("Unlock").GetComponent<Button>();
         var watch = panel.Find("WatchAd").GetComponent<Button>();
