@@ -87,6 +87,88 @@ public static partial class PlaySmokeTest
         Check("unlocks survive a save reload",
             Wallet.Balance == 50 && UnlockService.IsOwned(common) && UnlockService.IsOwned(rare) && UnlockService.Selected(UnlockCategory.Character) == common && SaveService.Data.owned.Count == 2);
 
+        // 2b. Trials, pacing and purchases restore (pure logic).
+        UseFreshTempSave();
+        Check("trial cannot start on an owned item", !UnlockService.StartTrial(free));
+        var startedTrial = UnlockService.StartTrial(rare);
+        Check("trial makes a locked item usable and selected for N runs",
+            startedTrial && !UnlockService.IsOwned(rare) && UnlockService.IsUsable(rare) && UnlockService.Selected(UnlockCategory.Character) == rare
+            && UnlockService.TrialRunsLeft(rare) == EconomyConfig.Instance.TrialRuns);
+        UnlockService.Select(free);
+        UnlockService.EndRunForTrials();
+        Check("a run with another item selected does not use up the trial", UnlockService.TrialRunsLeft(rare) == EconomyConfig.Instance.TrialRuns);
+        UnlockService.Select(rare);
+        var expiredNames = new List<string>();
+        for (var run = 0; run < EconomyConfig.Instance.TrialRuns; run++)
+        {
+            foreach (var item in UnlockService.EndRunForTrials())
+            {
+                expiredNames.Add(item.Id);
+            }
+        }
+        Check("trial ends after N runs and selection goes back to the owned item",
+            expiredNames.Count == 1 && expiredNames[0] == rare.Id && !UnlockService.IsUsable(rare) && UnlockService.Selected(UnlockCategory.Character) == free,
+            string.Join(",", expiredNames));
+
+        UnlockService.Select(free);
+        Wallet.Add(UnlockService.Price(common) + 10);
+        UnlockService.TryBuyWithGems(common);
+        UnlockService.Select(common);
+        UnlockService.StartTrial(rare);
+        UnlockService.StartTrial(rare);
+        var trialCount = SaveService.Data.trials.Count;
+        UnlockService.EndRunForTrials();
+        UnlockService.EndRunForTrials();
+        UnlockService.EndRunForTrials();
+        Check("a new trial replaces the old one; the last owned item comes back", trialCount == 1 && UnlockService.Selected(UnlockCategory.Character) == common);
+
+        UseFreshTempSave();
+        var pacerAds = new FakeAdService();
+        Services.Ads = pacerAds;
+        var every = EconomyConfig.Instance.GameOversPerInterstitial;
+        for (var i = 0; i < every - 1; i++)
+        {
+            InterstitialPacer.RegisterGameOver(false);
+            InterstitialPacer.OnLeave(() => { });
+        }
+        Check($"no interstitial before game over {every}", pacerAds.InterstitialsShown == 0);
+        InterstitialPacer.RegisterGameOver(false);
+        var proceeded = false;
+        InterstitialPacer.OnLeave(() => proceeded = true);
+        Check($"interstitial on game over {every}, then the count restarts", pacerAds.InterstitialsShown == 1 && proceeded && SaveService.Data.gameOversSinceInterstitial == 0);
+        InterstitialPacer.RegisterGameOver(false);
+        InterstitialPacer.OnLeave(() => { });
+        Check("no interstitial right after one", pacerAds.InterstitialsShown == 1);
+
+        SaveService.Data.gameOversSinceInterstitial = every - 1;
+        InterstitialPacer.RegisterGameOver(false);
+        InterstitialPacer.MarkRewardedWatched();
+        InterstitialPacer.OnLeave(() => { });
+        var afterRewarded = pacerAds.InterstitialsShown;
+        InterstitialPacer.RegisterGameOver(false);
+        InterstitialPacer.OnLeave(() => { });
+        Check("a rewarded ad on the same game over skips it; it stays due for the next", afterRewarded == 1 && pacerAds.InterstitialsShown == 2);
+
+        SaveService.Data.gameOversSinceInterstitial = every - 1;
+        InterstitialPacer.RegisterGameOver(true);
+        InterstitialPacer.OnLeave(() => { });
+        Check("no interstitial on the game over where a trial ended", pacerAds.InterstitialsShown == 2);
+
+        UnlockService.GrantRemoveAds();
+        SaveService.Data.gameOversSinceInterstitial = every - 1;
+        InterstitialPacer.RegisterGameOver(false);
+        InterstitialPacer.OnLeave(() => { });
+        Check("Remove Ads stops interstitials", pacerAds.InterstitialsShown == 2);
+
+        UseFreshTempSave();
+        Services.Ads = new NullAdService();
+        SaveService.Data.gameOversSinceInterstitial = every - 1;
+        InterstitialPacer.RegisterGameOver(false);
+        var leftOnPc = false;
+        InterstitialPacer.OnLeave(() => leftOnPc = true);
+        Check("no ad service (PC): leaving the game-over screen still proceeds", leftOnPc);
+        Services.Ads = new FakeAdService();
+
         // 3. The real UI, through its real buttons.
         UseFreshTempSave();
         Wallet.Add(70);
@@ -156,6 +238,61 @@ public static partial class PlaySmokeTest
             UnlockService.Selected(UnlockCategory.Character) == common && !selectButton.interactable && selectButton.GetComponentInChildren<TMP_Text>().text == "Selected" && frames == 1,
             $"frames={frames}");
 
+        // Step 4: ad / store buttons, driven by service availability.
+        UseFreshTempSave();
+        var rareTile = screen.Tiles.First(tile => tile.Definition == rare);
+        var buyObject = screenTransform.Find("InfoPanel/Buy").gameObject;
+        var tryObject = screenTransform.Find("InfoPanel/Try").gameObject;
+        var restoreObject = screenTransform.Find("InfoPanel/Restore").gameObject;
+
+        Services.Ads = new NullAdService();
+        Services.Store = new NullStoreService();
+        screen.Focus(rareTile);
+        Check("no ads/store (PC): Buy, Try and Restore are hidden, gem Unlock stays",
+            !buyObject.activeSelf && !tryObject.activeSelf && !restoreObject.activeSelf && screenTransform.Find("InfoPanel/Unlock").gameObject.activeSelf);
+
+        var fakeAds = new FakeAdService { RewardedReady = false };
+        var fakeStore = new FakeStoreService();
+        Services.Ads = fakeAds;
+        Services.Store = fakeStore;
+        screen.Focus(rareTile);
+        var tryButton = tryObject.GetComponent<Button>();
+        Check("ads/store present: Buy, Try, Restore shown; Try disabled while no ad is loaded",
+            buyObject.activeSelf && buyObject.GetComponentInChildren<TMP_Text>().text == "Buy $0.99" && restoreObject.activeSelf
+            && tryObject.activeSelf && !tryButton.interactable && tryObject.GetComponentInChildren<TMP_Text>().text == "Ad not ready");
+
+        fakeAds.RewardedReady = true;
+        fakeAds.NextRewardEarned = false;
+        screen.Focus(rareTile);
+        tryButton.onClick.Invoke();
+        Check("closing the rewarded ad early grants no trial", fakeAds.RewardedShown == 1 && !UnlockService.IsUsable(rare) && UnlockService.TrialRunsLeft(rare) == 0);
+
+        fakeAds.NextRewardEarned = true;
+        tryButton.onClick.Invoke();
+        var trialStatus = screenTransform.Find("InfoPanel/Status").GetComponent<TMP_Text>().text;
+        Check("earning the reward starts a 3-run trial: selected, Select shown, Try hidden",
+            UnlockService.TrialRunsLeft(rare) == EconomyConfig.Instance.TrialRuns && UnlockService.Selected(UnlockCategory.Character) == rare
+            && trialStatus == $"Trial: {EconomyConfig.Instance.TrialRuns} runs left" && !tryObject.activeSelf && screenTransform.Find("InfoPanel/Select").gameObject.activeSelf,
+            trialStatus);
+
+        SaveService.Load();
+        Check("trial survives a save reload", UnlockService.TrialRunsLeft(rare) == EconomyConfig.Instance.TrialRuns && UnlockService.Selected(UnlockCategory.Character) == rare);
+
+        screenTransform.Find("InfoPanel/Buy").GetComponent<Button>().onClick.Invoke();
+        Check("Buy grants the item through the store and ends the trial",
+            fakeStore.Owned.Contains(rare.ProductId) && UnlockService.IsOwned(rare) && UnlockService.TrialRunsLeft(rare) == 0 && !buyObject.activeSelf);
+
+        fakeStore.Owned.Add(StoreProducts.RemoveAds);
+        fakeStore.Owned.Add(common.ProductId);
+        restoreObject.GetComponent<Button>().onClick.Invoke();
+        restoreObject.GetComponent<Button>().onClick.Invoke();
+        Check("Restore Purchases grants owned products and Remove Ads, idempotently",
+            UnlockService.IsOwned(common) && UnlockService.RemoveAdsOwned && SaveService.Data.owned.Count(entry => entry.id == common.Id) == 1);
+
+        UseFreshTempSave();
+        Services.Ads = new FakeAdService();
+        Services.Store = new FakeStoreService();
+
         Click("SelectionScreen/TopBar/Back");
         yield return 0.2f;
         Check("Back closes the screen, restores the main menu and frees the preview",
@@ -163,7 +300,7 @@ public static partial class PlaySmokeTest
 
         Click("MainMenu/Characters");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
-        Check("reopening focuses the selected character", !timedOut && screen.Focused != null && screen.Focused.Definition == common);
+        Check("reopening focuses the selected character", !timedOut && screen.Focused != null && screen.Focused.Definition == UnlockService.Selected(UnlockCategory.Character));
         Click("SelectionScreen/TopBar/Back");
         yield return 0.2f;
 
@@ -228,11 +365,15 @@ public static partial class PlaySmokeTest
             var screen = instance.GetComponent<SelectionScreen>();
 
             // Worst case for size: both action buttons shown, with the longest label the price table can produce.
-            var select = (RectTransform)root.Find("InfoPanel/Select");
-            var unlock = (RectTransform)root.Find("InfoPanel/Unlock");
-            select.gameObject.SetActive(true);
-            unlock.gameObject.SetActive(true);
-            unlock.GetComponentInChildren<TMP_Text>().text = "Need 17995 more gems";
+            var actions = new List<RectTransform>();
+            foreach (var actionName in new[] { "Select", "Unlock", "Buy", "Try", "Restore" })
+            {
+                var action = (RectTransform)root.Find("InfoPanel/" + actionName);
+                action.gameObject.SetActive(true);
+                actions.Add(action);
+            }
+            actions[1].GetComponentInChildren<TMP_Text>().text = "Need 17995 more gems";
+            actions[2].GetComponentInChildren<TMP_Text>().text = "Buy CHF 999.99";
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(root);
@@ -245,13 +386,13 @@ public static partial class PlaySmokeTest
                 text.ForceMeshUpdate();
             }
 
-            AuditOne(problems, label, scale, root, screen.Tiles, select, unlock);
+            AuditOne(problems, label, scale, root, screen.Tiles, actions);
             Object.DestroyImmediate(canvasObject);
         }
         return problems;
     }
 
-    private static void AuditOne(List<string> problems, string label, float scale, RectTransform root, IReadOnlyList<UnlockTile> tiles, RectTransform select, RectTransform unlock)
+    private static void AuditOne(List<string> problems, string label, float scale, RectTransform root, IReadOnlyList<UnlockTile> tiles, List<RectTransform> actions)
     {
         var layout = root.GetComponent<SelectionLayout>();
         var mode = layout.IsLandscape ? "landscape" : "portrait";
@@ -322,7 +463,12 @@ public static partial class PlaySmokeTest
             }
         }
 
-        foreach (var (name, button) in new[] { ("Back", back), ("Select", select), ("Unlock", unlock) })
+        var tapTargets = new List<(string, RectTransform)> { ("Back", back) };
+        foreach (var action in actions)
+        {
+            tapTargets.Add((action.name, action));
+        }
+        foreach (var (name, button) in tapTargets)
         {
             if (button.rect.height * scale < MinTouchPixels)
             {

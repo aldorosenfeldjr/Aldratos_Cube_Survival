@@ -458,5 +458,12 @@ public static partial class PlaySmokeTest
         hazardSpawner.ClearAll(); // BeginSpawning drops the first wave at once; it must not kill the test run
         Check("game over after clear: Next level", offered && reachedNext && !gameOverMenu.gameObject.activeSelf, $"offered={offered} reachedNext={reachedNext} {offerDetail}");
         gameManager.TargetSecondsOverride = 0;
+
+        // 12. Trial-over prompt and interstitial pacing through the real game-over screen.
+        var trialFlow = TrialFlowChecks(gameManager, hazardSpawner);
+        while (trialFlow.MoveNext())
+        {
+            yield return trialFlow.Current;
+        }
     }
 }

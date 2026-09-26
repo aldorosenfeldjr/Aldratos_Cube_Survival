@@ -20,6 +20,7 @@ public static class SelectionScreenBuilder
     private const string TilePath = UiFolder + "UnlockTile.prefab";
     private const string ScreenPath = UiFolder + "SelectionScreen.prefab";
     private const string MainMenuPath = UiFolder + "MainMenu.prefab";
+    private const string GameOverPath = UiFolder + "GameOverMenu.prefab";
 
     private static readonly Color PanelColor = new Color(0.07f, 0.09f, 0.13f, 1f);
     private static readonly Color FrameColor = new Color(1f, 0.85f, 0.2f, 1f);
@@ -31,6 +32,7 @@ public static class SelectionScreenBuilder
         var tile = BuildTile();
         BuildScreen(gemCounter, tile);
         UpdateMainMenuPrefab(gemCounter);
+        UpdateGameOverPrefab();
         AssetDatabase.SaveAssets();
         Debug.Log("Rebuilt selection screen prefabs and the main menu additions.");
     }
@@ -151,7 +153,7 @@ public static class SelectionScreenBuilder
         // Info panel: preview, name, tier, status, actions. Stacked; SelectionLayout decides where the panel sits.
         var info = NewRect("InfoPanel", root.transform);
         var stack = info.gameObject.AddComponent<VerticalLayoutGroup>();
-        stack.spacing = 10f;
+        stack.spacing = 8f;
         stack.padding = new RectOffset(20, 20, 0, 0);
         stack.childAlignment = TextAnchor.UpperCenter;
         stack.childControlWidth = true;
@@ -160,7 +162,7 @@ public static class SelectionScreenBuilder
         stack.childForceExpandHeight = false;
 
         var previewFrame = NewRect("PreviewFrame", info);
-        SetLayout(previewFrame.gameObject, minHeight: 200f, preferredHeight: 320f, flexibleHeight: 1f);
+        SetLayout(previewFrame.gameObject, minHeight: 160f, preferredHeight: 320f, flexibleHeight: 1f);
         var previewRect = NewRect("Preview", previewFrame);
         Stretch(previewRect);
         var preview = previewRect.gameObject.AddComponent<RawImage>();
@@ -170,15 +172,20 @@ public static class SelectionScreenBuilder
         fitter.aspectRatio = 1f;
 
         var nameText = AddLabel(info, "Name", "Name", 48f);
-        SetLayout(nameText.gameObject, preferredHeight: 56f);
+        SetLayout(nameText.gameObject, minHeight: 50f, preferredHeight: 50f);
         var tierText = AddLabel(info, "Tier", "Tier", 32f);
-        SetLayout(tierText.gameObject, preferredHeight: 40f);
+        SetLayout(tierText.gameObject, minHeight: 36f, preferredHeight: 36f);
         var statusText = AddLabel(info, "Status", "Status", 32f);
-        SetLayout(statusText.gameObject, preferredHeight: 40f);
+        SetLayout(statusText.gameObject, minHeight: 36f, preferredHeight: 36f);
         var select = AddButton(info, "Select", "Select");
-        SetLayout(select, preferredHeight: 64f);
         var unlock = AddButton(info, "Unlock", "Unlock");
-        SetLayout(unlock, preferredHeight: 64f);
+        var buy = AddButton(info, "Buy", "Buy");
+        var tryAd = AddButton(info, "Try", "Try: watch ad");
+        var restore = AddButton(info, "Restore", "Restore Purchases");
+        foreach (var button in new[] { select, unlock, buy, tryAd, restore })
+        {
+            SetLayout(button, minHeight: 60f, preferredHeight: 60f);
+        }
 
         // Grid panel: vertical scroll of tiles.
         var gridPanel = NewRect("GridPanel", root.transform);
@@ -208,6 +215,9 @@ public static class SelectionScreenBuilder
         UnityEventTools.AddPersistentListener(back.GetComponent<Button>().onClick, screen.Back);
         UnityEventTools.AddPersistentListener(select.GetComponent<Button>().onClick, screen.Select);
         UnityEventTools.AddPersistentListener(unlock.GetComponent<Button>().onClick, screen.Unlock);
+        UnityEventTools.AddPersistentListener(buy.GetComponent<Button>().onClick, screen.Buy);
+        UnityEventTools.AddPersistentListener(tryAd.GetComponent<Button>().onClick, screen.Try);
+        UnityEventTools.AddPersistentListener(restore.GetComponent<Button>().onClick, screen.Restore);
 
         var fields = new SerializedObject(screen);
         fields.FindProperty("category").enumValueIndex = (int)UnlockCategory.Character;
@@ -220,6 +230,11 @@ public static class SelectionScreenBuilder
         fields.FindProperty("selectLabel").objectReferenceValue = select.GetComponentInChildren<TextMeshProUGUI>();
         fields.FindProperty("unlockButton").objectReferenceValue = unlock.GetComponent<Button>();
         fields.FindProperty("unlockLabel").objectReferenceValue = unlock.GetComponentInChildren<TextMeshProUGUI>();
+        fields.FindProperty("buyButton").objectReferenceValue = buy.GetComponent<Button>();
+        fields.FindProperty("buyLabel").objectReferenceValue = buy.GetComponentInChildren<TextMeshProUGUI>();
+        fields.FindProperty("tryButton").objectReferenceValue = tryAd.GetComponent<Button>();
+        fields.FindProperty("tryLabel").objectReferenceValue = tryAd.GetComponentInChildren<TextMeshProUGUI>();
+        fields.FindProperty("restoreButton").objectReferenceValue = restore.GetComponent<Button>();
         fields.FindProperty("tilePrefab").objectReferenceValue = tilePrefab;
         fields.FindProperty("tileContainer").objectReferenceValue = content;
         fields.FindProperty("scroll").objectReferenceValue = scroll;
@@ -254,6 +269,20 @@ public static class SelectionScreenBuilder
             SetRect(contents.transform.Find("Exit"), new Vector2(0f, -160f), new Vector2(280f, 60f));
             SetRect(contents.transform.Find("ClearHighScore"), new Vector2(0f, -250f), new Vector2(340f, 50f));
 
+            var removeAds = contents.transform.Find("RemoveAds");
+            if (removeAds == null)
+            {
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ButtonPath), contents.transform);
+                instance.name = "RemoveAds";
+                instance.GetComponentInChildren<TextMeshProUGUI>().text = "Remove Ads";
+                UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.RemoveAds);
+                removeAds = instance.transform;
+            }
+            SetRect(removeAds, new Vector2(0f, -320f), new Vector2(400f, 60f));
+            var menuFields = new SerializedObject(menu);
+            menuFields.FindProperty("removeAdsButton").objectReferenceValue = removeAds.gameObject;
+            menuFields.ApplyModifiedPropertiesWithoutUndo();
+
             if (contents.transform.Find("GemCounter") == null)
             {
                 var gems = (GameObject)PrefabUtility.InstantiatePrefab(gemCounterPrefab, contents.transform);
@@ -262,6 +291,61 @@ public static class SelectionScreenBuilder
             }
 
             PrefabUtility.SaveAsPrefabAsset(contents, MainMenuPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(contents);
+        }
+    }
+
+    // The game-over screen gets a centred modal for the trial-over prompt (built once, then only repositioned).
+    private static void UpdateGameOverPrefab()
+    {
+        var contents = PrefabUtility.LoadPrefabContents(GameOverPath);
+        try
+        {
+            var menu = contents.GetComponent<GameOverMenu>();
+            var existing = contents.transform.Find("TrialPanel");
+            if (existing != null)
+            {
+                Object.DestroyImmediate(existing.gameObject);
+            }
+
+            var panel = new GameObject("TrialPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            panel.layer = LayerMask.NameToLayer("UI");
+            panel.transform.SetParent(contents.transform, false);
+            Stretch((RectTransform)panel.transform);
+            panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.82f);
+
+            var title = AddLabel(panel.transform, "Title", "Trial over", 48f);
+            Place(title.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 150f), new Vector2(1100f, 80f));
+            var buy = AddButton(panel.transform, "Buy", "Buy");
+            var unlock = AddButton(panel.transform, "Unlock", "Unlock");
+            var ad = AddButton(panel.transform, "WatchAd", "Watch ad");
+            var dismiss = AddButton(panel.transform, "NoThanks", "No thanks");
+            var y = 50f;
+            foreach (var button in new[] { buy, unlock, ad, dismiss })
+            {
+                Place(button.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, y), new Vector2(640f, 60f));
+                y -= 80f;
+            }
+
+            UnityEventTools.AddPersistentListener(buy.GetComponent<Button>().onClick, menu.TrialBuy);
+            UnityEventTools.AddPersistentListener(unlock.GetComponent<Button>().onClick, menu.TrialUnlock);
+            UnityEventTools.AddPersistentListener(ad.GetComponent<Button>().onClick, menu.TrialWatchAd);
+            UnityEventTools.AddPersistentListener(dismiss.GetComponent<Button>().onClick, menu.TrialDismiss);
+
+            var fields = new SerializedObject(menu);
+            fields.FindProperty("trialPanel").objectReferenceValue = panel;
+            fields.FindProperty("trialTitle").objectReferenceValue = title;
+            fields.FindProperty("trialBuyButton").objectReferenceValue = buy.GetComponent<Button>();
+            fields.FindProperty("trialUnlockButton").objectReferenceValue = unlock.GetComponent<Button>();
+            fields.FindProperty("trialAdButton").objectReferenceValue = ad.GetComponent<Button>();
+            fields.FindProperty("trialDismissButton").objectReferenceValue = dismiss.GetComponent<Button>();
+            fields.ApplyModifiedPropertiesWithoutUndo();
+
+            panel.SetActive(false);
+            PrefabUtility.SaveAsPrefabAsset(contents, GameOverPath);
         }
         finally
         {

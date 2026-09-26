@@ -27,6 +27,11 @@ public class SelectionScreen : MonoBehaviour
     [SerializeField] private TextMeshProUGUI selectLabel;
     [SerializeField] private Button unlockButton;
     [SerializeField] private TextMeshProUGUI unlockLabel;
+    [SerializeField] private Button buyButton;
+    [SerializeField] private TextMeshProUGUI buyLabel;
+    [SerializeField] private Button tryButton;
+    [SerializeField] private TextMeshProUGUI tryLabel;
+    [SerializeField] private Button restoreButton;
     [SerializeField] private UnlockTile tilePrefab;
     [SerializeField] private RectTransform tileContainer;
     [SerializeField] private ScrollRect scroll;
@@ -85,6 +90,55 @@ public class SelectionScreen : MonoBehaviour
             Refresh();
             EventSystem.current.SetSelectedGameObject(focused.gameObject);
         }
+    }
+
+    /// <summary>Real-money purchase through the store service (only offered where a store exists).</summary>
+    public void Buy()
+    {
+        if (focused == null)
+        {
+            return;
+        }
+
+        var item = focused.Definition;
+        Services.Store.Buy(item.ProductId, success =>
+        {
+            if (success)
+            {
+                UnlockService.GrantPurchase(item);
+                Refresh();
+            }
+        });
+    }
+
+    /// <summary>Watch a rewarded ad to try the item for a few runs. Granted only when the ad reports the reward was earned.</summary>
+    public void Try()
+    {
+        if (focused == null)
+        {
+            return;
+        }
+
+        var item = focused.Definition;
+        Services.Ads.ShowRewarded(earned =>
+        {
+            if (earned && UnlockService.StartTrial(item))
+            {
+                Refresh();
+            }
+        });
+    }
+
+    public void Restore()
+    {
+        Services.Store.Restore(productIds =>
+        {
+            UnlockService.RestorePurchases(productIds);
+            if (focused != null)
+            {
+                Refresh();
+            }
+        });
     }
 
     private void OnEnable()
@@ -171,21 +225,35 @@ public class SelectionScreen : MonoBehaviour
 
         var definition = focused.Definition;
         var owned = UnlockService.IsOwned(definition);
+        var usable = UnlockService.IsUsable(definition);
+        var trialRuns = UnlockService.TrialRunsLeft(definition);
         var selected = UnlockService.Selected(category) == definition;
         var price = UnlockService.Price(definition);
         var affordable = Wallet.Balance >= price;
+        var store = Services.Store;
+        var ads = Services.Ads;
 
         nameText.text = definition.DisplayName;
         tierText.text = definition.Tier == PriceTier.Free ? "Free" : definition.Tier.ToString();
-        statusText.text = selected ? "Selected" : owned ? "Owned" : $"{price} gems";
+        statusText.text = trialRuns > 0 ? $"Trial: {trialRuns} run{(trialRuns == 1 ? string.Empty : "s")} left"
+            : selected ? "Selected" : owned ? "Owned" : $"{price} gems";
 
-        selectButton.gameObject.SetActive(owned);
+        selectButton.gameObject.SetActive(usable);
         selectButton.interactable = !selected;
         selectLabel.text = selected ? "Selected" : "Select";
 
         unlockButton.gameObject.SetActive(!owned);
         unlockButton.interactable = affordable;
         unlockLabel.text = affordable ? $"Unlock ({price} gems)" : $"Need {price - Wallet.Balance} more gems";
+
+        buyButton.gameObject.SetActive(!owned && store.IsAvailable);
+        buyLabel.text = $"Buy {store.LocalizedPrice(definition.ProductId)}";
+
+        tryButton.gameObject.SetActive(!owned && ads.IsAvailable && trialRuns == 0);
+        tryButton.interactable = ads.RewardedReady;
+        tryLabel.text = ads.RewardedReady ? "Try: watch ad" : "Ad not ready";
+
+        restoreButton.gameObject.SetActive(store.IsAvailable);
     }
 
     private void CreateStage()

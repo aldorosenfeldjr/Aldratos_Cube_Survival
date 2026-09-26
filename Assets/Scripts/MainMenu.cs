@@ -23,6 +23,9 @@ public class MainMenu : MonoBehaviour
     [SerializeField]
     private SelectionScreen selectionScreen;
 
+    [SerializeField]
+    private GameObject removeAdsButton;
+
     private void Start()
     {
         QualitySettings.vSyncCount = 0;
@@ -37,6 +40,36 @@ public class MainMenu : MonoBehaviour
         EventSystem.current.SetSelectedGameObject(firstSelected);
 
         scoreRectTransform.anchoredPosition = new Vector2(scoreRectTransform.anchoredPosition.x, 20);
+    }
+
+    private void OnEnable()
+    {
+        RefreshRemoveAds();
+    }
+
+    // Offered only where a store exists and the purchase is not owned yet.
+    private void RefreshRemoveAds()
+    {
+        if (removeAdsButton == null)
+        {
+            return;
+        }
+
+        var store = Services.Store;
+        removeAdsButton.SetActive(store.IsAvailable && !UnlockService.RemoveAdsOwned);
+        removeAdsButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = $"Remove Ads {store.LocalizedPrice(StoreProducts.RemoveAds)}";
+    }
+
+    public void RemoveAds()
+    {
+        Services.Store.Buy(StoreProducts.RemoveAds, success =>
+        {
+            if (success)
+            {
+                UnlockService.GrantRemoveAds();
+                RefreshRemoveAds();
+            }
+        });
     }
 
     private void Update()

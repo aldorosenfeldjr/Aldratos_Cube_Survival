@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class GameOverMenu : MonoBehaviour
 {
@@ -17,6 +18,22 @@ public class GameOverMenu : MonoBehaviour
     private GameObject scoreHud;
     [SerializeField]
     private GameObject firstSelected;
+
+    [Header("Trial over prompt")]
+    [SerializeField]
+    private GameObject trialPanel;
+    [SerializeField]
+    private TMPro.TextMeshProUGUI trialTitle;
+    [SerializeField]
+    private Button trialBuyButton;
+    [SerializeField]
+    private Button trialUnlockButton;
+    [SerializeField]
+    private Button trialAdButton;
+    [SerializeField]
+    private Button trialDismissButton;
+
+    private UnlockableDefinition trialItem;
 
     private void OnEnable()
     {
@@ -42,6 +59,16 @@ public class GameOverMenu : MonoBehaviour
 
         EventSystem.current.SetSelectedGameObject(null);
         EventSystem.current.SetSelectedGameObject(firstSelected);
+
+        trialItem = game.TrialEnded;
+        if (trialItem != null)
+        {
+            OpenTrialPanel();
+        }
+        else
+        {
+            trialPanel.SetActive(false);
+        }
     }
 
     private void OnDisable()
@@ -58,25 +85,124 @@ public class GameOverMenu : MonoBehaviour
 
         if (current == null || !current.activeInHierarchy)
         {
-            EventSystem.current.SetSelectedGameObject(firstSelected);
+            EventSystem.current.SetSelectedGameObject(trialPanel.activeSelf ? FirstTrialButton() : firstSelected);
         }
     }
 
     public void Restart()
     {
-        gameObject.SetActive(false);
-
-        GameManager.Instance.Enable();
+        InterstitialPacer.OnLeave(() =>
+        {
+            gameObject.SetActive(false);
+            GameManager.Instance.Enable();
+        });
     }
 
     public void NextLevel()
     {
-        gameObject.SetActive(false);
-        GameManager.Instance.NextLevel();
+        InterstitialPacer.OnLeave(() =>
+        {
+            gameObject.SetActive(false);
+            GameManager.Instance.NextLevel();
+        });
     }
 
     public void Quit()
     {
-        GameManager.Instance.ReturnToMainMenu();
+        InterstitialPacer.OnLeave(() => GameManager.Instance.ReturnToMainMenu());
+    }
+
+    // Trial-over prompt: keep the item (buy / gems) or watch an ad for more runs. Each option shows only when the platform offers it.
+    private void OpenTrialPanel()
+    {
+        trialPanel.SetActive(true);
+        SetMainButtonsInteractable(false);
+        trialTitle.text = $"Trial over: keep {trialItem.DisplayName}?";
+
+        var store = Services.Store;
+        trialBuyButton.gameObject.SetActive(store.IsAvailable);
+        trialBuyButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = $"Buy {store.LocalizedPrice(trialItem.ProductId)}";
+
+        var price = UnlockService.Price(trialItem);
+        trialUnlockButton.gameObject.SetActive(Wallet.Balance >= price);
+        trialUnlockButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = $"Unlock ({price} gems)";
+
+        var ads = Services.Ads;
+        trialAdButton.gameObject.SetActive(ads.IsAvailable && ads.RewardedReady);
+        trialAdButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = $"Watch ad: {EconomyConfig.Instance.TrialRuns} more runs";
+
+        EventSystem.current.SetSelectedGameObject(FirstTrialButton());
+    }
+
+    private GameObject FirstTrialButton()
+    {
+        foreach (var button in new[] { trialBuyButton, trialUnlockButton, trialAdButton })
+        {
+            if (button.gameObject.activeSelf)
+            {
+                return button.gameObject;
+            }
+        }
+        return trialDismissButton.gameObject;
+    }
+
+    private void CloseTrialPanel()
+    {
+        trialPanel.SetActive(false);
+        SetMainButtonsInteractable(true);
+        EventSystem.current.SetSelectedGameObject(firstSelected);
+    }
+
+    private void SetMainButtonsInteractable(bool interactable)
+    {
+        foreach (var button in GetComponentsInChildren<Button>(true))
+        {
+            if (!button.transform.IsChildOf(trialPanel.transform))
+            {
+                button.interactable = interactable;
+            }
+        }
+    }
+
+    public void TrialBuy()
+    {
+        var item = trialItem;
+        Services.Store.Buy(item.ProductId, success =>
+        {
+            if (success)
+            {
+                UnlockService.GrantPurchase(item);
+                UnlockService.Select(item);
+                CloseTrialPanel();
+            }
+        });
+    }
+
+    public void TrialUnlock()
+    {
+        if (UnlockService.TryBuyWithGems(trialItem))
+        {
+            UnlockService.Select(trialItem);
+            CloseTrialPanel();
+        }
+    }
+
+    public void TrialWatchAd()
+    {
+        var item = trialItem;
+        Services.Ads.ShowRewarded(earned =>
+        {
+            if (earned)
+            {
+                InterstitialPacer.MarkRewardedWatched();
+                UnlockService.StartTrial(item);
+                CloseTrialPanel();
+            }
+        });
+    }
+
+    public void TrialDismiss()
+    {
+        CloseTrialPanel();
     }
 }
