@@ -67,6 +67,7 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
   warns if the scene's `LevelInfo` does not point at the theme). Both builders are idempotent.
 - Do only what was asked. Do not add unrequested behavior (e.g. idle spin/bob) — stated
   visual directions (e.g. "face the camera, no rotation") are requirements, not suggestions.
+- Hand-testing shortcuts (Editor only, Edit Mode only, they change your REAL save): *Tools > Debug > Add 10000 Gems To Save* and *Reset Save*. Automated tests never touch the real save.
 - Unit tests (EditMode, `Assets/Tests/EditMode`, ~5 s): unity-editor-mcp `run_tests` with `mode=editor` and a `filter` (the unfiltered result is long). Pure logic only (save, wallet, pricing, unlocks/trials, interstitial pacer, run state, catalog data). New pure logic gets tests here; anything needing Play Mode goes in the smoke test.
 - Verify cheaply: recompile + `console` (level=error, small `tail`), then run the flow check:
   unity-editor-mcp `menu` -> `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read
