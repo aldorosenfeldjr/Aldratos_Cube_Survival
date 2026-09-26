@@ -74,6 +74,9 @@ public class GameManager : MonoBehaviour
     public int MultiplierBonus => run.MultiplierBonus;
     /// <summary>Clear reward earned in the run being shown (0 if the level was not cleared this run).</summary>
     public int ClearReward => clearedThisRun ? LastClear.Reward : 0;
+
+    /// <summary>The item whose ad trial ran out at this run's end (the game-over screen offers to keep it), or null.</summary>
+    public UnlockableDefinition TrialEnded { get; private set; }
     public LevelProgression.ClearResult LastClear { get; private set; }
     public bool HasNextLevel => LevelProgression.NextLevelId(registry, run.LevelId) != null;
 
@@ -327,6 +330,9 @@ public class GameManager : MonoBehaviour
         powerUpSpawner.StopSpawning();
         gemSpawner.StopSpawning();
         gameOver = true;
+        var endedTrials = UnlockService.EndRunForTrials();
+        TrialEnded = endedTrials.Count > 0 ? endedTrials[0] : null;
+        InterstitialPacer.RegisterGameOver(TrialEnded != null);
         CloseSuccess();
 
         ResetTimeAndCamera();

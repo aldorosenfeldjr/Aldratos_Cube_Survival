@@ -12,6 +12,9 @@ public class SaveData
     public List<LevelSave> levels = new List<LevelSave>();
     public List<OwnedEntry> owned = new List<OwnedEntry>();
     public List<SelectedEntry> selected = new List<SelectedEntry>();
+    public List<TrialEntry> trials = new List<TrialEntry>();
+    public int gameOversSinceInterstitial;
+    public bool removeAds;
 
     public LevelSave FindLevel(string id)
     {
@@ -53,4 +56,14 @@ public class SelectedEntry
 {
     public string category;
     public string id;
+}
+
+/// <summary>A running ad trial: one per category. <c>returnToId</c> is the owned item selected again when it ends.</summary>
+[Serializable]
+public class TrialEntry
+{
+    public string category;
+    public string id;
+    public int runsLeft;
+    public string returnToId;
 }
