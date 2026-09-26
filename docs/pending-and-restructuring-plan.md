@@ -1,6 +1,6 @@
 # Handoff: state, open items, roadmap
 
-Updated 2026-09-26 (economy steps 1-2 done, section 3a; next is step 3). A fresh session starts by reading `CLAUDE.md`
+Updated 2026-09-26 (economy steps 1-3 done, section 3a; next is step 4). A fresh session starts by reading `CLAUDE.md`
 (project map + rules), then this file. Do not re-explore the project.
 
 ## 1. State
@@ -50,6 +50,11 @@ Updated 2026-09-26 (economy steps 1-2 done, section 3a; next is step 3). A fresh
 | "Clear High Score" is smaller (340x50, 28pt) than other buttons | decided | User chose to keep it as is for now. |
 | EditMode tests (`PowerUpManager`, `TimeScaleController`) | later | Belongs to the separate test-suite session. |
 | Check post-processing on a phone | user | Mobile gets tonemapping/grading/vignette + SMAA + HDR (no DoF/SSAO). Profile on a real device; drop SMAA or HDR on URP-Mobile if it costs too much. |
+| **Gem look: emission is dropped by Unity** | later | `Assets/Gems/Gem.mat` has `m_LightmapFlags: 4` (emissive-is-black), so Unity strips `_EMISSION` whenever it validates the material and the gem glow disappears. `GemBuilder` should set `globalIlluminationFlags = RealtimeEmissive`. Found in step 3, not fixed (step-2 item). |
+| Selection preview lighting | user | The preview cube uses Core's sunset light/ambient, so it looks lavender next to the swatch's true blue. Faithful to gameplay lighting; decide if the preview needs its own neutral light. |
+| Selection screen not eyeballed in portrait | user | Landscape checked visually once; portrait and 7 other sizes only by the numeric layout audit. Also unchecked: the grid scrolling with >1 row (`EnsureVisible`). |
+| Editor rewrites URP materials | note | `git status` shows `Gem.mat`, `PowerUp_*_Material.mat`, `Assets/Characters/*.mat` as modified after play/compile: Unity syncing `_Color` from `_BaseColor` (float noise). Do not commit them. |
+| `PlaySmokeTest.cs` deprecation warnings | optional | `FindObjectsByType(FindObjectsSortMode)` at ~line 288. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
 
 ## 3. Product roadmap (agreed order, none started)
@@ -219,9 +224,18 @@ estimate: re-tune the table after real playtests.
    clear rewards credited, Success screen with `Keep going`. Smoke checks: clear at target (test override for a short target), next level
    unlocks, save round trip.
 2. **DONE 2026-09-26 (branch `feature/economy-step2`; smoke test 19/19, stable over 3 runs).** Falling gem pickup + `GemSpawner` + Gem Multiplier power-up + HUD gem counter + game-over breakdown.
-   Smoke checks: gem pickup, multiplier doubles value. Built by `Tools > Gems > Rebuild Gem Assets` (`GemBuilder`). Placeholder look: procedural octahedron gem and icon.  Game-over `Next level` (after a clear + Keep going) is built. The smoke test now clears leftover hazards after each restart (a first-wave crate could kill the test run). **Next session: step 3** (`UnlockableDefinition`/`UnlockCatalog`/`UnlockService` + `SelectionScreen`).
-3. `UnlockableDefinition`/`UnlockCatalog`/`UnlockService` + the `SelectionScreen` shell, tested with
-   2-3 placeholder character rows. Add smoke checks for gem buy and select.
+   Smoke checks: gem pickup, multiplier doubles value. Built by `Tools > Gems > Rebuild Gem Assets` (`GemBuilder`). Placeholder look: procedural octahedron gem and icon.  Game-over `Next level` (after a clear + Keep going) is built. The smoke test now clears leftover hazards after each restart (a first-wave crate could kill the test run). 
+3. **DONE 2026-09-26 (branch `feature/economy-step3`; smoke test 42/42).** `UnlockableDefinition` (+ `CharacterDefinition`),
+   `UnlockCatalog` (Resources), `UnlockService` (owned, gem buy, purchase grant, select), `SaveData.owned/selected`,
+   `GemCounter`, `SelectionScreen` + `SelectionLayout` + `UnlockTile` (`Scripts/Selection/`). Built by
+   `Tools > Characters > Rebuild Character Assets` (3 **placeholder** rows: Boxy free/default = the current blue
+   material, Ruby Common, Sunny Rare; ids `char.blue/red/yellow`; roadmap item 2 replaces the table) and
+   `Tools > UI > Rebuild Selection Screen` + `Wire Selection Screen In Core`. The main menu has a `Characters`
+   button and a gem counter. **Not built (by design, later steps):** Buy (store), Try (ad), Restore Purchases,
+   trial state (`IsUsable` == owned until step 4), Companions screen, applying the selected character to the
+   player (roadmap item 2). Everything the screen does is covered by smoke checks (mechanics, real button flow,
+   preview pixel readback, layout audit at 8 screen sizes, portrait and landscape).
+   **Next session: step 4** (ad/store interfaces + fakes + trial flow + interstitial pacer).
 4. `IAdService`/`IStoreService` + fakes + trial flow + trial-over panel + interstitial pacer. Add smoke checks
    for trial start/expiry and the pacer count.
 5. Real adapters (AdMob, Unity IAP, UMP consent, ATT, age gate, parent check) on a mobile build. This step
