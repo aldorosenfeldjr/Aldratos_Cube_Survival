@@ -1,6 +1,6 @@
 # Handoff: state, open items, roadmap
 
-Updated 2026-09-25 at the end of the restructuring session. A fresh session starts by reading `CLAUDE.md`
+Updated 2026-09-25 at the end of the URP + Input System session. A fresh session starts by reading `CLAUDE.md`
 (project map + rules), then this file. Do not re-explore the project.
 
 ## 1. State
@@ -18,30 +18,23 @@ Updated 2026-09-25 at the end of the restructuring session. A fresh session star
   (no folder); Unity deletes it on open. `LevelBuilder` never rewrites Build Settings unless a scene is
   missing from it.
 
-## NEXT TASK: migrate to URP (clears Unity Hub's "Built-In Render Pipeline is deprecated")
+## Done 2026-09-25: URP migration + Input System (branch `feature/urp-migration`)
 
-Branch `feature/urp-migration` (off 8b67a9d) is already created and checked out. Needs the Editor open
-with unity-editor-mcp connected. Facts already checked, do not re-explore:
-- Unity 6000.6.0f1. No pipeline asset anywhere (`GraphicsSettings`/`QualitySettings` customRenderPipeline 0).
-- `com.unity.postprocessing` 3.5.4 is in the manifest but **unused** (no PostProcessVolume/Layer in scenes,
-  prefabs or scripts): remove it.
-- No custom rendering code (no `OnRenderImage`, `Blit`, `CommandBuffer`, `Shader.Find`, `new Material`).
-- Custom shaders: only BOXOPHOBIC `Skybox Cubemap Blend/Extended` (skybox shaders, check they still
-  render) and LeanTween's archived example shader (unused). ~80 `.mat` files + KayKit fbx embedded materials.
-
-Steps:
-1. Add `com.unity.render-pipelines.universal` (let Package Manager pick the 6000.6 version), remove PPv2.
-2. Create `Assets/Settings/URP-Asset` + renderer. Carry over the current quality tuning (2 cascades, 60
-   shadow distance, 1 per-pixel additional light, no reflection probes); keep it mobile-friendly (SRP
-   Batcher on, no HDR/MSAA unless visibly needed). Assign as the default pipeline and on every quality level.
-3. Window > Rendering > Render Pipeline Converter, Built-in to URP: Rendering Settings, Material Upgrade,
-   Read-only Material (fbx), Animation Clip. Then grep `.mat` files for the Built-in Standard shader
-   (`guid: 0000000000000000f000000000000000`) and particle shaders to catch anything left pink.
-4. Check lights/ambient per level (URP lighting looks different), cameras get `UniversalAdditionalCameraData`.
-5. Verify: recompile + console (error), smoke test, one before/after screenshot per level (Main menu,
-   Meadow, Playground) since this is a visual change. Update `PowerUpPickupBuilder` / `HazardBuilder`
-   material paths only if the converter replaced materials rather than upgrading in place.
-6. Update the `project_performance` memory (no longer Built-in RP) and this doc, then commit.
+- **URP 17.6**: `Assets/Settings/URP-Mobile` (Very Low..Medium, Android default) and `URP-PC` (High..Ultra,
+  Standalone default + Graphics default). Forward, SRP Batcher, no HDR, no depth/opaque texture; PC has
+  soft shadows/2 cascades/60m/MSAA 2x, Mobile hard shadows/1 cascade/20m/no MSAA. Converter ran Material,
+  Read-only Material, Animation Clip. All renderers in the 3 scenes + game prefabs use URP-compatible shaders;
+  only unused LeanTween/TMP example materials still use legacy shaders. Core camera/light have URP data.
+- **PPv2 was not unused** (the old note was wrong): Core's Main Camera had a PostProcessLayer (SMAA) and a
+  global PostProcessVolume with `Assets/Scenes/SampleScene_Profiles/Main Camera Profile.asset` (Depth of Field,
+  Ambient Occlusion, Color Grading). Package removed, dead components stripped. Before/after captures look
+  nearly identical. The profile asset is kept (now unreadable) until a decision on recreating it as a URP
+  Volume + SSAO (see open items).
+- **Input System 1.20** (`activeInputHandler: 1`, new only): `Player` (Pointer = mouse/touch halves, keyboard
+  steer ramp from `GameConfig.KeyboardSteerRamp` matching the old axis feel, gamepad left stick, Space jump),
+  `GameManager` (Esc / Android back = pause). Core's EventSystem uses `InputSystemUIInputModule`.
+  TMP "Examples & Extras" scripts still call `UnityEngine.Input` (unused; they would throw if run).
+- Smoke test 9/9 after each step.
 
 ## 2. Open items
 
@@ -52,6 +45,9 @@ Steps:
 | HUD container sits under `Score`, not the Canvas | optional | Intentional (hides with the score on game over via `GameOverMenu.scoreHud`); reparenting needs that coupling replicated. |
 | "Clear High Score" is smaller (340x50, 28pt) than other buttons | decided | User chose to keep it as is for now. |
 | EditMode tests (`PowerUpManager`, `TimeScaleController`) | later | Belongs to the separate test-suite session. |
+| Test controls after an Editor restart | user | The new input backend only activates after restarting Unity (script restart did not work). Check arrows/A-D, mouse-hold halves, Space, Esc. Then on a phone: touch halves + Android back. |
+| Recreate old PPv2 look in URP? | user | Old profile: DoF + AO + Color Grading + SMAA. URP equivalents: Volume (DoF, Tonemapping) + SSAO renderer feature + camera SMAA. SSAO/DoF are costly on mobile: PC asset only, or drop. |
+| iOS default quality | user | `QualitySettings` has no iOS entry; Android uses Medium (URP-Mobile). Probably set iOS to Medium too. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
 
 ## 3. Product roadmap (agreed order, none started)

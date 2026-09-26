@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 
 public class Player : MonoBehaviour
@@ -10,6 +11,7 @@ public class Player : MonoBehaviour
 
     private Rigidbody rb;
     private bool isGrounded;
+    private float keyboardSteer;
 
     // Start is called before the first frame update
     void Awake()
@@ -26,37 +28,63 @@ public class Player : MonoBehaviour
         }
 
         float horizontalInput = 0;
+        var config = GameConfig.Instance;
+        UpdateKeyboardSteer(config.KeyboardSteerRamp);
 
-        if (Input.GetMouseButton(0))
+        // Pointer covers mouse and touch: hold on the left/right half of the screen to steer.
+        var pointer = Pointer.current;
+        if (pointer != null && pointer.press.isPressed)
         {
             var center = Screen.width / 2;
-            var mousePosition = Input.mousePosition;
-            if (mousePosition.x > center)
+            var pointerX = pointer.position.ReadValue().x;
+            if (pointerX > center)
             {
                 horizontalInput = 1;
             }
-            else if (mousePosition.x < center)
+            else if (pointerX < center)
             {
                 horizontalInput = -1;
             }
         }
         else
         {
-            horizontalInput = Input.GetAxis("Horizontal");
+            var stick = Gamepad.current != null ? Gamepad.current.leftStick.x.ReadValue() : 0f;
+            horizontalInput = Mathf.Abs(stick) > Mathf.Abs(keyboardSteer) ? stick : keyboardSteer;
         }
-        
+
         var speedMultiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.SpeedMultiplier : 1f;
 
-        var config = GameConfig.Instance;
         if (rb.linearVelocity.magnitude <= config.MaxSpeed * speedMultiplier)
         {
             rb.AddForce(new Vector3(horizontalInput * config.MoveForce * speedMultiplier * Time.deltaTime, 0, 0));
         }
 
-        if (isGrounded && Time.timeScale > 0 && Input.GetKeyDown(KeyCode.Space))
+        var jumpPressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+        if (isGrounded && Time.timeScale > 0 && jumpPressed)
         {
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, config.JumpForce, rb.linearVelocity.z);
         }
+    }
+
+    /// <summary>
+    /// Arrow keys / A-D steering that ramps toward the pressed direction instead of jumping to it,
+    /// and snaps to 0 when the direction reverses (same feel as the old Input Manager axis).
+    /// </summary>
+    private void UpdateKeyboardSteer(float ramp)
+    {
+        float target = 0;
+        var keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.rightArrowKey.isPressed || keyboard.dKey.isPressed) target += 1;
+            if (keyboard.leftArrowKey.isPressed || keyboard.aKey.isPressed) target -= 1;
+        }
+
+        if (target != 0 && Mathf.Sign(target) != Mathf.Sign(keyboardSteer))
+        {
+            keyboardSteer = 0;
+        }
+        keyboardSteer = Mathf.MoveTowards(keyboardSteer, target, ramp * Time.unscaledDeltaTime);
     }
 
     private void FixedUpdate()
