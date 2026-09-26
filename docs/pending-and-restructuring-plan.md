@@ -9,7 +9,7 @@ Updated 2026-09-25 at the end of the URP + Input System session. A fresh session
   `HazardSpawner`, `RunState`), `GameConfig` asset for tunables, menus/HUD as prefabs in `Assets/Prefabs/UI/`
   (Core 6.7k -> 2.5k lines), one-click smoke test, `HazardBuilder`/`LevelBuilder`. Details live in the
   CLAUDE.md map; git history has one commit per step.
-- **Branches:** `dev` == `feature/theme-polish-and-companion`, pushed to `origin/dev`. `main` is untouched
+- **Branches:** `dev` has everything (theme polish, URP migration merged 2026-09-26), pushed to `origin/dev`. `main` is untouched
   (batched promotions only). Merge convention: features -> `dev`.
 - **Verification:** menu `Tools/Smoke Test/Run Play Smoke Test` (~15s), then read the console. 9/9 at the
   end of this session.
