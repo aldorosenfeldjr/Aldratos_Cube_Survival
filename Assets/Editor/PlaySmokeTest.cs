@@ -277,6 +277,19 @@ public static class PlaySmokeTest
         yield return 2.4f;
         Check("score ticks", gameManager.Score >= 2, $"score={gameManager.Score}");
 
+        // 2b. The gem spawner drops a gem on its own (interval <= GemMaxInterval).
+        var gemDeadline = Time.realtimeSinceStartup + GameConfig.Instance.GemMaxInterval + 2f;
+        while (UnityEngine.Object.FindAnyObjectByType<GemPickup>() == null && Time.realtimeSinceStartup < gemDeadline)
+        {
+            yield return 0.25f;
+        }
+        Check("gem spawns on its own", UnityEngine.Object.FindAnyObjectByType<GemPickup>() != null);
+        UnityEngine.Object.FindAnyObjectByType<GemSpawner>().StopSpawning(); // keep the wallet checks below deterministic
+        foreach (var stray in UnityEngine.Object.FindObjectsByType<GemPickup>(FindObjectsSortMode.None))
+        {
+            UnityEngine.Object.Destroy(stray.gameObject);
+        }
+
         // 3. Every power-up: effect applies and shows in the HUD.
         var badPowerUps = new List<string>();
         var definitions = AssetDatabase.FindAssets("t:PowerUpDefinition");
@@ -292,6 +305,7 @@ public static class PlaySmokeTest
             var effect = definition is ShieldDefinition ? powerUps.HasShield
                 : definition is SpeedBoostDefinition ? powerUps.SpeedMultiplier > 1f
                 : definition is InvincibilityDefinition ? powerUps.IsInvincible
+                : definition is GemMultiplierDefinition ? powerUps.GemMultiplier > 1
                 : true;
             if (!effect || hudContainer.childCount <= iconsBefore)
             {
@@ -301,6 +315,24 @@ public static class PlaySmokeTest
         Check($"power-ups x{definitions.Length} (effect + HUD)", definitions.Length > 0 && badPowerUps.Count == 0, string.Join("; ", badPowerUps));
         powerUps.ResetAll();
         yield return 0.1f;
+
+        // 3b. A real gem pickup lands on the player and credits the wallet; the multiplier doubles the value.
+        var gemPlayer = UnityEngine.Object.FindAnyObjectByType<Player>();
+        var gemPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gem.prefab");
+        var gemStart = Wallet.Balance;
+        UnityEngine.Object.Instantiate(gemPrefab, gemPlayer.transform.position + Vector3.up * 1.5f, Quaternion.identity);
+        yield return 1.2f;
+        var gemGain = Wallet.Balance - gemStart;
+        Check("gem pickup credits wallet", gemGain == EconomyConfig.Instance.GemValue && gameManager.GemsCollected >= 1, $"gain={gemGain}");
+
+        var multiplierDefinition = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:GemMultiplierDefinition")[0]));
+        powerUps.Grant(multiplierDefinition);
+        var doubledStart = Wallet.Balance;
+        gameManager.CollectGem();
+        var doubledGain = Wallet.Balance - doubledStart;
+        Check("gem multiplier doubles value", doubledGain == EconomyConfig.Instance.GemValue * 2 && gameManager.MultiplierBonus >= EconomyConfig.Instance.GemValue, $"gain={doubledGain} bonus={gameManager.MultiplierBonus}");
+        powerUps.ResetAll();
+        UseFreshTempSave(); // the level-clear checks below expect an empty wallet
 
         // 4. Hazards spawn and fall (invincible so a crate cannot end the run).
         var invincibility = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:InvincibilityDefinition")[0]));
@@ -354,6 +386,7 @@ public static class PlaySmokeTest
         gameManager.TargetSecondsOverride = 3;
         gameManager.RestartGame();
         hazardSpawner.StopSpawning();
+        hazardSpawner.ClearAll(); // BeginSpawning drops the first wave at once; it must not kill the test run
         powerUpSpawner.StopSpawning();
         yield return WaitUntil(() => successMenu.gameObject.activeInHierarchy);
         var cleared = !timedOut;
@@ -381,6 +414,7 @@ public static class PlaySmokeTest
         // 10. Repeat clear pays the small reward; Next level loads the following level and starts a run.
         gameManager.RestartGame();
         hazardSpawner.StopSpawning();
+        hazardSpawner.ClearAll(); // BeginSpawning drops the first wave at once; it must not kill the test run
         powerUpSpawner.StopSpawning();
         yield return WaitUntil(() => successMenu.gameObject.activeInHierarchy);
         var repeatShown = !timedOut;
@@ -390,9 +424,31 @@ public static class PlaySmokeTest
         yield return WaitUntil(() => gameManager.isActiveAndEnabled && gameManager.LevelName == registry.LevelEntries[1].DisplayName);
         var loadedNext = !timedOut;
         hazardSpawner.StopSpawning();
+        hazardSpawner.ClearAll(); // BeginSpawning drops the first wave at once; it must not kill the test run
         yield return 0.3f;
         Check("repeat clear reward + next level", repeatShown && repeatPaid && loadedNext && Mathf.Approximately(Time.timeScale, 1f) && gameManager.Score <= 1,
             $"shown={repeatShown} repeatPaid={repeatPaid} nextLoaded={loadedNext} timeScale={Time.timeScale:0.00} score={gameManager.Score}");
+        // 11. Game over after a clear (and Keep going) offers Next level; it loads the following level.
+        gameManager.gameObject.SetActive(false);
+        levelSelect.GetComponent<LevelSelect>().PlayLevel(MeadowId);
+        yield return WaitUntil(() => gameManager.isActiveAndEnabled && gameManager.LevelName == registry.LevelEntries[0].DisplayName);
+        hazardSpawner.StopSpawning();
+        hazardSpawner.ClearAll(); // BeginSpawning drops the first wave at once; it must not kill the test run
+        powerUpSpawner.StopSpawning();
+        yield return WaitUntil(() => successMenu.gameObject.activeInHierarchy);
+        Click("SuccessMenu/KeepGoing");
+        yield return 0.3f;
+        gameManager.GameOver();
+        yield return WaitUntil(() => gameOverMenu.gameObject.activeInHierarchy);
+        var nextButton = gameOverMenu.transform.Find("NextLevel");
+        var offered = nextButton != null && nextButton.gameObject.activeSelf;
+        var offerDetail = $"clearedThisRun={gameManager.ClearedThisRun} hasNext={gameManager.HasNextLevel} button={(nextButton != null)} level={gameManager.LevelName}";
+        Click("GameOverMenu/NextLevel");
+        yield return WaitUntil(() => gameManager.isActiveAndEnabled && gameManager.LevelName == registry.LevelEntries[1].DisplayName);
+        var reachedNext = !timedOut;
+        hazardSpawner.StopSpawning();
+        hazardSpawner.ClearAll(); // BeginSpawning drops the first wave at once; it must not kill the test run
+        Check("game over after clear: Next level", offered && reachedNext && !gameOverMenu.gameObject.activeSelf, $"offered={offered} reachedNext={reachedNext} {offerDetail}");
         gameManager.TargetSecondsOverride = 0;
     }
 }

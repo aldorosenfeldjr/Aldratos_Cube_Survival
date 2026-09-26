@@ -639,6 +639,7 @@ GameObject:
   - component: {fileID: 402352957}
   - component: {fileID: 402352959}
   - component: {fileID: 402352960}
+  - component: {fileID: 402352961}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -666,6 +667,8 @@ MonoBehaviour:
   pauseButton: {fileID: 135417497}
   hazardSpawner: {fileID: 402352960}
   powerUpSpawner: {fileID: 402352959}
+  gemSpawner: {fileID: 402352961}
+  gemText: {fileID: 7073401774477412566}
   powerUpJuiceController: {fileID: 1796181066}
   mainVCam: {fileID: 1796181058}
   zoomVCam: {fileID: 1975513362}
@@ -719,6 +722,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::HazardSpawner
   hazardPrefab: {fileID: 8112962851509513234, guid: 6e989956cc298fa4a81c7929524519bf, type: 3}
+--- !u!114 &402352961
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 402352956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c379905affec343bcf00616a69cc11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::GemSpawner
+  gemPrefab: {fileID: 7333296456177530089, guid: 06139b1dfde7bff47a122d6901b319d7, type: 3}
 --- !u!1 &578458745
 GameObject:
   m_ObjectHideFlags: 0
@@ -2751,6 +2767,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5a000dfd5444271498cabb1e520aee40, type: 3}
+--- !u!114 &7073401774477412566 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 79304793260852017, guid: 5a000dfd5444271498cabb1e520aee40, type: 3}
+  m_PrefabInstance: {fileID: 7073401774477412565}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8651675766262384309
 PrefabInstance:
   m_ObjectHideFlags: 0

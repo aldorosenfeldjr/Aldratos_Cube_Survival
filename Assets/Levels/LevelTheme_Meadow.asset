@@ -20,3 +20,4 @@ MonoBehaviour:
   speedBoostPrefab: {fileID: 8177416960485180663, guid: fe6abd9f24472fb4eb1db0b20de5b35b, type: 3}
   invincibilityPrefab: {fileID: 6849938047571833967, guid: bfffe30c4b47b4341a86705d3856fac6, type: 3}
   shieldPrefab: {fileID: 7976951101115416493, guid: e7067ee02edca174c930c5e94bb39daa, type: 3}
+  gemMultiplierPrefab: {fileID: 7976951101115416493, guid: 1981304bd1125e64da767ca958744441, type: 3}

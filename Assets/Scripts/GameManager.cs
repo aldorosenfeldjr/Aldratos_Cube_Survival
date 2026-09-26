@@ -33,6 +33,11 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private PowerUpSpawner powerUpSpawner;
     [SerializeField]
+    private GemSpawner gemSpawner;
+    [SerializeField]
+    [Tooltip("Run gem counter, next to the score. Shown only during a run.")]
+    private TMPro.TextMeshProUGUI gemText;
+    [SerializeField]
     private PowerUpJuiceController powerUpJuiceController;
 
     [SerializeField]
@@ -64,6 +69,11 @@ public class GameManager : MonoBehaviour
     public int Score => run.Score;
     public string LevelName => currentTheme != null ? currentTheme.DisplayName : string.Empty;
     public int TargetSeconds => TargetSecondsOverride > 0 ? TargetSecondsOverride : (currentTheme != null ? currentTheme.TargetSeconds : 0);
+    public bool ClearedThisRun => clearedThisRun;
+    public int GemsCollected => run.GemsCollected;
+    public int MultiplierBonus => run.MultiplierBonus;
+    /// <summary>Clear reward earned in the run being shown (0 if the level was not cleared this run).</summary>
+    public int ClearReward => clearedThisRun ? LastClear.Reward : 0;
     public LevelProgression.ClearResult LastClear { get; private set; }
     public bool HasNextLevel => LevelProgression.NextLevelId(registry, run.LevelId) != null;
 
@@ -104,6 +114,7 @@ public class GameManager : MonoBehaviour
         gameOver = false;
         BeginRun();
         highScoreText.gameObject.SetActive(true);
+        gemText.gameObject.SetActive(true);
         pauseButton.SetActive(true);
     }
 
@@ -112,6 +123,10 @@ public class GameManager : MonoBehaviour
         if (highScoreText != null)
         {
             highScoreText.gameObject.SetActive(false);
+        }
+        if (gemText != null)
+        {
+            gemText.gameObject.SetActive(false);
         }
         if (pauseButton != null)
         {
@@ -167,6 +182,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>Called by a gem pickup the player catches: credits the wallet (x the active multiplier) right away.</summary>
+    public void CollectGem()
+    {
+        var multiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.GemMultiplier : 1;
+        Wallet.Add(run.AddGem(EconomyConfig.Instance.GemValue, multiplier));
+        UpdateGemText();
+    }
+
+    private void UpdateGemText()
+    {
+        gemText.text = (run.GemsCollected + run.MultiplierBonus).ToString();
+    }
+
     private void ClearLevel()
     {
         clearedThisRun = true;
@@ -190,8 +218,10 @@ public class GameManager : MonoBehaviour
     {
         var nextLevelId = LevelProgression.NextLevelId(registry, run.LevelId);
         CloseSuccess();
+        NewRecordScreen.SetActive(false);
         hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
+        gemSpawner.StopSpawning();
         ClearFallingObjects();
         scoreText.transform.localScale = Vector3.one;
         player.GetComponent<Player>().ResetState();
@@ -253,11 +283,13 @@ public class GameManager : MonoBehaviour
         clearedThisRun = false;
 
         scoreText.text = "0";
+        UpdateGemText();
         scoreText.color = normalScoreColor;
         highScoreText.text = $"Best: {run.HighScore}";
 
         hazardSpawner.BeginSpawning();
         powerUpSpawner.BeginSpawning();
+        gemSpawner.BeginSpawning();
         if (PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.ResetAll();
@@ -293,6 +325,7 @@ public class GameManager : MonoBehaviour
     {
         hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
+        gemSpawner.StopSpawning();
         gameOver = true;
         CloseSuccess();
 
