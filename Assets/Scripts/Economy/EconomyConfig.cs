@@ -43,6 +43,19 @@ public class EconomyConfig : ScriptableObject
     public int RarePrice => rarePrice;
     public int EpicPrice => epicPrice;
     public int LegendaryPrice => legendaryPrice;
+    /// <summary>PC gem price of a tier. Use <see cref="UnlockService.PriceFor"/> for the platform price.</summary>
+    public int TierPrice(PriceTier tier)
+    {
+        switch (tier)
+        {
+            case PriceTier.Common: return commonPrice;
+            case PriceTier.Rare: return rarePrice;
+            case PriceTier.Epic: return epicPrice;
+            case PriceTier.Legendary: return legendaryPrice;
+            default: return 0;
+        }
+    }
+
     public int TrialRuns => trialRuns;
     public int GameOversPerInterstitial => gameOversPerInterstitial;
 }
