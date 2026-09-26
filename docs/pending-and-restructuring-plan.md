@@ -214,7 +214,7 @@ estimate: re-tune the table after real playtests.
   it later if levels ever become unlockable (not planned).
 
 **Implementation order (each step its own session, smoke test green after each):**
-1. `SaveService` + migration + level progression: `targetSeconds` and clear rewards in `LevelBuilder`, clear
+1. **DONE 2026-09-26 (branch `feature/economy-step1`; smoke test 15/15).** Not built: the game-over screen's `Next level` after an endless continuation (do it with the step 2 breakdown). Level Select shows locked/goal/best as text (no lock icon). `SaveService` + migration + level progression: `targetSeconds` and clear rewards in `LevelBuilder`, clear
    banner, next-level unlock, locked levels in Level Select, per-level bests. `Wallet` + `EconomyConfig` +
    clear rewards credited, Success screen with `Keep going`. Smoke checks: clear at target (test override for a short target), next level
    unlocks, save round trip.

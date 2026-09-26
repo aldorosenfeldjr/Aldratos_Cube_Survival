@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: LevelTheme_Meadow
   m_EditorClassIdentifier: NewAssembly::LevelTheme
   displayName: Meadow
+  targetSeconds: 60
+  firstClearReward: 100
+  repeatClearReward: 15
   hazardPrefab: {fileID: 8112962851509513234, guid: 6e989956cc298fa4a81c7929524519bf, type: 3}
   speedBoostPrefab: {fileID: 8177416960485180663, guid: fe6abd9f24472fb4eb1db0b20de5b35b, type: 3}
   invincibilityPrefab: {fileID: 6849938047571833967, guid: bfffe30c4b47b4341a86705d3856fac6, type: 3}

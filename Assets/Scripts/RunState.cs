@@ -1,19 +1,17 @@
-using UnityEngine;
-
-/// <summary>Score and high score for the current run. Plain C#, owned by <see cref="GameManager"/>.</summary>
+/// <summary>Score and the level's best score for the current run. Plain C#, owned by <see cref="GameManager"/>. Bests live in <see cref="SaveService"/>.</summary>
 public class RunState
 {
-    public const string HighScorePreferenceKey = "HighScore";
-
     private float timer;
 
+    public string LevelId { get; private set; }
     public int Score { get; private set; }
     public int HighScore { get; private set; }
     public bool IsNewBest => Score > HighScore;
 
-    public RunState()
+    public void SetLevel(string levelId)
     {
-        HighScore = PlayerPrefs.GetInt(HighScorePreferenceKey);
+        LevelId = levelId;
+        RefreshHighScore();
     }
 
     public void Reset()
@@ -36,27 +34,21 @@ public class RunState
         return true;
     }
 
-    /// <summary>Stores the score as the new high score if it beats it; returns true if it did.</summary>
+    /// <summary>Stores the score as the level's new best if it beats it; returns true if it did.</summary>
     public bool CommitHighScore()
     {
-        if (!IsNewBest)
+        if (LevelId == null || !SaveService.SetBestScore(LevelId, Score))
         {
             return false;
         }
 
         HighScore = Score;
-        PlayerPrefs.SetInt(HighScorePreferenceKey, HighScore);
+        SaveService.Save();
         return true;
     }
 
-    public void ClearHighScore()
+    public void RefreshHighScore()
     {
-        HighScore = 0;
-    }
-
-    public static void DeleteSavedHighScore()
-    {
-        PlayerPrefs.DeleteKey(HighScorePreferenceKey);
-        PlayerPrefs.Save();
+        HighScore = LevelId == null ? 0 : SaveService.BestScore(LevelId);
     }
 }
