@@ -386,6 +386,10 @@ public static partial class PlaySmokeTest
                 text.ForceMeshUpdate();
             }
 
+            // Keyboard/gamepad focus on the last tile must scroll it into view wherever the grid is too short to show every tile.
+            screen.Focus(screen.Tiles[screen.Tiles.Count - 1]);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+
             AuditOne(problems, label, scale, root, screen.Tiles, actions);
             Object.DestroyImmediate(canvasObject);
         }
@@ -490,9 +494,9 @@ public static partial class PlaySmokeTest
                 problems.Add($"{tag}: tile {tile.Definition.DisplayName} too small to tap");
             }
         }
-        if (tiles.Count > 0 && Outside(LocalRect((RectTransform)tiles[0].transform, root), viewportRect))
+        if (tiles.Count > 0 && Outside(LocalRect((RectTransform)tiles[tiles.Count - 1].transform, root), viewportRect))
         {
-            problems.Add($"{tag}: first tile is not visible in the grid");
+            problems.Add($"{tag}: the focused (last) tile is not scrolled into view");
         }
     }
 
