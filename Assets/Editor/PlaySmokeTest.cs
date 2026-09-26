@@ -263,6 +263,13 @@ public static partial class PlaySmokeTest
         CharacterChecks();
         UseFreshTempSave();
 
+        var companionChecks = CompanionChecks();
+        while (companionChecks.MoveNext())
+        {
+            yield return companionChecks.Current;
+        }
+        UseFreshTempSave();
+
         // 1. Menu flow, using the real buttons.
         Click("MainMenu/Play");
         yield return WaitUntil(() => levelSelect.gameObject.activeInHierarchy);
