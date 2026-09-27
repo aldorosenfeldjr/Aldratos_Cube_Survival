@@ -171,19 +171,25 @@ public static class CompanionBuilder
     {
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(row.Model);
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
-        var animator = instance.GetComponent<Animator>();
-        if (animator == null)
+        try
         {
-            animator = instance.AddComponent<Animator>();
-        }
-        animator.runtimeAnimatorController = controller;
-        animator.avatar = AssetDatabase.LoadAllAssetsAtPath(row.Model).OfType<Avatar>().FirstOrDefault();
-        animator.applyRootMotion = false;
-        instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            var animator = instance.GetComponent<Animator>();
+            if (animator == null)
+            {
+                animator = instance.AddComponent<Animator>();
+            }
+            animator.runtimeAnimatorController = controller;
+            animator.avatar = AssetDatabase.LoadAllAssetsAtPath(row.Model).OfType<Avatar>().FirstOrDefault();
+            animator.applyRootMotion = false;
+            instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-        var saved = PrefabUtility.SaveAsPrefabAsset(instance, $"{Folder}/{row.Id.Replace('.', '_')}.prefab");
-        Object.DestroyImmediate(instance);
-        return saved;
+            return PrefabUtility.SaveAsPrefabAsset(instance, $"{Folder}/{row.Id.Replace('.', '_')}.prefab");
+        }
+        finally
+        {
+            // The instance lives in the open scene while it is edited. Always remove it, even on failure, or it is saved into the scene.
+            Object.DestroyImmediate(instance);
+        }
     }
 
     private static CompanionDefinition BuildDefinition(Row row, GameObject prefab)
