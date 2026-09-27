@@ -22,6 +22,28 @@ public static class DebugTools
         Debug.Log($"Debug: added 10000 gems. Balance is now {Wallet.Balance}. Save: {SavePath}");
     }
 
+    [MenuItem("Tools/Debug/Unlock All Characters & Companions")]
+    public static void UnlockAll()
+    {
+        if (RefuseWhilePlaying())
+        {
+            return;
+        }
+
+        SaveService.UseFile(null);
+        SaveService.Load();
+        var count = 0;
+        foreach (var definition in UnlockCatalog.Instance.Items)
+        {
+            if (!UnlockService.IsOwned(definition))
+            {
+                UnlockService.GrantPurchase(definition);
+                count++;
+            }
+        }
+        Debug.Log($"Debug: unlocked {count} item(s). Save: {SavePath}");
+    }
+
     [MenuItem("Tools/Debug/Reset Save (gems, unlocks, levels, mute)")]
     public static void ResetSave()
     {
