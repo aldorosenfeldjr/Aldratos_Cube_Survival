@@ -1,0 +1,147 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// Renders a small diorama into a low-resolution RenderTexture behind the Main Menu's UI — the reduced
+/// resolution is the "out of focus" look, cheap on every platform (no real-time depth-of-field). Own root
+/// object in Core, like <c>TimeScaleController</c>: never needs to survive a scene reload, since menu
+/// navigation never leaves Core. A slow idle drift plays under whichever named pose is current;
+/// <see cref="MoveTo"/> eases to a new pose, cancelling any pose tween already in flight.
+/// </summary>
+public class MenuBackgroundRig : MonoBehaviour
+{
+    [System.Serializable]
+    public struct Pose
+    {
+        public Vector3 position;
+        public Vector3 eulerAngles;
+        public float fieldOfView;
+    }
+
+    [SerializeField] private GameObject stagePrefab;
+    [SerializeField] private RawImage backgroundImage;
+    [SerializeField, Range(2, 8)] private int downscaleFactor = 4;
+    [SerializeField] private float poseTweenDuration = 0.7f;
+    [SerializeField] private Pose mainMenuIdle = new Pose { position = new Vector3(0f, 1.6f, -6f), eulerAngles = new Vector3(6f, 0f, 0f), fieldOfView = 32f };
+    [SerializeField] private Pose charactersOpen = new Pose { position = new Vector3(2.4f, 1.4f, -4.6f), eulerAngles = new Vector3(8f, -18f, 0f), fieldOfView = 28f };
+    [SerializeField] private Pose companionsOpen = new Pose { position = new Vector3(-2.4f, 1.2f, -4.6f), eulerAngles = new Vector3(8f, 18f, 0f), fieldOfView = 28f };
+    [SerializeField] private float driftAmplitude = 0.15f;
+    [SerializeField] private float driftSpeed = 0.15f;
+
+    // Far from the play area so the camera's frustum never picks up real level/hazard geometry from whichever
+    // level scenes happen to be additively loaded alongside Core (the camera has no culling mask restriction,
+    // same reasoning as SelectionScreen's own far-away preview stage).
+    private static readonly Vector3 StagePosition = new Vector3(1000f, 0f, 0f);
+
+    public static MenuBackgroundRig Instance { get; private set; }
+
+    private Camera stageCamera;
+    private RenderTexture texture;
+    private Pose currentPose;
+    private Pose basePose;
+
+    private void Awake()
+    {
+        Instance = this;
+        transform.position = StagePosition;
+        Instantiate(stagePrefab, transform);
+
+        var cameraObject = new GameObject("MenuBackgroundCamera");
+        cameraObject.transform.SetParent(transform, false);
+        stageCamera = cameraObject.AddComponent<Camera>();
+        stageCamera.clearFlags = CameraClearFlags.SolidColor;
+        stageCamera.backgroundColor = new Color(0.1f, 0.12f, 0.2f, 1f);
+        stageCamera.nearClipPlane = 0.3f;
+        stageCamera.farClipPlane = 60f;
+        stageCamera.allowHDR = false;
+        stageCamera.allowMSAA = false;
+
+        RebuildTexture();
+        SetPoseImmediate(mainMenuIdle);
+    }
+
+    private void OnEnable()
+    {
+        StartDrift();
+    }
+
+    private void OnDisable()
+    {
+        LeanTween.cancel(gameObject);
+        if (stageCamera != null)
+        {
+            LeanTween.cancel(stageCamera.gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+        if (backgroundImage != null)
+        {
+            backgroundImage.texture = null;
+        }
+        if (texture != null)
+        {
+            texture.Release();
+            Destroy(texture);
+        }
+    }
+
+    private void RebuildTexture()
+    {
+        var width = Mathf.Max(4, Screen.width / downscaleFactor);
+        var height = Mathf.Max(4, Screen.height / downscaleFactor);
+        texture = new RenderTexture(width, height, 16) { name = "MenuBackgroundTexture", filterMode = FilterMode.Bilinear };
+        stageCamera.targetTexture = texture;
+        backgroundImage.texture = texture;
+    }
+
+    /// <summary>Eases to the given pose, cancelling any pose tween already running — never stacks.</summary>
+    public void MoveTo(Pose pose)
+    {
+        LeanTween.cancel(gameObject);
+        var start = currentPose;
+        LeanTween.value(gameObject, 0f, 1f, poseTweenDuration)
+            .setEaseInOutSine()
+            .setOnUpdate((float t) => basePose = LerpPose(start, pose, t));
+        currentPose = pose;
+    }
+
+    public void MoveToMainMenu() => MoveTo(mainMenuIdle);
+    public void MoveToCharacters() => MoveTo(charactersOpen);
+    public void MoveToCompanions() => MoveTo(companionsOpen);
+
+    private void SetPoseImmediate(Pose pose)
+    {
+        currentPose = pose;
+        basePose = pose;
+    }
+
+    private static Pose LerpPose(Pose a, Pose b, float t)
+    {
+        return new Pose
+        {
+            position = Vector3.Lerp(a.position, b.position, t),
+            eulerAngles = Vector3.Lerp(a.eulerAngles, b.eulerAngles, t),
+            fieldOfView = Mathf.Lerp(a.fieldOfView, b.fieldOfView, t),
+        };
+    }
+
+    private void StartDrift()
+    {
+        LeanTween.value(stageCamera.gameObject, 0f, 1f, 1f)
+            .setLoopClamp()
+            .setOnUpdate((float unused) =>
+            {
+                var t = Time.unscaledTime * driftSpeed;
+                var drift = new Vector3(Mathf.Sin(t) * driftAmplitude, Mathf.Sin(t * 0.7f) * driftAmplitude * 0.5f, 0f);
+                stageCamera.transform.localPosition = basePose.position + drift;
+                stageCamera.transform.localEulerAngles = basePose.eulerAngles;
+                stageCamera.fieldOfView = basePose.fieldOfView;
+            });
+    }
+}
