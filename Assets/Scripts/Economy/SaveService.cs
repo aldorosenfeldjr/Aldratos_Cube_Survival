@@ -14,7 +14,7 @@ public static class SaveService
     public const string LegacyHighScoreKey = "HighScore";
     public const string MigratedLevelId = "Level_Meadow";
 
-    /// <summary>Gems a fresh save starts with in a development build on a device (never in the Editor, so tests and real play are unaffected).</summary>
+    /// <summary>Gems a fresh save starts with in a test or development build on a device (see <see cref="BuildInfo"/>).</summary>
     public const int DevelopmentBuildStartingGems = 10000;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -73,7 +73,7 @@ public static class SaveService
             MigrateLegacyHighScore();
         }
 
-        if (Debug.isDebugBuild && !Application.isEditor)
+        if (BuildInfo.GivesStartingGems)
         {
             data.gems = DevelopmentBuildStartingGems;
         }
