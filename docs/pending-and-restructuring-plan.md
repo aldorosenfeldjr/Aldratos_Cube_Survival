@@ -76,6 +76,16 @@ Purpose: try the game on the user's iPhone 12 without a Mac or Apple account. Br
   apps before building. The C# code itself compiles fine under WebGL.
 - **Editor target:** after building, switch back to Windows (*File > Build Profiles*, or `switch_build_target` StandaloneWindows64),
   otherwise Play Mode and the smoke test run on the WebGL target.
+- **Published:** https://aldorosenfeldjr.github.io/Aldratos_Cube_Survival_WebTest/ (public repo `Aldratos_Cube_Survival_WebTest`,
+  GitHub Pages from `main`). ~17 MB. Verified in headless Chrome with an iPhone user agent and 390x844 viewport: loads in ~18 s,
+  mobile layout, menu, level select and gameplay render, no console errors. Open item: Chrome logs "Shader 'Hidden/Universal Render
+  Pipeline/Edge Adaptive Spatial Upsampling' is stripped ... PostProcessing render passes will not execute": the web build may lose
+  the colour grading/vignette look (not yet compared side by side).
+- **Lesson:** the web screenshot exposed a stray `Pug` instance in the Core scene (a failed `CompanionBuilder` run left its
+  temporary model in the open scene and it was saved). Removed; the builder now always destroys its instance and the smoke test fails
+  if an animated model other than the spawned companion sits at the root of Core.
+- To republish: switch to WebGL, `build` (no Development option) into `E:\GitHub\Aldratos_Cube_Survival_WebTest`, commit and push
+  that repo, switch back to Windows. A WebGL build takes ~10 min the first time and needs several GB of free memory.
 - Untested assumptions: audio starts only after the first tap (browser rule); touch input and layouts on iPhone Safari; save
   persistence across reloads; performance.
 
