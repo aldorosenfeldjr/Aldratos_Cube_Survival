@@ -237,6 +237,7 @@ MonoBehaviour:
   tileContainer: {fileID: 5606902590203704245}
   scroll: {fileID: 2209952389736867161}
   previewBackground: {r: 0.12, g: 0.14, b: 0.18, a: 1}
+  previewRotator: {fileID: 6175643833675084463}
 --- !u!114 &5079335361377065361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -326,6 +327,7 @@ GameObject:
   - component: {fileID: 5078139472087806941}
   - component: {fileID: 8876004765196033346}
   - component: {fileID: 125738855610490147}
+  - component: {fileID: 6175643833675084463}
   m_Layer: 5
   m_Name: Preview
   m_TagString: Untagged
@@ -401,6 +403,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.AspectRatioFitter
   m_AspectMode: 3
   m_AspectRatio: 1
+--- !u!114 &6175643833675084463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4848776863309594492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d03de2326f8180742b472ed09b51437c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::PreviewRotator
+  degreesPerPixel: 0.3
 --- !u!1 &6243488586405689690
 GameObject:
   m_ObjectHideFlags: 0

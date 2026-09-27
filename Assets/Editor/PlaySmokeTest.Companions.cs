@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Companion checks for the play smoke test (roadmap item 3): the catalog matches the plan, animations exist and loop, the spawner
@@ -164,13 +165,11 @@ public static partial class PlaySmokeTest
         yield return 0.4f;
         var pigFraming = PreviewFraming(screenTransform);
         var previewAnimal = GameObject.Find("SelectionPreviewStage")?.transform.Find("Preview_comp.pig");
-        var previewPose0 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
-        yield return 0.5f;
-        var previewPose1 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
-        var previewChange = previewAnimal != null ? PoseDifference(previewPose0, previewPose1) : -1f;
-        Check("preview shows the focused animal and is static (paused, no rotation)",
-            previewAnimal != null && pigFraming.ok && previewChange >= 0f && previewChange < 0.000001f,
-            $"found={previewAnimal != null} {pigFraming.detail} pose change {previewChange:0.0000000}");
+        Check("preview shows the focused animal", previewAnimal != null && pigFraming.ok, $"found={previewAnimal != null} {pigFraming.detail}");
+        var companionRotator = screenTransform.Find("InfoPanel/PreviewFrame/Preview").GetComponent<PreviewRotator>();
+        var beforeRotation = previewAnimal != null ? previewAnimal.rotation : Quaternion.identity;
+        companionRotator.OnDrag(new PointerEventData(EventSystem.current) { delta = new Vector2(120f, 0f) });
+        Check("dragging the companion preview rotates it", previewAnimal != null && Quaternion.Angle(beforeRotation, previewAnimal.rotation) > 1f);
 
         var framingProblems = new List<string>();
         foreach (var tile in screen.Tiles.ToList())

@@ -36,6 +36,7 @@ public class SelectionScreen : MonoBehaviour
     [SerializeField] private RectTransform tileContainer;
     [SerializeField] private ScrollRect scroll;
     [SerializeField] private Color previewBackground = new Color(0.12f, 0.14f, 0.18f, 1f);
+    [SerializeField] private PreviewRotator previewRotator;
 
     private readonly List<UnlockTile> tiles = new List<UnlockTile>();
     private UnlockTile focused;
@@ -314,6 +315,7 @@ public class SelectionScreen : MonoBehaviour
         }
         previewObject = definition.CreatePreview(stage.transform);
         previewObject.transform.localPosition = Vector3.zero;
+        previewRotator.Target = previewObject.transform;
     }
 
     // Scrolls the grid just enough to bring a keyboard/gamepad-focused tile into view.

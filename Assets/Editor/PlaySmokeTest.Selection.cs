@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -204,9 +205,10 @@ public static partial class PlaySmokeTest
         Check("preview follows focus (red box)", commonCentre.r > commonCentre.b, $"centre={commonCentre}");
         var stage = GameObject.Find("SelectionPreviewStage");
         var cube = stage != null ? stage.transform.Find("Preview_" + common.Id) : null;
+        var rotator = screenTransform.Find("InfoPanel/PreviewFrame/Preview").GetComponent<PreviewRotator>();
         var before = cube != null ? cube.rotation : Quaternion.identity;
-        yield return 0.5f;
-        Check("preview is static (no rotation)", cube != null && Quaternion.Angle(before, cube.rotation) < 0.01f);
+        rotator.OnDrag(new PointerEventData(EventSystem.current) { delta = new Vector2(120f, 0f) });
+        Check("dragging the preview rotates it", cube != null && Quaternion.Angle(before, cube.rotation) > 1f);
 
         var unlockButton = screenTransform.Find("InfoPanel/Unlock").GetComponent<Button>();
         var selectButton = screenTransform.Find("InfoPanel/Select").GetComponent<Button>();
