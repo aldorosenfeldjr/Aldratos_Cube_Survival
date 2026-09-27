@@ -166,6 +166,12 @@ public class SelectionScreen : MonoBehaviour
         DestroyStage();
     }
 
+    // A screen destroyed while open (rather than closed with Back) must still free its preview camera, stage and texture.
+    private void OnDestroy()
+    {
+        DestroyStage();
+    }
+
     private void Update()
     {
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)

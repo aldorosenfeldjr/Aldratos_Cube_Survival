@@ -61,6 +61,34 @@ then this file. Do not re-explore the project.
 | Editor rewrites URP materials | note | `git status` shows `Gem.mat`, `PowerUp_*_Material.mat`, `Assets/Characters/*.mat` as modified after play/compile: Unity syncing `_Color` from `_BaseColor` (float noise). Do not commit them. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
 
+## 2b. Web test build (iPhone Safari), added 2026-09-27
+
+Purpose: try the game on the user's iPhone 12 without a Mac or Apple account. Branch `feature/web-test`; output folder
+`E:\GitHub\Aldratos_Cube_Survival_WebTest` (its own repo, served by GitHub Pages; the game repo stays free of build binaries).
+
+- **Build:** switch the target to WebGL (installed), then `build` with option `Development` and that output path. A Development
+  build turns on the fake ad/store services and starts a fresh save with 10,000 gems (`SaveService.DevelopmentBuildStartingGems`;
+  never in the Editor). Release builds keep ads/store "unavailable" until the real adapters exist.
+- **WebGL settings:** default quality Medium (URP-Mobile), Gzip + decompression fallback (GitHub Pages sends no compression headers),
+  `FileSync.jslib` flushes saves to IndexedDB, `File.Replace` falls back to copy + delete.
+- **Memory gotcha:** WebGL builds need several GB. The first attempt died with Windows error 1455 ("paging file too small") and
+  Unity then reported a bogus "scripts have compile errors" that stuck until a real script change forced a recompile. Close other
+  apps before building. The C# code itself compiles fine under WebGL.
+- **Editor target:** after building, switch back to Windows (*File > Build Profiles*, or `switch_build_target` StandaloneWindows64),
+  otherwise Play Mode and the smoke test run on the WebGL target.
+- **Published:** https://aldorosenfeldjr.github.io/Aldratos_Cube_Survival_WebTest/ (public repo `Aldratos_Cube_Survival_WebTest`,
+  GitHub Pages from `main`). ~17 MB. Verified in headless Chrome with an iPhone user agent and 390x844 viewport: loads in ~18 s,
+  mobile layout, menu, level select and gameplay render, no console errors. Open item: Chrome logs "Shader 'Hidden/Universal Render
+  Pipeline/Edge Adaptive Spatial Upsampling' is stripped ... PostProcessing render passes will not execute": the web build may lose
+  the colour grading/vignette look (not yet compared side by side).
+- **Lesson:** the web screenshot exposed a stray `Pug` instance in the Core scene (a failed `CompanionBuilder` run left its
+  temporary model in the open scene and it was saved). Removed; the builder now always destroys its instance and the smoke test fails
+  if an animated model other than the spawned companion sits at the root of Core.
+- To republish: switch to WebGL, `build` (no Development option) into `E:\GitHub\Aldratos_Cube_Survival_WebTest`, commit and push
+  that repo, switch back to Windows. A WebGL build takes ~10 min the first time and needs several GB of free memory.
+- Untested assumptions: audio starts only after the first tap (browser rule); touch input and layouts on iPhone Safari; save
+  persistence across reloads; performance.
+
 ## 3. Product roadmap (all built 2026-09-26 except step 5 of item 1; see status lines)
 
 Status: **1 done through step 4** (real adapters open), **2 done** (`CharacterBuilder`, 12 colours, `Player.ApplyLook`),

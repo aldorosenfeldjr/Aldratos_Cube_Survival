@@ -70,6 +70,19 @@ public static partial class PlaySmokeTest
         UseFreshTempSave();
         var spawner = Object.FindAnyObjectByType<CompanionSpawner>(FindObjectsInactive.Include);
         Check("Core has a companion spawner and the old scene cat is gone", spawner != null && GameObject.Find("Cat Lite") == null);
+
+        // A builder that fails halfway can leave its temporary model in the open scene and get it saved (this happened once: a giant
+        // pug stood in the middle of the play field). No animated model may sit at the root of Core except the spawned companion.
+        yield return 0.5f; // objects destroyed by earlier checks are removed at the end of a frame
+        var strayModels = new List<string>();
+        foreach (var root in spawner.gameObject.scene.GetRootGameObjects())
+        {
+            if (!root.name.StartsWith("Companion_") && root.GetComponentInChildren<SkinnedMeshRenderer>(true) != null)
+            {
+                strayModels.Add($"{root.name} (children {root.transform.childCount}, active {root.activeInHierarchy})");
+            }
+        }
+        Check("no stray model instances in the Core scene", strayModels.Count == 0, string.Join(", ", strayModels));
         if (spawner == null)
         {
             yield break;

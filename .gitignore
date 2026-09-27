@@ -72,3 +72,6 @@ crashlytics-build.properties
 
 # VS Code
 .vscode/
+
+# Burst plugins written next to the project by WebGL builds
+/Data/
