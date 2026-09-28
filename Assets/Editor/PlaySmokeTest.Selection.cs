@@ -177,15 +177,34 @@ public static partial class PlaySmokeTest
         var screenTransform = CanvasChild("SelectionScreen");
         var screen = screenTransform != null ? screenTransform.GetComponent<SelectionScreen>() : null;
         var menuGems = CanvasChild("MainMenu/GemCounter");
-        Check("main menu has Characters button, gem counter, and Core has the screen",
-            CanvasChild("MainMenu/Characters") != null && menuGems != null && screen != null);
+        Check("main menu has a Characters teaser, gem counter, and Core has the screen",
+            CanvasChild("MainMenu/CharacterTeaser") != null && menuGems != null && screen != null);
         if (screen == null || menuGems == null)
         {
             yield break;
         }
         Check("main menu gem counter shows the wallet", menuGems.GetComponent<TMP_Text>().text == "Gems: 70", menuGems.GetComponent<TMP_Text>().text);
 
-        Click("MainMenu/Characters");
+        // The teaser: a spoiler row of the catalog's first three characters, reusing the tiles' own lock and selected-frame logic.
+        var teaser = CanvasChild("MainMenu/CharacterTeaser")?.GetComponent<SelectionTeaser>();
+        var spoiler = teaser != null ? teaser.GetComponentsInChildren<UnlockTile>(true) : new UnlockTile[0];
+        bool Framed(UnlockTile tile) => tile.transform.Find("SelectedFrame").gameObject.activeSelf;
+        bool Locked(UnlockTile tile) => tile.transform.Find("Badge").gameObject.activeSelf;
+        Check("character teaser spoils the first 3 characters in catalog order",
+            spoiler.Length == 3 && spoiler.Select(tile => tile.Definition).SequenceEqual(characters.Take(3)), $"tiles={spoiler.Length}");
+        Check("teaser: the equipped character is framed and locked ones still show their lock",
+            spoiler.Length == 3 && spoiler.All(tile => Framed(tile) == (UnlockService.Selected(UnlockCategory.Character) == tile.Definition) && Locked(tile) == !UnlockService.IsOwned(tile.Definition))
+            && spoiler.Any(Locked) && spoiler.Any(Framed));
+        Check("teaser tiles let taps through to the panel behind them",
+            spoiler.Length == 3 && spoiler.All(tile => tile.GetComponentsInChildren<Graphic>(true).All(graphic => !graphic.raycastTarget)));
+        UnlockService.GrantPurchase(common);
+        UnlockService.Select(common);
+        Check("teaser follows the selection live: the frame moves and the lock goes",
+            spoiler.Length == 3 && spoiler.All(tile => Framed(tile) == (tile.Definition == common) && Locked(tile) == !UnlockService.IsOwned(tile.Definition)));
+        UseFreshTempSave();
+        Wallet.Add(70);
+
+        Click("MainMenu/CharacterTeaser");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
         var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponent<TMP_Text>();
@@ -300,7 +319,7 @@ public static partial class PlaySmokeTest
         Check("Back closes the screen, restores the main menu and frees the preview",
             !screen.gameObject.activeSelf && mainMenu.gameObject.activeSelf && GameObject.Find("SelectionPreviewStage") == null);
 
-        Click("MainMenu/Characters");
+        Click("MainMenu/CharacterTeaser");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         Check("reopening focuses the selected character", !timedOut && screen.Focused != null && screen.Focused.Definition == UnlockService.Selected(UnlockCategory.Character));
         Click("SelectionScreen/TopBar/Back");

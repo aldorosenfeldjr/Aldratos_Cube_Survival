@@ -143,13 +143,13 @@ public static partial class PlaySmokeTest
         var mainMenu = CanvasChild("MainMenu");
         var screenTransform = CanvasChild("CompanionScreen");
         var screen = screenTransform != null ? screenTransform.GetComponent<SelectionScreen>() : null;
-        Check("main menu has a Companions button and Core has the companion screen", CanvasChild("MainMenu/Companions") != null && screen != null);
+        Check("main menu has a Companions teaser and Core has the companion screen", CanvasChild("MainMenu/CompanionTeaser") != null && screen != null);
         if (screen == null)
         {
             yield break;
         }
 
-        Click("MainMenu/Companions");
+        Click("MainMenu/CompanionTeaser");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
         var title = screenTransform.Find("TopBar/Title").GetComponent<TMP_Text>().text;
@@ -223,7 +223,7 @@ public static partial class PlaySmokeTest
     private static List<string> MainMenuLayoutProblems(Transform mainMenu)
     {
         mainMenu.Find("RemoveAds").gameObject.SetActive(true);
-        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "Characters", "Companions", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" });
+        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" });
     }
 
     private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names)

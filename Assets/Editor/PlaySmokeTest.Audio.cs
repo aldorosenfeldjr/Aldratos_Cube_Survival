@@ -36,7 +36,7 @@ public static partial class PlaySmokeTest
         UseFreshTempSave();
         var prefabHasClick = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/MenuButton.prefab").GetComponent<ClickSound>() != null;
         var before = audio.PlayedCount;
-        Click("MainMenu/Characters");
+        Click("MainMenu/CharacterTeaser");
         yield return WaitUntil(() => CanvasChild("SelectionScreen").gameObject.activeInHierarchy);
         Check("pressing a menu button plays the click", prefabHasClick && audio.PlayedCount == before + 1 && audio.LastPlayed == Sfx.Click,
             $"prefab={prefabHasClick} played {before}->{audio.PlayedCount} last={audio.LastPlayed}");
