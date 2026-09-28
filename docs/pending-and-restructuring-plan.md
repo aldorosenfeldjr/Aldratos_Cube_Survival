@@ -1,8 +1,9 @@
 # Handoff: state, open items, roadmap
 
-Updated 2026-09-26 (economy steps 1-4, characters, companions, audio and the unit-test suite are done; only economy step 5,
-the real ad/store adapters, is open: see section 3a). A fresh session starts by reading `CLAUDE.md` (project map + rules),
-then this file. Do not re-explore the project.
+Updated 2026-09-27 (economy steps 1-4, characters, companions, audio and the unit-test suite are done; only economy step 5,
+the real ad/store adapters, is open: see section 3a. The character/companion selection experience was redesigned on
+2026-09-27: see section 2c). A fresh session starts by reading `CLAUDE.md` (project map + rules), then this file. Do not
+re-explore the project.
 
 ## 1. State
 
@@ -56,7 +57,7 @@ then this file. Do not re-explore the project.
 | Animals without Walk/Run | note | Pug, Piggy, Woolly and Llama only ship Idle and Jump animations, so they stand and idle instead of wandering. Only Daisy (cow), Bolt (horse) and Stripes (zebra) wander, like the cat. The cat's Idle clips do not loop (existing setup). |
 | Companion sizing | user | Each animal's on-screen size is a `WorldSize` column in `CompanionBuilder` (cat 0.52 = its old size). Values for the animals are a first guess: check them in a real run. `CatWanderer` also drives the new animals (name kept to avoid churn). |
 | Check post-processing on a phone | user | Mobile gets tonemapping/grading/vignette + SMAA + HDR (no DoF/SSAO). Profile on a real device; drop SMAA or HDR on URP-Mobile if it costs too much. |
-| Selection preview lighting | user | The preview cube uses Core's sunset light/ambient, so it looks lavender next to the swatch's true blue. Faithful to gameplay lighting; decide if the preview needs its own neutral light. |
+| Selection preview lighting | done 2026-09-27 | The preview stage now has its own range-limited neutral Point light (`SelectionScreen.CreateStage`); Core's sunset ambient still adds a faint lavender cast (see 2c). |
 | Selection screen not eyeballed in portrait | user | Landscape checked visually once; portrait and 7 other sizes only by the numeric layout audit. Also unchecked: the grid scrolling with >1 row (`EnsureVisible`). |
 | Editor rewrites URP materials | note | `git status` shows `Gem.mat`, `PowerUp_*_Material.mat`, `Assets/Characters/*.mat` as modified after play/compile: Unity syncing `_Color` from `_BaseColor` (float noise). Do not commit them. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
@@ -88,6 +89,73 @@ Purpose: try the game on the user's iPhone 12 without a Mac or Apple account. Br
   that repo, switch back to Windows. A WebGL build takes ~10 min the first time and needs several GB of free memory.
 - Untested assumptions: audio starts only after the first tap (browser rule); touch input and layouts on iPhone Safari; save
   persistence across reloads; performance.
+
+## 2c. Selection experience redesign, added 2026-09-27 (branch `feature/selection-experience-redesign`)
+
+Spec `docs/superpowers/specs/2026-09-27-selection-experience-redesign-design.md`, plan `docs/superpowers/plans/2026-09-27-selection-experience-redesign.md`.
+Built: the Main Menu shows two teaser panels on the right (`SelectionTeaser`: title + the catalog's first three items, the equipped one
+framed, locked ones badged; the panel is the button); tapping one fades the menu, slides the teaser toward the card's side, eases the
+menu background to a new pose and fades the screen in; Back reverses it. The screens are flipped (card/grid left or top, hero preview
+right or bottom, one `heroShare` = 0.5 in `SelectionLayout`) and sit on a see-through scrim. The preview is the real player mesh
+(`CharacterDefinition.previewMesh`, `YellowBox.fbx`) or the companion's own idle loop (`PreviewIdleLoop`; wanderers also walk in
+place), and both drag-rotate (`PreviewRotator`). The background is `MenuBackgroundRig` (own root object in Core, parked at x=1000):
+a diorama (`Assets/Prefabs/MenuShowcaseStage.prefab`, KayKit props + one Point light) rendered by its own camera at 1/4 resolution
+(the low resolution is the "out of focus" look, no real-time DoF, so it is cheap on mobile); it drifts slowly and eases between
+three poses (`MainMenu`, `Characters`, `Companions`, editable on the component); its camera renders only while `MenuBackground` is
+visible. The selection UI wears the Hyper Casual UI Pack (`Assets/Hyper_Casual_UI`): `SelectionSkinBuilder` (*Tools > UI > Apply
+Selection Skin*) is the one table for it; the shared `MenuButton`/`MenuLabel` prefabs and every other menu are NOT skinned yet.
+- **`SelectionScreenBuilder` (*Tools > UI > Rebuild Selection Screen*) now generates all of the above** (teaser prefab, Main Menu
+  teasers and layout, draggable preview, scrim) and runs the skin: rebuild instead of hand-editing these prefabs. It also churns
+  `GameOverMenu.prefab` (regenerated fileIDs) and `UnlockTile.prefab` (TMP override noise): revert those two after a rebuild.
+- Cat: it rendered default grey because `Cat Lite.fbx` imports no materials and `CompanionBuilder` never assigned one. Rows now take a
+  `Material` (the cat wears `Tex_Cat_Lite.mat`, what the old scene cat had). The selection preview stage has its own neutral Point light.
+- Debug: *Tools > Debug > Unlock All Characters & Companions* (Edit Mode only, changes your REAL save).
+- Smoke test: 134 checks, green; EditMode unit tests 57/57. Running `run_tests` with a modified open scene pops a modal "Scene(s) Have Been
+  Modified" dialog that blocks the Editor and every MCP call (dismiss it by hand, or `save_all` first).
+
+| Open item | Who | Notes |
+|---|---|---|
+| Eyeball it | user | Blur strength (is 1/4 resolution "out of focus" enough? else add one cheap box-blur pass), pose values (`MenuBackgroundRig`), diorama look/brightness (its light is a placeholder Point light), teaser and `heroShare` proportions, the cat's remaining faint lavender cast (Core's sunset ambient), and the portrait phone layout of the Main Menu (only the numeric audit covers it). The background texture rebuilds on rotation, but the diorama's vertical FOV was tuned for landscape, so portrait crops it. |
+| Diorama set-dressing | user | `MenuShowcaseStage` is three KayKit props on purpose; arrange it yourself (see the level-decoration note in memory). |
+| Skin the rest of the UI | done, see 2d | HUD, power-up pickups and icons, Pause / Game Over / Success / Level Select / New Record were done in 2d; the shared `MenuButton`/`MenuLabel` prefabs themselves are still plain (nothing uses them un-skinned except the mobile-only Quit paths). |
+| Cat spawns below the ground | later | Level ground is flat at y=0.250 but `CompanionSpawner` sits at y=0.0527, so a freshly spawned cat is about 0.2 below the ground plane and only pops up when `CatWanderer` first moves. It made the smoke check "default companion (the cat) ... on the ground and wandering" fail in ~40% of runs (it measured a cat that had already wandered); the check now destroys and respawns the cat first, so it is deterministic and still asserts the spawn-time seating. Fixing the real quirk = move the spawner onto the ground (then update the check's expectation). |
+| Scene-authored pieces | note | `MenuBackgroundRig`, its `Background` RawImage (must stay the FIRST child of `Canvas/MenuBackground`, checked by the smoke test) and `MenuShowcaseStage.prefab` live in Core / are hand-authored, not produced by a builder: `Rebuild Selection Screen` does not touch them. |
+| Portrait phones | done, eyeball | Below a 1000-unit canvas width (portrait phones are about 850-880 wide) `MainMenu.ApplyTeaserLayout` puts the teasers under the centred buttons instead of at the right edge; the smoke test audits 1920 / 1440 / 1000 / 876 / 844 / 760-wide canvases. Not seen on a real phone. |
+| Deferred review notes | later | Menu background renders every frame (up to the 120 Hz `targetFrameRate` set in `MainMenu.Start`; consider ~30 Hz or cancelling the drift while the camera is off); `Play()` is not covered by the open-transition guard (a teaser tap in its 0.2 s fade moves the background and the menu is then destroyed); `OnScreenClosed` fades in while already interactable (a tap in that 0.3 s starts a fade-out on the same CanvasGroup); teaser tile names/lock badge are ~9-12 units tall (check legibility on a phone); `CharacterDefinition.previewMesh` renders nothing if null and `CharacterBuilder` does not warn when `YellowBox.fbx` fails to load; a companion with an off-centre pivot may wobble when dragged. |
+
+## 2d. UI professionalization + collectables, added 2026-09-28 (same branch)
+
+Done after the first delivery was judged too thin. Everything uses the Hyper Casual UI Pack's own composed panels, pills, chips and icons.
+- **Power-ups**: all 8 pickup prefabs are small glossy collectables (heart = Shield, bolt = Speed Boost, star = Invincibility, purple
+  diamond = Gem Multiplier) with a soft glow (`Assets/UI/SoftGlow.png`), sparkles and a sphere collider (0.42), built by
+  `PowerUpPickupBuilder`; the HUD icons are rendered from the same models (`PortraitBuilder.RenderToSprite`), so they always match.
+- **HUD** (`GameUIBuilder`): score card top-left, Best and Gems chips under it, power-up rows (icon, name, seconds left, shrinking
+  green bar over a dark track; the track hides for power-ups without a timer), orange pause tile top-right. The Score object now hangs
+  from its top-left corner; `MainMenu` hides it above the screen (`ScoreHiddenY`) and slides it to `ScoreShownY` on Play.
+- **Menus** (`GameUIBuilder`): Pause, Game Over (+ trial-over offer), Success, New Record, Level Select each sit on a teal/gold pack
+  panel with correctly sized pills (nothing wider than ~560). Selection screens (`SelectionSkinBuilder`): gold-framed teal card,
+  dark tiles with a gold selected frame, orange back tile, coin gem chip (`GemCounter` is now a chip: slot + icon + label), buttons at
+  fixed width via `LayoutElement` (the VerticalLayoutGroup no longer stretches them), teasers on the pack's HUD panel.
+- **Text**: Baloo2 ExtraBold TMP asset + dark-outline material (`Assets/Fonts`, generated by `UIPack.EnsureFont`); the title on the
+  Main Menu keeps its display font.
+- **Gotchas found**: edits made to a prefab *instance* from an editor script are lost on save unless recorded
+  (`PrefabUtility.RecordPrefabInstancePropertyModifications`); Core's `Score` and `NewRecordScreen` instances carried old size/position
+  overrides that hid the new design (the builder clears them); some pack PNGs import as plain textures (`UIPack.Sprite` fixes that);
+  `PortraitBuilder` used to destroy its RenderTexture before its camera (console error, fixed); an `EditorApplication.update` callback
+  left over from a screenshot script spams errors until a script reload (`EditorUtility.RequestScriptReload`).
+- Smoke test 139/139 (5 new checks in `PlaySmokeTest.GameUI.cs`: pack panels/buttons and no oversized buttons, HUD, panels fit 5
+  screen sizes, every pickup small with a sphere collider and glow, icons are the collectable renders).
+- **2026-09-28, follow-up pass**: the power-up collect fly-in label (`PowerUpCollectFXLabel.prefab`, via `GameUIBuilder.ApplyCollectFxLabel`)
+  now has a soft glow behind the icon and Baloo2 text (found and fixed along the way: `PowerUpCollectFX` used
+  `GetComponentInChildren<Image>()` to find the icon, which started picking the new glow sibling instead — now a named `Find("Icon")`
+  lookup; the name label also needed `textWrappingMode = NoWrap` + autosizing so e.g. "Invincibility" doesn't wrap to two lines).
+  `SuccessMenu` no longer leaves a gap when Next level is hidden (last level cleared): Keep going / Quit read their normal slot Y
+  from the positions the builder already set (`SuccessMenuBuilder` now wires a `quitButton` field) and slide up to fill Next level's
+  slot instead — the spacing stays defined once, in the builder table. Checked the New Record badge in play mode (diagonal gold
+  ribbon, -18° rotation baked into the prefab, Baloo2 text): reads fine, no change made. Every label/button in every menu already
+  gets Baloo2 explicitly, per-instance, from the two skin builders' tables — the "remaining `MenuLabel`s" item turned out to already
+  be resolved as a side effect of that; only the Main Menu title intentionally keeps its display font.
+- Not done: real-phone check.
 
 ## 3. Product roadmap (all built 2026-09-26 except step 5 of item 1; see status lines)
 

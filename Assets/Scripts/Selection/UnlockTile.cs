@@ -22,6 +22,7 @@ public class UnlockTile : MonoBehaviour
         {
             swatch.sprite = definition.Thumbnail;
             swatch.color = Color.white;
+            swatch.preserveAspect = true;
         }
         else
         {

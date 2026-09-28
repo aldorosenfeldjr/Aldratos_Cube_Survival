@@ -12,6 +12,9 @@ public class PowerUpHUDIcon : MonoBehaviour
     private TMPro.TextMeshProUGUI nameText;
     [SerializeField]
     private Image fillBar;
+    [SerializeField]
+    [Tooltip("Empty bar behind the fill; hidden with it for power-ups that have no timer.")]
+    private GameObject barTrack;
 
     private float remainingTime;
     private float totalDuration;
@@ -26,6 +29,10 @@ public class PowerUpHUDIcon : MonoBehaviour
         totalDuration = duration;
         countdownText.gameObject.SetActive(hasTimer);
         fillBar.gameObject.SetActive(hasTimer);
+        if (barTrack != null)
+        {
+            barTrack.SetActive(hasTimer);
+        }
         UpdateCountdownText();
         UpdateFillBar();
     }

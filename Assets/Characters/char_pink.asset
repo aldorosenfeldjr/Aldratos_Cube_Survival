@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Bubblegum
   category: 0
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 3527229522570809777, guid: ac1713bc89c4d1a46be5b27a597c067f, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: 74a3fc09eb845ed439d029e25070ca5e, type: 2}
+  previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

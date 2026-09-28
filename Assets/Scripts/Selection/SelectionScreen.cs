@@ -15,6 +15,7 @@ using UnityEngine.UI;
 public class SelectionScreen : MonoBehaviour
 {
     private const int PreviewSize = 512;
+    private const float FadeInDuration = 0.25f;
     private static readonly Vector3 StagePosition = new Vector3(0f, -1000f, 0f);
 
     [SerializeField] private UnlockCategory category;
@@ -35,7 +36,8 @@ public class SelectionScreen : MonoBehaviour
     [SerializeField] private UnlockTile tilePrefab;
     [SerializeField] private RectTransform tileContainer;
     [SerializeField] private ScrollRect scroll;
-    [SerializeField] private Color previewBackground = new Color(0.12f, 0.14f, 0.18f, 1f);
+    [SerializeField] private PreviewRotator previewRotator;
+    [SerializeField] private Material pedestalMaterial;
 
     private readonly List<UnlockTile> tiles = new List<UnlockTile>();
     private UnlockTile focused;
@@ -53,12 +55,23 @@ public class SelectionScreen : MonoBehaviour
     {
         this.onClose = onClose;
         gameObject.SetActive(true);
+
+        var group = GetComponent<CanvasGroup>();
+        if (group == null)
+        {
+            group = gameObject.AddComponent<CanvasGroup>();
+        }
+        group.alpha = 0f;
+        group.LeanAlpha(1f, FadeInDuration);
     }
 
+    // Idempotent: a second Back (a double tap, or Escape in the same frame) finds no callback left and does nothing.
     public void Back()
     {
+        var close = onClose;
+        onClose = null;
         gameObject.SetActive(false);
-        onClose?.Invoke();
+        close?.Invoke();
     }
 
     /// <summary>Focuses a tile's item: the preview and info show it. Used by taps and by the test.</summary>
@@ -163,6 +176,7 @@ public class SelectionScreen : MonoBehaviour
     private void OnDisable()
     {
         Wallet.Changed -= OnWalletChanged;
+        LeanTween.cancel(gameObject);
         DestroyStage();
     }
 
@@ -273,17 +287,44 @@ public class SelectionScreen : MonoBehaviour
         // Static 3/4 view of the item: no rotation, no idle animation.
         var cameraObject = new GameObject("PreviewCamera");
         cameraObject.transform.SetParent(stage.transform, false);
-        cameraObject.transform.localPosition = new Vector3(2.4f, 1.9f, -3.4f);
-        cameraObject.transform.LookAt(stage.transform.position);
+        cameraObject.transform.localPosition = new Vector3(2.0f, 1.3f, -4.0f);
+        cameraObject.transform.LookAt(stage.transform.position + Vector3.down * 0.1f);
         var previewCamera = cameraObject.AddComponent<Camera>();
+        // Transparent, so the hero stands over the shifting menu background instead of in a box.
         previewCamera.clearFlags = CameraClearFlags.SolidColor;
-        previewCamera.backgroundColor = previewBackground;
-        previewCamera.fieldOfView = 30f;
+        previewCamera.backgroundColor = Color.clear;
+        previewCamera.fieldOfView = 38f;
         previewCamera.nearClipPlane = 0.3f;
         previewCamera.farClipPlane = 30f;
         previewCamera.allowHDR = false;
         previewCamera.allowMSAA = false;
         previewCamera.targetTexture = previewTexture;
+
+        // The stage is far from the play area but still lit by Core's warm sunset sun and ambient, which tints what it shows
+        // (the white cat looked lavender). A range-limited neutral light evens the colours out and cannot reach gameplay.
+        var lightObject = new GameObject("PreviewLight");
+        lightObject.transform.SetParent(stage.transform, false);
+        lightObject.transform.localPosition = new Vector3(1.5f, 2.5f, -2.5f);
+        var previewLight = lightObject.AddComponent<Light>();
+        previewLight.type = LightType.Point;
+        previewLight.color = Color.white;
+        previewLight.range = 12f;
+        previewLight.intensity = 12f;
+
+        // A pedestal for the hero to stand on: a wide base and a narrower top disc, feet at UnlockableDefinition.PreviewFloor.
+        AddDisc("PedestalBase", 2.3f, 0.10f, UnlockableDefinition.PreviewFloor - 0.07f);
+        AddDisc("Pedestal", 1.9f, 0.08f, UnlockableDefinition.PreviewFloor - 0.02f);
+    }
+
+    private void AddDisc(string discName, float diameter, float thickness, float centreY)
+    {
+        var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        disc.name = discName;
+        Destroy(disc.GetComponent<Collider>());
+        disc.transform.SetParent(stage.transform, false);
+        disc.transform.localPosition = new Vector3(0f, centreY, 0f);
+        disc.transform.localScale = new Vector3(diameter, thickness * 0.5f, diameter);
+        disc.GetComponent<Renderer>().sharedMaterial = pedestalMaterial;
     }
 
     private void DestroyStage()
@@ -314,6 +355,7 @@ public class SelectionScreen : MonoBehaviour
         }
         previewObject = definition.CreatePreview(stage.transform);
         previewObject.transform.localPosition = Vector3.zero;
+        previewRotator.Target = previewObject.transform;
     }
 
     // Scrolls the grid just enough to bring a keyboard/gamepad-focused tile into view.

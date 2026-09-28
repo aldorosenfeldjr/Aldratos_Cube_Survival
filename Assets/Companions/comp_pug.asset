@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Pug
   category: 1
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -181425430487431530, guid: ac91a23afa1e4434784ea1f8e61b63f7, type: 3}
   isDefault: 0
   prefab: {fileID: 8036946684456130007, guid: 863bb3eac6f81c148a83facdb55da827, type: 3}
   worldSize: 0.6

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Llama
   category: 1
   tier: 3
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -7250163868335425999, guid: 9c0f6bdd732ab6444b266d0578e5725f, type: 3}
   isDefault: 0
   prefab: {fileID: 6073640494321620615, guid: d272562a7e214d6439e0559dce96e5fe, type: 3}
   worldSize: 1

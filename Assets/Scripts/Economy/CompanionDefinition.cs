@@ -8,7 +8,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Companion", menuName = "Game/Companion Definition")]
 public class CompanionDefinition : UnlockableDefinition
 {
-    private const float PreviewSize = 1.6f;
+    private const float PreviewSize = 2.0f;
     private const float PreviewYaw = 145f;
 
     [SerializeField] private GameObject prefab;
@@ -65,7 +65,7 @@ public class CompanionDefinition : UnlockableDefinition
         return bounds;
     }
 
-    /// <summary>A still 3/4 view: the animal turned toward the preview camera, paused on its first idle frame, centred and fitted.</summary>
+    /// <summary>A live 3/4 view: the animal turned toward the preview camera, idling (or walking in place), centred and fitted.</summary>
     public override GameObject CreatePreview(Transform parent)
     {
         var instance = Instantiate(prefab, parent);
@@ -73,13 +73,13 @@ public class CompanionDefinition : UnlockableDefinition
         instance.transform.localPosition = Vector3.zero;
         instance.transform.localRotation = Quaternion.Euler(0f, PreviewYaw, 0f);
 
-        // Paused on its first idle frame; CompanionFitter then sizes and centres what is shown, on the first rendered frame.
+        // Loops its own idle (and, for wanderers, an in-place walk); CompanionFitter then sizes and centres what is shown.
         var animator = instance.GetComponent<Animator>();
         if (animator != null)
         {
-            animator.speed = 0f;
+            instance.AddComponent<PreviewIdleLoop>().Begin(animator, wanders);
         }
-        CompanionFitter.CentredOn(instance, PreviewSize, parent.position);
+        CompanionFitter.OnPedestal(instance, PreviewSize, parent.position + Vector3.up * PreviewFloor);
         return instance;
     }
 }

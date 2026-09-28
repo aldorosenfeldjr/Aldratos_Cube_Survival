@@ -42,6 +42,7 @@ public static class SuccessMenuBuilder
         fields.FindProperty("rewardText").objectReferenceValue = rewardText;
         fields.FindProperty("nextLevelButton").objectReferenceValue = next;
         fields.FindProperty("keepGoingButton").objectReferenceValue = keep;
+        fields.FindProperty("quitButton").objectReferenceValue = quit;
         fields.ApplyModifiedPropertiesWithoutUndo();
 
         root.SetActive(false);

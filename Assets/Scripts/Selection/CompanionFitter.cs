@@ -9,6 +9,7 @@ public class CompanionFitter : MonoBehaviour
 {
     private float size;
     private bool centre;
+    private bool onFloor;
     private Vector3 target;
 
     /// <summary>Fit to <paramref name="worldSize"/> and stand with the feet at <paramref name="groundY"/>.</summary>
@@ -28,11 +29,27 @@ public class CompanionFitter : MonoBehaviour
         fitter.target = centre;
     }
 
+    /// <summary>Fit to <paramref name="worldSize"/> and stand centred over <paramref name="floorCentre"/> with the feet on its height (a pedestal).</summary>
+    public static void OnPedestal(GameObject subject, float worldSize, Vector3 floorCentre)
+    {
+        var fitter = subject.AddComponent<CompanionFitter>();
+        fitter.size = worldSize;
+        fitter.onFloor = true;
+        fitter.target = floorCentre;
+    }
+
     private void LateUpdate()
     {
         CompanionDefinition.FitToSize(gameObject, size);
         var bounds = CompanionDefinition.WorldBounds(gameObject);
-        transform.position += centre ? target - bounds.center : new Vector3(0f, target.y - bounds.min.y, 0f);
+        if (onFloor)
+        {
+            transform.position += new Vector3(target.x - bounds.center.x, target.y - bounds.min.y, target.z - bounds.center.z);
+        }
+        else
+        {
+            transform.position += centre ? target - bounds.center : new Vector3(0f, target.y - bounds.min.y, 0f);
+        }
         Destroy(this);
     }
 }

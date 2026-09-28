@@ -7,8 +7,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // Builds the selection-screen prefabs from the shared MenuButton / MenuLabel prefabs (Tools > UI > Rebuild Selection Screen):
-//   GemCounter (wallet balance label, also on the main menu), UnlockTile (grid tile), SelectionScreen (Characters).
-// Also adds the Characters button and the gem counter to the MainMenu prefab, and wires the Core scene's MainMenu
+//   GemCounter (wallet balance label, also on the main menu), UnlockTile (grid tile), SelectionScreen (Characters),
+//   CompanionSelection, SelectionTeaser (the main menu's spoiler panel), then dresses them in the Hyper Casual UI Pack (SelectionSkinBuilder).
+// Also adds the two teasers and the gem counter to the MainMenu prefab, and wires the Core scene's MainMenu
 // to a SelectionScreen instance (Tools > UI > Wire Selection Screen In Core). Idempotent: rebuilding replaces the
 // prefab files in place, so scene instances keep their links.
 public static class SelectionScreenBuilder
@@ -18,12 +19,14 @@ public static class SelectionScreenBuilder
     private const string ButtonPath = UiFolder + "MenuButton.prefab";
     private const string GemCounterPath = UiFolder + "GemCounter.prefab";
     private const string TilePath = UiFolder + "UnlockTile.prefab";
+    private const string TeaserPath = UiFolder + "SelectionTeaser.prefab";
     private const string ScreenPath = UiFolder + "SelectionScreen.prefab";
     private const string CompanionScreenPath = UiFolder + "CompanionSelection.prefab";
     private const string MainMenuPath = UiFolder + "MainMenu.prefab";
     private const string GameOverPath = UiFolder + "GameOverMenu.prefab";
 
-    private static readonly Color PanelColor = new Color(0.07f, 0.09f, 0.13f, 1f);
+    // A see-through scrim, not a solid fill: the shifting menu background has to show behind the screens.
+    private static readonly Color PanelColor = new Color(0.07f, 0.09f, 0.13f, 0.4f);
     private static readonly Color FrameColor = new Color(1f, 0.85f, 0.2f, 1f);
 
     [MenuItem("Tools/UI/Rebuild Selection Screen")]
@@ -33,10 +36,12 @@ public static class SelectionScreenBuilder
         var tile = BuildTile();
         BuildScreen(gemCounter, tile, UnlockCategory.Character, ScreenPath, "SelectionScreen", "Characters");
         BuildScreen(gemCounter, tile, UnlockCategory.Companion, CompanionScreenPath, "CompanionScreen", "Companions");
-        UpdateMainMenuPrefab(gemCounter);
+        var teaser = BuildTeaser(tile);
+        UpdateMainMenuPrefab(gemCounter, teaser);
         UpdateGameOverPrefab();
         AssetDatabase.SaveAssets();
-        Debug.Log("Rebuilt selection screen prefabs and the main menu additions.");
+        SelectionSkinBuilder.ApplyAll();
+        Debug.Log("Rebuilt selection screen prefabs, the Main Menu teasers and their skin.");
     }
 
     [MenuItem("Tools/UI/Wire Selection Screen In Core")]
@@ -80,14 +85,37 @@ public static class SelectionScreenBuilder
         return instance.GetComponent<SelectionScreen>();
     }
 
+    // A chip: dark slot, coin icon, balance. The sprites come from SelectionSkinBuilder; this only makes the structure.
     private static GameObject BuildGemCounter()
     {
-        var root = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(LabelPath));
-        root.name = "GemCounter";
-        root.AddComponent<GemCounter>();
-        var text = root.GetComponent<TextMeshProUGUI>();
-        text.fontSize = 36f;
-        text.alignment = TextAlignmentOptions.Right;
+        var root = new GameObject("GemCounter", typeof(RectTransform));
+        root.layer = LayerMask.NameToLayer("UI");
+        ((RectTransform)root.transform).sizeDelta = new Vector2(240f, 60f);
+
+        var slot = NewRect("Slot", root.transform);
+        Stretch(slot);
+        var slotImage = slot.gameObject.AddComponent<Image>();
+        slotImage.raycastTarget = false;
+
+        var icon = NewRect("Icon", root.transform);
+        icon.anchorMin = icon.anchorMax = new Vector2(0f, 0.5f);
+        icon.pivot = new Vector2(0f, 0.5f);
+        icon.sizeDelta = new Vector2(40f, 40f);
+        icon.anchoredPosition = new Vector2(12f, 0f);
+        var iconImage = icon.gameObject.AddComponent<Image>();
+        iconImage.raycastTarget = false;
+        iconImage.preserveAspect = true;
+
+        var label = NewLabel(root.transform, "Label", 36f, 0f, 0f, 1f, 1f);
+        var labelRect = (RectTransform)label.transform;
+        labelRect.offsetMin = new Vector2(60f, 0f);
+        labelRect.offsetMax = new Vector2(-16f, 0f);
+        label.alignment = TextAlignmentOptions.Center;
+
+        var counter = root.AddComponent<GemCounter>();
+        var fields = new SerializedObject(counter);
+        fields.FindProperty("label").objectReferenceValue = label;
+        fields.ApplyModifiedPropertiesWithoutUndo();
         return Save(root, GemCounterPath);
     }
 
@@ -97,9 +125,12 @@ public static class SelectionScreenBuilder
         root.name = "UnlockTile";
         ((RectTransform)root.transform).sizeDelta = new Vector2(180f, 180f);
 
-        // Frame first so it draws behind the swatch and shows as a border on the selected item.
-        var frame = NewImage(root.transform, "SelectedFrame", FrameColor, 0.1f, 0.3f, 0.9f, 0.9f);
-        var swatch = NewImage(root.transform, "Swatch", Color.white, 0.14f, 0.34f, 0.86f, 0.86f);
+        // A rounded gold frame (only shown on the selected item) behind a soft card, behind the portrait: the frame reads as a border.
+        var frame = NewImage(root.transform, "SelectedFrame", FrameColor, 0.05f, 0.25f, 0.95f, 0.95f);
+        Round(frame);
+        var card = NewImage(root.transform, "Card", new Color(1f, 1f, 1f, 0.16f), 0.08f, 0.28f, 0.92f, 0.92f);
+        Round(card);
+        var swatch = NewImage(root.transform, "Swatch", Color.white, 0.11f, 0.30f, 0.89f, 0.90f);
 
         var badge = NewLabel(root.transform, "Badge", 22f, 0f, 0.86f, 1f, 1f);
         badge.color = FrameColor;
@@ -167,25 +198,26 @@ public static class SelectionScreenBuilder
         stack.childAlignment = TextAnchor.UpperCenter;
         stack.childControlWidth = true;
         stack.childControlHeight = true;
-        stack.childForceExpandWidth = true;
+        stack.childForceExpandWidth = false; // buttons keep their own width; the preview and the texts flex
         stack.childForceExpandHeight = false;
 
         var previewFrame = NewRect("PreviewFrame", info);
-        SetLayout(previewFrame.gameObject, minHeight: 160f, preferredHeight: 320f, flexibleHeight: 1f);
+        SetLayout(previewFrame.gameObject, minHeight: 160f, preferredHeight: 320f, flexibleHeight: 1f, flexibleWidth: 1f);
         var previewRect = NewRect("Preview", previewFrame);
         Stretch(previewRect);
         var preview = previewRect.gameObject.AddComponent<RawImage>();
-        preview.raycastTarget = false;
+        preview.raycastTarget = true; // the drag that rotates the preview needs a raycast hit
+        var rotator = previewRect.gameObject.AddComponent<PreviewRotator>();
         var fitter = previewRect.gameObject.AddComponent<AspectRatioFitter>();
         fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
         fitter.aspectRatio = 1f;
 
         var nameText = AddLabel(info, "Name", "Name", 48f);
-        SetLayout(nameText.gameObject, minHeight: 50f, preferredHeight: 50f);
+        SetLayout(nameText.gameObject, minHeight: 50f, preferredHeight: 60f, flexibleWidth: 1f);
         var tierText = AddLabel(info, "Tier", "Tier", 32f);
-        SetLayout(tierText.gameObject, minHeight: 36f, preferredHeight: 36f);
+        SetLayout(tierText.gameObject, minHeight: 36f, preferredHeight: 40f, flexibleWidth: 1f);
         var statusText = AddLabel(info, "Status", "Status", 32f);
-        SetLayout(statusText.gameObject, minHeight: 36f, preferredHeight: 36f);
+        SetLayout(statusText.gameObject, minHeight: 36f, preferredHeight: 40f, flexibleWidth: 1f);
         var select = AddButton(info, "Select", "Select");
         var unlock = AddButton(info, "Unlock", "Unlock");
         var buy = AddButton(info, "Buy", "Buy");
@@ -193,7 +225,7 @@ public static class SelectionScreenBuilder
         var restore = AddButton(info, "Restore", "Restore Purchases");
         foreach (var button in new[] { select, unlock, buy, tryAd, restore })
         {
-            SetLayout(button, minHeight: 60f, preferredHeight: 60f);
+            SetLayout(button, minHeight: 64f, preferredHeight: 64f, preferredWidth: 440f);
         }
 
         // Grid panel: vertical scroll of tiles.
@@ -235,6 +267,8 @@ public static class SelectionScreenBuilder
         fields.FindProperty("tierText").objectReferenceValue = tierText;
         fields.FindProperty("statusText").objectReferenceValue = statusText;
         fields.FindProperty("previewImage").objectReferenceValue = preview;
+        fields.FindProperty("previewRotator").objectReferenceValue = rotator;
+        fields.FindProperty("pedestalMaterial").objectReferenceValue = EnsurePedestalMaterial();
         fields.FindProperty("selectButton").objectReferenceValue = select.GetComponent<Button>();
         fields.FindProperty("selectLabel").objectReferenceValue = select.GetComponentInChildren<TextMeshProUGUI>();
         fields.FindProperty("unlockButton").objectReferenceValue = unlock.GetComponent<Button>();
@@ -258,37 +292,73 @@ public static class SelectionScreenBuilder
         Save(root, path);
     }
 
-    // The main menu keeps its own prefab: add a Characters button (between Play and Exit) and the gem counter.
-    private static void UpdateMainMenuPrefab(GameObject gemCounterPrefab)
+    // The Main Menu's spoiler panel for one category (the category is set per instance, on the Main Menu): a title and, in a row of
+    // fixed-size slots, the catalog's first three items as scaled-down grid tiles. The panel itself is the button that opens the screen.
+    private static SelectionTeaser BuildTeaser(UnlockTile tilePrefab)
+    {
+        var root = new GameObject("SelectionTeaser", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(ClickSound));
+        root.layer = LayerMask.NameToLayer("UI");
+        Place(root.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(290f, 164f));
+        var image = root.GetComponent<Image>();
+        image.color = new Color(0.08f, 0.09f, 0.16f, 0.6f);
+        root.GetComponent<Button>().targetGraphic = image;
+
+        var title = AddLabel(root.transform, "Title", "Characters", 32f);
+        title.raycastTarget = false;
+        var titleRect = (RectTransform)title.transform;
+        titleRect.anchorMin = new Vector2(0f, 1f);
+        titleRect.anchorMax = new Vector2(1f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.sizeDelta = new Vector2(0f, 40f);
+        titleRect.anchoredPosition = new Vector2(0f, -6f);
+
+        var tiles = NewRect("Tiles", root.transform);
+        tiles.anchorMin = new Vector2(0.5f, 0f);
+        tiles.anchorMax = new Vector2(0.5f, 0f);
+        tiles.pivot = new Vector2(0.5f, 0f);
+        tiles.sizeDelta = new Vector2(276f, 88f);
+        tiles.anchoredPosition = new Vector2(0f, 8f);
+        var row = tiles.gameObject.AddComponent<HorizontalLayoutGroup>();
+        row.spacing = 6f;
+        row.childAlignment = TextAnchor.MiddleCenter;
+        row.childControlWidth = false;
+        row.childControlHeight = false;
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = false;
+
+        var teaser = root.AddComponent<SelectionTeaser>();
+        var fields = new SerializedObject(teaser);
+        fields.FindProperty("category").enumValueIndex = (int)UnlockCategory.Character;
+        fields.FindProperty("titleText").objectReferenceValue = title;
+        fields.FindProperty("openButton").objectReferenceValue = root.GetComponent<Button>();
+        fields.FindProperty("tilePrefab").objectReferenceValue = tilePrefab;
+        fields.FindProperty("tileContainer").objectReferenceValue = tiles;
+        fields.ApplyModifiedPropertiesWithoutUndo();
+        return Save(root, TeaserPath).GetComponent<SelectionTeaser>();
+    }
+
+    // The main menu keeps its own prefab: the two teasers (Characters on top, Companions below, on the right) and the gem counter.
+    private static void UpdateMainMenuPrefab(GameObject gemCounterPrefab, SelectionTeaser teaserPrefab)
     {
         var contents = PrefabUtility.LoadPrefabContents(MainMenuPath);
         try
         {
             var menu = contents.GetComponent<MainMenu>();
-            var characters = contents.transform.Find("Characters");
-            if (characters == null)
-            {
-                var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ButtonPath), contents.transform);
-                instance.name = "Characters";
-                instance.GetComponentInChildren<TextMeshProUGUI>().text = "Characters";
-                UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.OpenCharacters);
-                characters = instance.transform;
-            }
-            var companions = contents.transform.Find("Companions");
-            if (companions == null)
-            {
-                var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ButtonPath), contents.transform);
-                instance.name = "Companions";
-                instance.GetComponentInChildren<TextMeshProUGUI>().text = "Companions";
-                UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.OpenCompanions);
-                companions = instance.transform;
-            }
-            // Vertical budget: the menu must stay inside the shortest canvas (about 864 units tall, i.e. +-432).
-            SetRect(characters, new Vector2(0f, -75f), new Vector2(340f, 60f));
-            SetRect(companions, new Vector2(0f, -150f), new Vector2(340f, 60f));
-            SetRect(contents.transform.Find("Exit"), new Vector2(0f, -225f), new Vector2(280f, 60f));
-            SetRect(contents.transform.Find("ClearHighScore"), new Vector2(0f, -300f), new Vector2(340f, 50f));
 
+            // The text buttons the teasers replaced (older builds of this prefab had them).
+            foreach (var legacy in new[] { "Characters", "Companions" })
+            {
+                var old = contents.transform.Find(legacy);
+                if (old != null)
+                {
+                    Object.DestroyImmediate(old.gameObject);
+                }
+            }
+            var characterTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CharacterTeaser", UnlockCategory.Character, MainMenu.SideCharacterY, menu.OpenCharacters);
+            var companionTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CompanionTeaser", UnlockCategory.Companion, MainMenu.SideCompanionY, menu.OpenCompanions);
+
+            // The centred buttons' sizes and positions live in SelectionSkinBuilder.MenuButtons (vertical budget: the menu must stay
+            // inside the shortest canvas, about 864 units tall, and clear of the teasers on the right).
             var removeAds = contents.transform.Find("RemoveAds");
             if (removeAds == null)
             {
@@ -298,9 +368,10 @@ public static class SelectionScreenBuilder
                 UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.RemoveAds);
                 removeAds = instance.transform;
             }
-            SetRect(removeAds, new Vector2(0f, -365f), new Vector2(400f, 60f));
             var menuFields = new SerializedObject(menu);
             menuFields.FindProperty("removeAdsButton").objectReferenceValue = removeAds.gameObject;
+            menuFields.FindProperty("characterTeaser").objectReferenceValue = characterTeaser;
+            menuFields.FindProperty("companionTeaser").objectReferenceValue = companionTeaser;
             menuFields.ApplyModifiedPropertiesWithoutUndo();
 
             if (contents.transform.Find("GemCounter") == null)
@@ -316,6 +387,33 @@ public static class SelectionScreenBuilder
         {
             PrefabUtility.UnloadPrefabContents(contents);
         }
+    }
+
+    // One teaser instance on the Main Menu: created once (with its click wired to the menu), then only repositioned and re-categorised.
+    private static SelectionTeaser EnsureTeaser(Transform parent, SelectionTeaser prefab, string name, UnlockCategory category, float y, UnityEngine.Events.UnityAction open)
+    {
+        var existing = parent.Find(name);
+        GameObject instance;
+        if (existing != null)
+        {
+            instance = existing.gameObject;
+        }
+        else
+        {
+            instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab.gameObject, parent);
+            instance.name = name;
+            UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, open);
+        }
+
+        var rect = (RectTransform)instance.transform;
+        rect.anchoredPosition = new Vector2(-MainMenu.SideLayoutMargin, y);
+        // Only the position is this menu's own: the size comes from the teaser prefab (an old size override would outlive prefab changes).
+        PrefabUtility.RevertPropertyOverride(new SerializedObject(rect).FindProperty("m_SizeDelta"), InteractionMode.AutomatedAction);
+        var teaser = instance.GetComponent<SelectionTeaser>();
+        var fields = new SerializedObject(teaser);
+        fields.FindProperty("category").enumValueIndex = (int)category;
+        fields.ApplyModifiedPropertiesWithoutUndo();
+        return teaser;
     }
 
     // The game-over screen gets a centred modal for the trial-over prompt (built once, then only repositioned).
@@ -401,6 +499,29 @@ public static class SelectionScreenBuilder
         return image;
     }
 
+    private static void Round(Image image)
+    {
+        image.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        image.type = Image.Type.Sliced;
+    }
+
+    // The pedestal the preview hero stands on (an ordinary lit material, so it is part of every build).
+    private static Material EnsurePedestalMaterial()
+    {
+        const string path = "Assets/Materials/Pedestal.mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material == null)
+        {
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(material, path);
+        }
+        material.SetColor("_BaseColor", new Color(0.42f, 0.5f, 0.82f));
+        material.SetFloat("_Smoothness", 0.75f);
+        material.SetFloat("_Metallic", 0.05f);
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
     private static TextMeshProUGUI NewLabel(Transform parent, string name, float size, float minX, float minY, float maxX, float maxY)
     {
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(LabelPath), parent);
@@ -436,7 +557,7 @@ public static class SelectionScreenBuilder
         return instance;
     }
 
-    private static void SetLayout(GameObject go, float minHeight = -1f, float preferredHeight = -1f, float flexibleHeight = -1f)
+    private static void SetLayout(GameObject go, float minHeight = -1f, float preferredHeight = -1f, float flexibleHeight = -1f, float preferredWidth = -1f, float flexibleWidth = -1f)
     {
         var element = go.GetComponent<LayoutElement>();
         if (element == null)
@@ -446,6 +567,8 @@ public static class SelectionScreenBuilder
         element.minHeight = minHeight;
         element.preferredHeight = preferredHeight;
         element.flexibleHeight = flexibleHeight;
+        element.preferredWidth = preferredWidth;
+        element.flexibleWidth = flexibleWidth;
     }
 
     private static void Stretch(RectTransform rect)

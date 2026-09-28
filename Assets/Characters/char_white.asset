@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Snowy
   category: 0
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 2163702195395301466, guid: 1b2ad4a54617a204e9f542a9ac606fde, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: 7b5c194b97fecfb4ca4d67a6357d0a86, type: 2}
+  previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

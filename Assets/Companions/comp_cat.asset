@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Kitty
   category: 1
   tier: 0
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 6770180470522577035, guid: f3af98c2e9d47b443b4c51c722bdc617, type: 3}
   isDefault: 1
   prefab: {fileID: 6694037834503889485, guid: f877b6f2dd0b23a43a22c62638d27fa0, type: 3}
   worldSize: 0.52

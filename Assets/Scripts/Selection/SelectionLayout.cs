@@ -1,21 +1,21 @@
 using UnityEngine;
 
 /// <summary>
-/// Switches the selection screen between landscape (info on the left, grid on the right) and portrait
-/// (info on top, grid below). The app auto-rotates, so this re-runs whenever the screen's size changes.
-/// Panels are positioned by anchors only, so it works at any resolution.
+/// Switches the selection screen between landscape (card/grid on the left, hero preview on the right) and
+/// portrait (card/grid on top, hero preview below), matching the reference layout. The app auto-rotates, so this
+/// re-runs whenever the screen's size changes. Panels are positioned by anchors only, so it works at any resolution.
 /// </summary>
 public class SelectionLayout : MonoBehaviour
 {
+    [Tooltip("The hero: live preview, name and action buttons.")]
     [SerializeField] private RectTransform infoPanel;
+    [Tooltip("The card: the scrollable grid of items.")]
     [SerializeField] private RectTransform gridPanel;
     [Tooltip("Height of the top bar (Back, title, gem counter) that both panels sit below.")]
     [SerializeField] private float topBarHeight = 100f;
     [SerializeField] private float padding = 24f;
-    [Tooltip("Share of the width given to the info panel in landscape.")]
-    [SerializeField, Range(0.3f, 0.6f)] private float landscapeInfoShare = 0.42f;
-    [Tooltip("Share of the height given to the info panel in portrait (it also holds the preview, so it needs more).")]
-    [SerializeField, Range(0.3f, 0.7f)] private float portraitInfoShare = 0.52f;
+    [Tooltip("Share of the screen given to the hero preview: width in landscape, height in portrait.")]
+    [SerializeField, Range(0.3f, 0.6f)] private float heroShare = 0.5f;
 
     public bool IsLandscape { get; private set; }
 
@@ -41,13 +41,13 @@ public class SelectionLayout : MonoBehaviour
 
         if (IsLandscape)
         {
-            SetAnchors(infoPanel, 0f, 0f, landscapeInfoShare, 1f);
-            SetAnchors(gridPanel, landscapeInfoShare, 0f, 1f, 1f);
+            SetAnchors(gridPanel, 0f, 0f, 1f - heroShare, 1f);
+            SetAnchors(infoPanel, 1f - heroShare, 0f, 1f, 1f);
         }
         else
         {
-            SetAnchors(infoPanel, 0f, 1f - portraitInfoShare, 1f, 1f);
-            SetAnchors(gridPanel, 0f, 0f, 1f, 1f - portraitInfoShare);
+            SetAnchors(gridPanel, 0f, 1f - heroShare, 1f, 1f);
+            SetAnchors(infoPanel, 0f, 0f, 1f, 1f - heroShare);
         }
     }
 

@@ -75,3 +75,6 @@ crashlytics-build.properties
 
 # Burst plugins written next to the project by WebGL builds
 /Data/
+
+# Superpowers plan execution workspace (ledgers, briefs, review packages)
+/.superpowers/

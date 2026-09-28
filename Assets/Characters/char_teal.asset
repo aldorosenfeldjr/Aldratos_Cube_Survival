@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Lagoon
   category: 0
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 4225965549148094811, guid: 531426789e77c2b409f1ff2d62376469, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: d259651f079be2743ab7e474ceb6b64e, type: 2}
+  previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Companion checks for the play smoke test (roadmap item 3): the catalog matches the plan, animations exist and loop, the spawner
@@ -88,6 +89,13 @@ public static partial class PlaySmokeTest
             yield break;
         }
 
+        // Check a freshly spawned cat: one that has been alive a while has started wandering, and then follows the level's ground
+        // (0.25), which is higher than the spawner's own height (0.05), so its feet no longer match the spawner.
+        if (spawner.Current != null)
+        {
+            Object.Destroy(spawner.Current);
+        }
+        yield return 0.1f;
         spawner.Spawn();
         yield return 0.3f; // sized and seated on the first rendered frame
         var cat = companions.First(item => item.IsDefault);
@@ -142,19 +150,21 @@ public static partial class PlaySmokeTest
         var mainMenu = CanvasChild("MainMenu");
         var screenTransform = CanvasChild("CompanionScreen");
         var screen = screenTransform != null ? screenTransform.GetComponent<SelectionScreen>() : null;
-        Check("main menu has a Companions button and Core has the companion screen", CanvasChild("MainMenu/Companions") != null && screen != null);
+        Check("main menu has a Companions teaser and Core has the companion screen", CanvasChild("MainMenu/CompanionTeaser") != null && screen != null);
         if (screen == null)
         {
             yield break;
         }
 
-        Click("MainMenu/Companions");
+        Click("MainMenu/CompanionTeaser");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
         var title = screenTransform.Find("TopBar/Title").GetComponent<TMP_Text>().text;
         Check("Companions opens its own screen: title, 8 tiles, the cat focused, main menu hidden",
             !timedOut && title == "Companions" && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == 8 && screen.Focused != null && screen.Focused.Definition == cat,
             $"title='{title}' tiles={screen.Tiles.Count}");
+        yield return 0.4f;
+        Check("the menu background moved to the Companions pose", MenuBackgroundRig.Instance.CurrentPoseName == "Companions", $"pose={MenuBackgroundRig.Instance.CurrentPoseName}");
 
         var catFraming = PreviewFraming(screenTransform);
         Check("preview shows the cat large and centred", catFraming.ok, catFraming.detail);
@@ -164,13 +174,19 @@ public static partial class PlaySmokeTest
         yield return 0.4f;
         var pigFraming = PreviewFraming(screenTransform);
         var previewAnimal = GameObject.Find("SelectionPreviewStage")?.transform.Find("Preview_comp.pig");
+        Check("preview shows the focused animal", previewAnimal != null && pigFraming.ok, $"found={previewAnimal != null} {pigFraming.detail}");
+
+        // Taken before the drag below: rotating the root would also change its localRotation and hide a frozen animator.
         var previewPose0 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
-        yield return 0.5f;
+        yield return 1.0f;
         var previewPose1 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
         var previewChange = previewAnimal != null ? PoseDifference(previewPose0, previewPose1) : -1f;
-        Check("preview shows the focused animal and is static (paused, no rotation)",
-            previewAnimal != null && pigFraming.ok && previewChange >= 0f && previewChange < 0.000001f,
-            $"found={previewAnimal != null} {pigFraming.detail} pose change {previewChange:0.0000000}");
+        Check("companion preview idle animation is playing (not frozen)", previewChange > 0.0005f, $"pose change {previewChange:0.0000000}");
+
+        var companionRotator = screenTransform.Find("InfoPanel/PreviewFrame/Preview").GetComponent<PreviewRotator>();
+        var beforeRotation = previewAnimal != null ? previewAnimal.rotation : Quaternion.identity;
+        companionRotator.OnDrag(new PointerEventData(EventSystem.current) { delta = new Vector2(120f, 0f) });
+        Check("dragging the companion preview rotates it", previewAnimal != null && Quaternion.Angle(beforeRotation, previewAnimal.rotation) > 1f);
 
         var framingProblems = new List<string>();
         foreach (var tile in screen.Tiles.ToList())
@@ -203,26 +219,44 @@ public static partial class PlaySmokeTest
         Click("CompanionScreen/TopBar/Back");
         yield return 0.2f;
         Check("Back closes the companion screen and restores the main menu", !screen.gameObject.activeSelf && mainMenu.gameObject.activeSelf && GameObject.Find("SelectionPreviewStage") == null);
+        yield return 0.8f;
+        var companionMenuGroup = mainMenu.GetComponent<CanvasGroup>();
+        Check("Back from Companions restores the background pose and the menu's opacity and input",
+            MenuBackgroundRig.Instance.CurrentPoseName == "MainMenu" && Mathf.Approximately(companionMenuGroup.alpha, 1f) && companionMenuGroup.interactable && companionMenuGroup.blocksRaycasts,
+            $"pose={MenuBackgroundRig.Instance.CurrentPoseName} alpha={companionMenuGroup.alpha}");
 
         // The main menu now has five buttons plus Remove Ads: everything must fit the shortest canvas (about 864 units tall).
         UseFreshTempSave();
         spawner.Spawn();
+        mainMenu.GetComponent<MainMenu>().ApplyTeaserLayout(1920f);
         var menuProblems = MainMenuLayoutProblems(mainMenu);
         Check("main menu fits the shortest canvas with no overlaps", menuProblems.Count == 0, string.Join(" | ", menuProblems));
+
+        // Real canvases (the scaler matches width and height halfway on 1920x866): landscape phones are 1920 wide, portrait phones
+        // 844-876 wide and about 1900 tall, tablets in between. The teasers re-place themselves for each width.
+        var menu = mainMenu.GetComponent<MainMenu>();
+        var canvasProblems = new List<string>();
+        foreach (var canvas in new[] { new Vector2(1920f, 866f), new Vector2(1440f, 1000f), new Vector2(1100f, 866f), new Vector2(1000f, 1500f), new Vector2(876f, 1900f), new Vector2(844f, 1900f), new Vector2(760f, 1900f) })
+        {
+            menu.ApplyTeaserLayout(canvas.x);
+            canvasProblems.AddRange(MainMenuLayoutProblems(mainMenu, canvas).Select(problem => $"{canvas.x}x{canvas.y}: {problem}"));
+        }
+        menu.ApplyTeaserLayout();
+        Check("main menu fits landscape, tablet and portrait phone canvases with no overlaps", canvasProblems.Count == 0, string.Join(" | ", canvasProblems));
     }
 
-    // Positions every main-menu element from its anchors on a synthetic worst-case canvas (968 wide: portrait; 864 tall: a landscape
-    // phone), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
-    private static List<string> MainMenuLayoutProblems(Transform mainMenu)
+    // Positions every main-menu element from its anchors on a synthetic canvas (default 1920 x 866, a landscape phone: the shortest
+    // real canvas), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
+    private static List<string> MainMenuLayoutProblems(Transform mainMenu, Vector2? canvas = null)
     {
         mainMenu.Find("RemoveAds").gameObject.SetActive(true);
-        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "Characters", "Companions", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" });
+        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" }, canvas ?? new Vector2(1920f, 866f));
     }
 
-    private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names)
+    private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names, Vector2? canvasSize = null)
     {
         var problems = new List<string>();
-        var canvas = new Vector2(968f, 864f);
+        var canvas = canvasSize ?? new Vector2(968f, 864f);
         var limit = new Rect(-canvas.x / 2f, -canvas.y / 2f, canvas.x, canvas.y);
         var rects = new List<(string, Rect)>();
         foreach (var name in names)
@@ -295,9 +329,11 @@ public static partial class PlaySmokeTest
         var height = (maxY - minY + 1) / (float)target.height;
         var centreX = (minX + maxX) / 2f / target.width - 0.5f;
         var centreY = (minY + maxY) / 2f / target.height - 0.5f;
+        // The subject includes the pedestal it stands on, so it sits a little low in the frame; it must not touch the frame's edge (clipped).
+        var clipped = minX <= 1 || minY <= 1 || maxX >= target.width - 2 || maxY >= target.height - 2;
         var biggest = Mathf.Max(width, height);
-        var ok = biggest >= 0.3f && biggest <= 0.95f && Mathf.Abs(centreX) < 0.15f && Mathf.Abs(centreY) < 0.15f;
-        return (ok, $"subject {width:P0} x {height:P0} of the frame, off-centre ({centreX:+0.00;-0.00}, {centreY:+0.00;-0.00})");
+        var ok = biggest >= 0.3f && biggest <= 0.95f && Mathf.Abs(centreX) < 0.15f && Mathf.Abs(centreY) < 0.25f && !clipped;
+        return (ok, $"subject {width:P0} x {height:P0} of the frame, off-centre ({centreX:+0.00;-0.00}, {centreY:+0.00;-0.00}){(clipped ? ", CLIPPED by the frame" : string.Empty)}");
     }
 
     private static int CompanionCount()

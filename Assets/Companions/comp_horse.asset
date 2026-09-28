@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Bolt
   category: 1
   tier: 4
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 2986679005520639294, guid: 3130c7fab41a34a4896839cdaf78fdce, type: 3}
   isDefault: 0
   prefab: {fileID: 6735148977573803108, guid: 867a88881d228fd4da00e460364baf63, type: 3}
   worldSize: 1.2

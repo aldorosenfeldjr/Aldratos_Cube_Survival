@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -176,21 +177,82 @@ public static partial class PlaySmokeTest
         var screenTransform = CanvasChild("SelectionScreen");
         var screen = screenTransform != null ? screenTransform.GetComponent<SelectionScreen>() : null;
         var menuGems = CanvasChild("MainMenu/GemCounter");
-        Check("main menu has Characters button, gem counter, and Core has the screen",
-            CanvasChild("MainMenu/Characters") != null && menuGems != null && screen != null);
+        Check("main menu has a Characters teaser, gem counter, and Core has the screen",
+            CanvasChild("MainMenu/CharacterTeaser") != null && menuGems != null && screen != null);
         if (screen == null || menuGems == null)
         {
             yield break;
         }
-        Check("main menu gem counter shows the wallet", menuGems.GetComponent<TMP_Text>().text == "Gems: 70", menuGems.GetComponent<TMP_Text>().text);
+        Check("main menu gem counter shows the wallet", menuGems.GetComponentInChildren<TMP_Text>().text == "70", menuGems.GetComponentInChildren<TMP_Text>().text);
 
-        Click("MainMenu/Characters");
+        // The teaser: a spoiler row of the catalog's first three characters, reusing the tiles' own lock and selected-frame logic.
+        var teaser = CanvasChild("MainMenu/CharacterTeaser")?.GetComponent<SelectionTeaser>();
+        var spoiler = teaser != null ? teaser.GetComponentsInChildren<UnlockTile>(true) : new UnlockTile[0];
+        bool Framed(UnlockTile tile) => tile.transform.Find("SelectedFrame").gameObject.activeSelf;
+        bool Locked(UnlockTile tile) => tile.transform.Find("Badge").gameObject.activeSelf;
+        Check("character teaser spoils the first 3 characters in catalog order",
+            spoiler.Length == 3 && spoiler.Select(tile => tile.Definition).SequenceEqual(characters.Take(3)), $"tiles={spoiler.Length}");
+        Check("teaser: the equipped character is framed and locked ones still show their lock",
+            spoiler.Length == 3 && spoiler.All(tile => Framed(tile) == (UnlockService.Selected(UnlockCategory.Character) == tile.Definition) && Locked(tile) == !UnlockService.IsOwned(tile.Definition))
+            && spoiler.Any(Locked) && spoiler.Any(Framed));
+        Check("teaser tiles let taps through to the panel behind them",
+            spoiler.Length == 3 && spoiler.All(tile => tile.GetComponentsInChildren<Graphic>(true).All(graphic => !graphic.raycastTarget)));
+        UnlockService.GrantPurchase(common);
+        UnlockService.Select(common);
+        Check("teaser follows the selection live: the frame moves and the lock goes",
+            spoiler.Length == 3 && spoiler.All(tile => Framed(tile) == (tile.Definition == common) && Locked(tile) == !UnlockService.IsOwned(tile.Definition)));
+        UseFreshTempSave();
+        Wallet.Add(70);
+
+        // The open transition: the menu locks its input while it fades, the tapped teaser slides toward the card's side,
+        // and the menu background eases to the Characters pose.
+        var rig = MenuBackgroundRig.Instance;
+        var menuGroup = mainMenu.GetComponent<CanvasGroup>();
+        var teaserRect = (RectTransform)CanvasChild("MainMenu/CharacterTeaser");
+        var teaserHome = teaserRect.anchoredPosition;
+        Check("the menu background camera renders while the menu is showing", rig != null && rig.CameraEnabled && rig.CurrentPoseName == "MainMenu");
+
+        Check("the diorama is the back-most menu background layer (SunGlow and Particles draw over it)",
+            CanvasChild("MenuBackground/Background").GetSiblingIndex() == 0);
+
+        // Interrupting a pose tween (open, then Back at once) continues from where the camera is instead of snapping to the old target.
+        rig.MoveToCharacters();
+        yield return 0.15f;
+        var fovBeforeInterrupt = rig.CameraFieldOfView;
+        rig.MoveToMainMenu();
+        yield return 0.06f;
+        Check("interrupting a pose tween continues smoothly instead of snapping", Mathf.Abs(rig.CameraFieldOfView - fovBeforeInterrupt) < 1f,
+            $"fov {fovBeforeInterrupt} -> {rig.CameraFieldOfView}");
+        yield return 0.9f;
+
+        // The app auto-rotates: a background texture built for one orientation must be rebuilt for the other, freeing the old one.
+        var oldTexture = rig.Texture;
+        rig.EnsureTextureSize(new Vector2Int(900, 2000));
+        Check("a rotated screen gets a background texture of its own aspect and the old one is freed",
+            !oldTexture.IsCreated() && rig.TextureWired && Mathf.Abs(rig.Texture.width / (float)rig.Texture.height - 0.45f) < 0.02f,
+            $"{rig.Texture.width}x{rig.Texture.height} wired={rig.TextureWired}");
+        yield return 0.2f;
+        Check("the background texture follows the real screen again by itself",
+            rig.TextureWired && Mathf.Abs(rig.Texture.width / (float)rig.Texture.height - Screen.width / (float)Screen.height) < 0.02f,
+            $"{rig.Texture.width}x{rig.Texture.height} screen={Screen.width}x{Screen.height}");
+
+        Click("MainMenu/CharacterTeaser");
+        Check("opening a screen locks the menu's input while it fades", !menuGroup.blocksRaycasts && !menuGroup.interactable);
+        var tweensAfterFirstTap = LeanTween.tweensRunning;
+        Click("MainMenu/CharacterTeaser");
+        Check("a second tap during the transition starts no more animation", LeanTween.tweensRunning == tweensAfterFirstTap, $"{tweensAfterFirstTap} -> {LeanTween.tweensRunning}");
+        yield return WaitUntil(() => teaserRect.anchoredPosition.x < teaserHome.x - 50f);
+        Check("the tapped teaser slides toward the card while the menu fades",
+            !timedOut && menuGroup.alpha > 0f && menuGroup.alpha < 1f, $"x={teaserRect.anchoredPosition.x} home={teaserHome.x} alpha={menuGroup.alpha}");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
-        var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponent<TMP_Text>();
+        var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponentInChildren<TMP_Text>();
         Check("Characters opens the screen and hides the main menu",
-            !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenGems.text == "Gems: 70",
+            !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenGems.text == "70",
             $"tiles={screen.Tiles.Count}/{characters.Count} gems='{screenGems.text}'");
+        yield return 0.3f;
+        Check("the menu background moved to the Characters pose", rig.CurrentPoseName == "Characters" && Mathf.Abs(rig.CameraFieldOfView - 28f) < 0.1f,
+            $"pose={rig.CurrentPoseName} fov={rig.CameraFieldOfView}");
 
         // The preview must show the focused item: centre differs from the background and follows the item's colour.
         var freeCentre = PreviewCentre(screenTransform, out var freeCorner);
@@ -204,9 +266,18 @@ public static partial class PlaySmokeTest
         Check("preview follows focus (red box)", commonCentre.r > commonCentre.b, $"centre={commonCentre}");
         var stage = GameObject.Find("SelectionPreviewStage");
         var cube = stage != null ? stage.transform.Find("Preview_" + common.Id) : null;
+        var rotator = screenTransform.Find("InfoPanel/PreviewFrame/Preview").GetComponent<PreviewRotator>();
         var before = cube != null ? cube.rotation : Quaternion.identity;
-        yield return 0.5f;
-        Check("preview is static (no rotation)", cube != null && Quaternion.Angle(before, cube.rotation) < 0.01f);
+        rotator.OnDrag(new PointerEventData(EventSystem.current) { delta = new Vector2(120f, 0f) });
+        Check("dragging the preview rotates it", cube != null && Quaternion.Angle(before, cube.rotation) > 1f);
+
+        // A real pointer only reaches OnDrag if the preview is the top raycast hit under it.
+        var previewObject = screenTransform.Find("InfoPanel/PreviewFrame/Preview");
+        var grab = new PointerEventData(EventSystem.current) { position = RectTransformUtility.WorldToScreenPoint(null, previewObject.position) };
+        var grabHits = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(grab, grabHits);
+        Check("the preview can be grabbed: a pointer over it hits it first", grabHits.Count > 0 && grabHits[0].gameObject == previewObject.gameObject,
+            grabHits.Count > 0 ? grabHits[0].gameObject.name : "no hit");
 
         var unlockButton = screenTransform.Find("InfoPanel/Unlock").GetComponent<Button>();
         var selectButton = screenTransform.Find("InfoPanel/Select").GetComponent<Button>();
@@ -221,7 +292,7 @@ public static partial class PlaySmokeTest
 
         unlockButton.onClick.Invoke();
         Check("clicking Unlock spends the price and owns the item",
-            Wallet.Balance == 0 && UnlockService.IsOwned(common) && !unlockButton.gameObject.activeSelf && selectButton.gameObject.activeSelf && selectButton.interactable && screenGems.text == "Gems: 0",
+            Wallet.Balance == 0 && UnlockService.IsOwned(common) && !unlockButton.gameObject.activeSelf && selectButton.gameObject.activeSelf && selectButton.interactable && screenGems.text == "0",
             $"balance={Wallet.Balance} gems='{screenGems.text}'");
 
         selectButton.onClick.Invoke();
@@ -297,12 +368,45 @@ public static partial class PlaySmokeTest
         yield return 0.2f;
         Check("Back closes the screen, restores the main menu and frees the preview",
             !screen.gameObject.activeSelf && mainMenu.gameObject.activeSelf && GameObject.Find("SelectionPreviewStage") == null);
+        yield return 0.8f;
+        Check("Back restores the menu fully: background pose, opacity, input and the teaser's place",
+            rig.CurrentPoseName == "MainMenu" && Mathf.Abs(rig.CameraFieldOfView - 32f) < 0.1f && Mathf.Approximately(menuGroup.alpha, 1f)
+            && menuGroup.interactable && menuGroup.blocksRaycasts && teaserRect.anchoredPosition == teaserHome,
+            $"pose={rig.CurrentPoseName} fov={rig.CameraFieldOfView} alpha={menuGroup.alpha} input={menuGroup.interactable}/{menuGroup.blocksRaycasts} teaser={teaserRect.anchoredPosition} home={teaserHome}");
 
-        Click("MainMenu/Characters");
+        Click("MainMenu/CharacterTeaser");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         Check("reopening focuses the selected character", !timedOut && screen.Focused != null && screen.Focused.Definition == UnlockService.Selected(UnlockCategory.Character));
         Click("SelectionScreen/TopBar/Back");
         yield return 0.2f;
+
+        // 3b. The skin: every action button, the grid panel and the teasers wear a 9-sliced sprite from the Hyper Casual UI Pack.
+        var skinProblems = new List<string>();
+        void RequireSkin(string label, Transform target)
+        {
+            var image = target != null ? target.GetComponent<Image>() : null;
+            var path = image != null && image.sprite != null ? AssetDatabase.GetAssetPath(image.sprite) : "none";
+            if (image == null || !image.enabled || image.type != Image.Type.Sliced || !path.StartsWith("Assets/Hyper_Casual_UI/") || image.sprite.border == Vector4.zero)
+            {
+                skinProblems.Add($"{label}: {path}");
+            }
+        }
+        foreach (var screenRoot in new[] { screenTransform, CanvasChild("CompanionScreen") })
+        {
+            var backSprite = screenRoot.Find("TopBar/Back").GetComponent<Image>().sprite;
+            if (backSprite == null || !AssetDatabase.GetAssetPath(backSprite).StartsWith("Assets/Hyper_Casual_UI/"))
+            {
+                skinProblems.Add(screenRoot.name + "/Back: not the pack's back tile");
+            }
+            foreach (var action in new[] { "Select", "Unlock", "Buy", "Try", "Restore" })
+            {
+                RequireSkin(screenRoot.name + "/" + action, screenRoot.Find("InfoPanel/" + action));
+            }
+            RequireSkin(screenRoot.name + "/GridPanel", screenRoot.Find("GridPanel"));
+        }
+        RequireSkin("CharacterTeaser", CanvasChild("MainMenu/CharacterTeaser"));
+        RequireSkin("CompanionTeaser", CanvasChild("MainMenu/CompanionTeaser"));
+        Check("the selection screens and teasers wear the Hyper Casual UI Pack skin", skinProblems.Count == 0, string.Join(" | ", skinProblems));
 
         // 4. Layout audit at real screen sizes.
         var problems = LayoutAudit();
@@ -431,7 +535,7 @@ public static partial class PlaySmokeTest
 
         var infoRect = LocalRect(info, root);
         var gridRect = LocalRect(grid, root);
-        if (layout.IsLandscape ? gridRect.center.x <= infoRect.center.x : gridRect.center.y >= infoRect.center.y)
+        if (layout.IsLandscape ? gridRect.center.x >= infoRect.center.x : gridRect.center.y <= infoRect.center.y)
         {
             problems.Add($"{tag}: panels are not arranged for {mode}");
         }

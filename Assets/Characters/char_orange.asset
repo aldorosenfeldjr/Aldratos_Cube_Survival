@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Peachy
   category: 0
   tier: 1
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -7839322659653677160, guid: f5429f825f522454b89dcbc8e85ea6b5, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: cac0a2e6d6ffe884dabb47939355bccb, type: 2}
+  previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

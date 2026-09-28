@@ -1,107 +1,196 @@
 using UnityEditor;
 using UnityEngine;
 
-// Configures every power-up pickup prefab from the single table below, so a visual change
-// (badge size, item scale, ...) is one edit here plus Tools > PowerUps > Rebuild Pickup Prefabs,
-// not six prefab edits. Prefabs are modified in place, so GUIDs and LevelTheme references survive.
+// Builds every power-up pickup prefab from the single table below, so a visual change is one edit here plus
+// Tools > PowerUps > Rebuild Pickup Prefabs. Prefabs are modified in place (GUIDs, LevelTheme references and the
+// PowerUpPickup definition survive). The same models are rendered into the HUD icons, so pickup and HUD always match.
 //
-// Layout (camera looks down +Z, so the camera-facing side is -Z):
-//   root (Rigidbody, MeshCollider or fitted BoxCollider, PowerUpPickup)
-//    └ VisualPivot            identity - pickups do not rotate
-//        ├ ItemMesh           oriented so its face points at the camera
-//        └ BadgeFrame         flat, larger, sits behind the item
+// A pickup is a small glossy collectable, not a crate: one KayKit shape per kind (bolt, star, heart, diamond), tinted
+// with its own emissive material, a soft glow halo behind it and a few sparkles. It holds still and faces the camera
+// (camera looks down +Z, so the camera-facing side is -Z).
+//   root (Rigidbody, SphereCollider, PowerUpPickup, AutoDestroyer)
+//    └ VisualPivot          identity - pickups do not rotate
+//        ├ ItemMesh         the shape, fitted to ItemSize
+//        ├ Halo             camera-facing glow sprite behind the item
+//        └ Sparkles         small looping particles
 public static class PowerUpPickupBuilder
 {
-    private const float ItemScale = 0.8f;
-    // Uncollected pickups despawn after this many seconds, in every level.
-    private const float PickupLifetime = 12f;
-    private static readonly Vector3 BadgeScale = new Vector3(1.5f, 1.5f, 0.35f);
-    private static readonly Vector3 BadgePosition = new Vector3(0f, 0f, 0.45f);
+    private const float ItemSize = 0.75f;        // longest edge of the shape, in world units
+    private const float HaloSize = 1.35f;
+    private const float ColliderRadius = 0.42f;
+    private const float PickupLifetime = 12f;    // uncollected pickups despawn after this many seconds
+    private const string MaterialFolder = "Assets/PowerUps/Materials";
+    private const string IconFolder = "Assets/PowerUps/Icons";
+    private const string KayKit = "Assets/KayKit_Platformer_Pack/fbx(unity)";
 
-    private const string GoldBadge = "Assets/Materials/PowerUp_Badge_Gold.mat";
-    private const string BlueBadge = "Assets/Materials/PowerUp_Badge_Blue.mat";
-    private const string GreenBadge = "Assets/Materials/PowerUp_Badge_Green.mat";
-    private const string PurpleBadge = "Assets/Materials/PowerUp_Badge_Purple.mat";
+    private enum Kind { Shield, SpeedBoost, Invincibility, GemMultiplier }
 
-    // Meadow items are authored lying flat (face up +Y); Playground items are already upright.
-    private static readonly Vector3 FlatItem = new Vector3(-90f, 0f, 0f);
-    private static readonly Vector3 UprightItem = Vector3.zero;
-
-    private struct Entry
+    private struct Look
     {
-        public string PrefabPath;
-        public Vector3 ItemEuler;
-        public string BadgeMaterial;
-        // Flat-authored items: the item-mesh MeshCollider would stay lying down while the
-        // visual stands upright, so they get a BoxCollider fitted to the rotated item instead.
-        public bool FitBoxCollider;
-
-        public Entry(string prefabPath, Vector3 itemEuler, string badgeMaterial)
+        public string Model;
+        public Color Colour;
+        public Look(string model, Color colour)
         {
-            PrefabPath = prefabPath;
-            ItemEuler = itemEuler;
-            BadgeMaterial = badgeMaterial;
-            FitBoxCollider = itemEuler == FlatItem;
+            Model = model;
+            Colour = colour;
         }
     }
 
-    private static readonly Entry[] Entries =
+    private static Look LookOf(Kind kind)
     {
-        new Entry("Assets/Prefabs/PowerUp_Shield.prefab", FlatItem, BlueBadge),
-        new Entry("Assets/Prefabs/PowerUp_SpeedBoost.prefab", FlatItem, GreenBadge),
-        new Entry("Assets/Prefabs/PowerUp_Invincibility.prefab", FlatItem, GoldBadge),
-        new Entry("Assets/Prefabs/KayKit_Shield.prefab", UprightItem, BlueBadge),
-        new Entry("Assets/Prefabs/KayKit_SpeedBoost.prefab", UprightItem, GreenBadge),
-        new Entry("Assets/Prefabs/KayKit_Invincibility.prefab", UprightItem, GoldBadge),
-        new Entry("Assets/Prefabs/PowerUp_GemMultiplier.prefab", FlatItem, PurpleBadge),
-        new Entry("Assets/Prefabs/KayKit_GemMultiplier.prefab", UprightItem, PurpleBadge),
+        switch (kind)
+        {
+            case Kind.SpeedBoost: return new Look($"{KayKit}/green/power_green.fbx", new Color(0.25f, 0.9f, 0.35f));
+            case Kind.Invincibility: return new Look($"{KayKit}/yellow/star_yellow.fbx", new Color(1f, 0.8f, 0.15f));
+            case Kind.Shield: return new Look($"{KayKit}/red/heart_red.fbx", new Color(1f, 0.3f, 0.4f));
+            default: return new Look($"{KayKit}/blue/diamond_blue.fbx", new Color(0.75f, 0.35f, 1f));
+        }
+    }
+
+    private static readonly (string PrefabPath, Kind Kind)[] Entries =
+    {
+        ("Assets/Prefabs/PowerUp_Shield.prefab", Kind.Shield),
+        ("Assets/Prefabs/PowerUp_SpeedBoost.prefab", Kind.SpeedBoost),
+        ("Assets/Prefabs/PowerUp_Invincibility.prefab", Kind.Invincibility),
+        ("Assets/Prefabs/KayKit_Shield.prefab", Kind.Shield),
+        ("Assets/Prefabs/KayKit_SpeedBoost.prefab", Kind.SpeedBoost),
+        ("Assets/Prefabs/KayKit_Invincibility.prefab", Kind.Invincibility),
+        ("Assets/Prefabs/PowerUp_GemMultiplier.prefab", Kind.GemMultiplier),
+        ("Assets/Prefabs/KayKit_GemMultiplier.prefab", Kind.GemMultiplier),
     };
+
+    private static string DefinitionPath(Kind kind) => kind == Kind.GemMultiplier ? "Assets/PowerUps/GemMultiplier.asset" : $"Assets/PowerUps/{kind}.asset";
 
     [MenuItem("Tools/PowerUps/Rebuild Pickup Prefabs")]
     public static void RebuildAll()
     {
-        foreach (var entry in Entries)
+        var halo = EnsureGlowSprite();
+        foreach (Kind kind in System.Enum.GetValues(typeof(Kind)))
         {
-            Rebuild(entry);
+            var material = BuildMaterial(kind);
+            RenderIcon(kind, material);
+        }
+
+        foreach (var (path, kind) in Entries)
+        {
+            Rebuild(path, kind, halo);
         }
 
         AssetDatabase.SaveAssets();
-        Debug.Log($"Rebuilt {Entries.Length} power-up pickup prefabs.");
+        Debug.Log($"Rebuilt {Entries.Length} power-up pickup prefabs and 4 HUD icons.");
     }
 
-    private static void Rebuild(Entry entry)
+    // Soft white radial falloff (no ring), tinted per pickup by the SpriteRenderer colour.
+    private static Sprite EnsureGlowSprite()
     {
-        var root = PrefabUtility.LoadPrefabContents(entry.PrefabPath);
-
-        var pivot = root.transform.Find("VisualPivot");
-        pivot.localPosition = Vector3.zero;
-        pivot.localRotation = Quaternion.identity;
-        pivot.localScale = Vector3.one;
-
-        // Idle spin/bob was removed: pickups must hold still and face the camera.
-        foreach (var component in pivot.GetComponents<Component>())
+        const string path = "Assets/UI/SoftGlow.png";
+        if (!System.IO.File.Exists(path))
         {
-            if (component == null || component.GetType().Name == "PowerUpIdleMotion")
+            const int size = 128;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            for (var y = 0; y < size; y++)
             {
-                Object.DestroyImmediate(component, true);
+                for (var x = 0; x < size; x++)
+                {
+                    var d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(size / 2f, size / 2f)) / (size / 2f);
+                    var a = Mathf.Pow(Mathf.Clamp01(1f - d), 2f);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
             }
+            System.IO.File.WriteAllBytes(path, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(path);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.SaveAndReimport();
         }
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
 
-        var item = pivot.Find("ItemMesh");
-        item.localPosition = Vector3.zero;
-        item.localEulerAngles = entry.ItemEuler;
-        item.localScale = Vector3.one * ItemScale;
-
-        var badge = pivot.Find("BadgeFrame");
-        badge.localPosition = BadgePosition;
-        badge.localRotation = Quaternion.identity;
-        badge.localScale = BadgeScale;
-        badge.GetComponent<MeshRenderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(entry.BadgeMaterial);
-
-        if (entry.FitBoxCollider)
+    private static Material BuildMaterial(Kind kind)
+    {
+        var path = $"{MaterialFolder}/Collectable_{kind}.mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material == null)
         {
-            FitBoxColliderToItem(root, item);
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(material, path);
         }
+
+        var colour = LookOf(kind).Colour;
+        material.SetColor("_BaseColor", colour);
+        material.SetFloat("_Smoothness", 0.85f);
+        material.SetFloat("_Metallic", 0.1f);
+        material.EnableKeyword("_EMISSION");
+        material.SetColor("_EmissionColor", colour * 0.18f);
+        material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    private static GameObject BuildItem(Transform parent, Kind kind, Material material)
+    {
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(LookOf(kind).Model);
+        var item = (GameObject)Object.Instantiate(model, parent);
+        item.name = "ItemMesh";
+        foreach (var renderer in item.GetComponentsInChildren<Renderer>())
+        {
+            var materials = new Material[renderer.sharedMaterials.Length];
+            for (var i = 0; i < materials.Length; i++)
+            {
+                materials[i] = material;
+            }
+            renderer.sharedMaterials = materials;
+        }
+
+        // Fit the longest edge to ItemSize and centre on the origin, whatever the model's own scale and pivot.
+        item.transform.localScale = Vector3.one;
+        item.transform.localPosition = Vector3.zero;
+        item.transform.localRotation = Quaternion.identity;
+        var bounds = CompanionDefinition.WorldBounds(item);
+        var longest = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
+        item.transform.localScale = Vector3.one * (ItemSize / Mathf.Max(0.0001f, longest));
+        bounds = CompanionDefinition.WorldBounds(item);
+        item.transform.position += parent.position - bounds.center;
+        return item;
+    }
+
+    private static void RenderIcon(Kind kind, Material material)
+    {
+        var sprite = PortraitBuilder.RenderToSprite($"{IconFolder}/{kind}_Icon.png", stage => BuildItem(stage, kind, material), 0f);
+        var definition = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(DefinitionPath(kind));
+        var fields = new SerializedObject(definition);
+        fields.FindProperty("icon").objectReferenceValue = sprite;
+        fields.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(definition);
+    }
+
+    private static void Rebuild(string path, Kind kind, Sprite haloSprite)
+    {
+        var root = PrefabUtility.LoadPrefabContents(path);
+
+        // Start from a clean root: the old badge-and-crate visual and any old colliders go.
+        foreach (var child in new System.Collections.Generic.List<Transform>(GetChildren(root.transform)))
+        {
+            Object.DestroyImmediate(child.gameObject);
+        }
+        foreach (var collider in root.GetComponents<Collider>())
+        {
+            Object.DestroyImmediate(collider, true);
+        }
+
+        var pivot = new GameObject("VisualPivot").transform;
+        pivot.SetParent(root.transform, false);
+
+        var material = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialFolder}/Collectable_{kind}.mat");
+        BuildItem(pivot, kind, material);
+        BuildHalo(pivot, haloSprite, LookOf(kind).Colour);
+        BuildSparkles(pivot, LookOf(kind).Colour);
+
+        var sphere = root.AddComponent<SphereCollider>();
+        sphere.radius = ColliderRadius;
 
         var autoDestroyer = root.GetComponent<AutoDestroyer>();
         if (autoDestroyer == null)
@@ -115,36 +204,52 @@ public static class PowerUpPickupBuilder
         // A tumbling pickup would turn its face away from the camera.
         root.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
 
-        PrefabUtility.SaveAsPrefabAsset(root, entry.PrefabPath);
+        PrefabUtility.SaveAsPrefabAsset(root, path);
         PrefabUtility.UnloadPrefabContents(root);
     }
 
-    private static void FitBoxColliderToItem(GameObject root, Transform item)
+    private static System.Collections.Generic.IEnumerable<Transform> GetChildren(Transform parent)
     {
-        var meshCollider = root.GetComponent<MeshCollider>();
-        if (meshCollider != null)
+        foreach (Transform child in parent)
         {
-            Object.DestroyImmediate(meshCollider, true);
+            yield return child;
         }
+    }
 
-        var box = root.GetComponent<BoxCollider>();
-        if (box == null)
-        {
-            box = root.AddComponent<BoxCollider>();
-        }
+    private static void BuildHalo(Transform pivot, Sprite sprite, Color colour)
+    {
+        var halo = new GameObject("Halo");
+        halo.transform.SetParent(pivot, false);
+        halo.transform.localPosition = new Vector3(0f, 0f, 0.12f); // just behind the item, away from the camera
+        var renderer = halo.AddComponent<SpriteRenderer>();
+        renderer.sprite = sprite;
+        renderer.color = new Color(colour.r, colour.g, colour.b, 0.6f);
+        renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MenuBokeh.mat") ?? renderer.sharedMaterial;
+        halo.transform.localScale = Vector3.one * (HaloSize / Mathf.Max(0.01f, sprite.bounds.size.x));
+    }
 
-        // Item mesh bounds, carried through the item's local transform into root space.
-        var meshBounds = item.GetComponent<MeshFilter>().sharedMesh.bounds;
-        var toRoot = root.transform.worldToLocalMatrix * item.localToWorldMatrix;
-        var fitted = new Bounds(toRoot.MultiplyPoint3x4(meshBounds.center), Vector3.zero);
-        for (int i = 0; i < 8; i++)
-        {
-            var corner = meshBounds.center + Vector3.Scale(meshBounds.extents,
-                new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
-            fitted.Encapsulate(toRoot.MultiplyPoint3x4(corner));
-        }
-
-        box.center = fitted.center;
-        box.size = fitted.size;
+    private static void BuildSparkles(Transform pivot, Color colour)
+    {
+        var sparkles = new GameObject("Sparkles");
+        sparkles.transform.SetParent(pivot, false);
+        var system = sparkles.AddComponent<ParticleSystem>();
+        var main = system.main;
+        main.loop = true;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;
+        main.startLifetime = 0.9f;
+        main.startSpeed = 0.05f;
+        main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.12f);
+        main.startColor = Color.Lerp(colour, Color.white, 0.6f);
+        main.maxParticles = 12;
+        var emission = system.emission;
+        emission.rateOverTime = 7f;
+        var shape = system.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.32f;
+        var over = system.sizeOverLifetime;
+        over.enabled = true;
+        over.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.35f, 1f), new Keyframe(1f, 0f)));
+        var particles = sparkles.GetComponent<ParticleSystemRenderer>();
+        particles.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MenuBokeh.mat");
     }
 }

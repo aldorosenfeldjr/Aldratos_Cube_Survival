@@ -277,6 +277,8 @@ public static partial class PlaySmokeTest
         }
         UseFreshTempSave();
 
+        GameUIChecks();
+
         // 1. Menu flow, using the real buttons.
         Click("MainMenu/Play");
         yield return WaitUntil(() => levelSelect.gameObject.activeInHierarchy);
@@ -286,6 +288,8 @@ public static partial class PlaySmokeTest
         tiles[0].onClick.Invoke();
         yield return WaitUntil(() => gameManager.isActiveAndEnabled);
         Check("level select -> run starts", !timedOut);
+        yield return 0.2f;
+        Check("the menu background camera stops rendering during a run", MenuBackgroundRig.Instance != null && !MenuBackgroundRig.Instance.CameraEnabled);
         if (timedOut)
         {
             yield break;
