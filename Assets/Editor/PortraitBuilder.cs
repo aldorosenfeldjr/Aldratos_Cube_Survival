@@ -28,36 +28,39 @@ public static class PortraitBuilder
             AssetDatabase.CreateFolder("Assets", "Portraits");
         }
 
+        foreach (var item in catalog.Items)
+        {
+            var sprite = RenderToSprite($"{Folder}/{item.Id.Replace('.', '_')}.png", item.CreatePreview, item is CompanionDefinition ? 145f : -35f);
+            var fields = new SerializedObject(item);
+            fields.FindProperty("thumbnail").objectReferenceValue = sprite;
+            fields.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(item);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Rendered {catalog.Items.Count} portraits into {Folder}.");
+    }
+
+    /// <summary>
+    /// Renders whatever <paramref name="makeSubject"/> builds under the far-away stage (3/4 view, transparent, cropped to the subject,
+    /// lit neutrally) into a PNG at <paramref name="assetPath"/>, imports it as a sprite and returns it. Also used for the power-up icons.
+    /// </summary>
+    public static Sprite RenderToSprite(string assetPath, System.Func<Transform, GameObject> makeSubject, float yaw)
+    {
         var sun = RenderSettings.sun;
         var sunWasOn = sun != null && sun.enabled;
         var ambientMode = RenderSettings.ambientMode;
         var ambientLight = RenderSettings.ambientLight;
         try
         {
-            // The scene's warm sunset light and ambient would tint every portrait: light them neutrally instead.
+            // The scene's warm sunset light and ambient would tint the render: light it neutrally instead.
             if (sun != null)
             {
                 sun.enabled = false;
             }
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.55f, 0.55f, 0.6f);
-
-            foreach (var item in catalog.Items)
-            {
-                var path = $"{Folder}/{item.Id.Replace('.', '_')}.png";
-                File.WriteAllBytes(path, Render(item));
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                importer.textureType = TextureImporterType.Sprite;
-                importer.alphaIsTransparency = true;
-                importer.mipmapEnabled = false;
-                importer.SaveAndReimport();
-
-                var fields = new SerializedObject(item);
-                fields.FindProperty("thumbnail").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                fields.ApplyModifiedPropertiesWithoutUndo();
-                EditorUtility.SetDirty(item);
-            }
+            File.WriteAllBytes(assetPath, Render(makeSubject, yaw));
         }
         finally
         {
@@ -69,8 +72,13 @@ public static class PortraitBuilder
             RenderSettings.ambientLight = ambientLight;
         }
 
-        AssetDatabase.SaveAssets();
-        Debug.Log($"Rendered {catalog.Items.Count} portraits into {Folder}.");
+        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+        var importer = (TextureImporter)AssetImporter.GetAtPath(assetPath);
+        importer.textureType = TextureImporterType.Sprite;
+        importer.alphaIsTransparency = true;
+        importer.mipmapEnabled = false;
+        importer.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
     }
 
     // Finds the opaque pixels and scales them to fill a square with a small margin, so a small animal and a big one both fill their tile.
@@ -114,16 +122,16 @@ public static class PortraitBuilder
         return output;
     }
 
-    private static byte[] Render(UnlockableDefinition item)
+    private static byte[] Render(System.Func<Transform, GameObject> makeSubject, float yaw)
     {
         var stage = new GameObject("PortraitStage") { hideFlags = HideFlags.HideAndDontSave };
         var texture = new RenderTexture(RenderSize, RenderSize, 24, RenderTextureFormat.ARGB32);
         try
         {
             stage.transform.position = StagePosition;
-            var subject = item.CreatePreview(stage.transform);
+            var subject = makeSubject(stage.transform);
             subject.transform.localPosition = Vector3.zero;
-            subject.transform.localRotation = Quaternion.Euler(0f, item is CompanionDefinition ? 145f : -35f, 0f);
+            subject.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
 
             var bounds = CompanionDefinition.WorldBounds(subject);
             var radius = Mathf.Max(0.01f, bounds.extents.magnitude);
@@ -165,9 +173,9 @@ public static class PortraitBuilder
         }
         finally
         {
+            Object.DestroyImmediate(stage); // first: the stage's camera still targets the texture
             texture.Release();
             Object.DestroyImmediate(texture);
-            Object.DestroyImmediate(stage);
         }
     }
 }

@@ -42,7 +42,7 @@ public static class GemBuilder
             {
                 AssetDatabase.CopyAsset(source, copy);
             }
-            ConfigureMultiplierPrefab(copy, mesh, material);
+            ConfigureMultiplierPrefab(copy);
         }
 
         AssetDatabase.SaveAssets();
@@ -167,20 +167,14 @@ public static class GemBuilder
         EditorUtility.SetDirty(definition);
     }
 
-    private static void ConfigureMultiplierPrefab(string path, Mesh mesh, Material material)
+    private static void ConfigureMultiplierPrefab(string path)
     {
         var root = PrefabUtility.LoadPrefabContents(path);
         var pickup = new SerializedObject(root.GetComponent<PowerUpPickup>());
         pickup.FindProperty("definition").objectReferenceValue = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(DefinitionPath);
         pickup.ApplyModifiedPropertiesWithoutUndo();
 
-        var item = root.transform.Find("VisualPivot/ItemMesh");
-        item.GetComponent<MeshFilter>().sharedMesh = mesh;
-        item.GetComponent<MeshRenderer>().sharedMaterials = new[] { material };
-        foreach (var collider in root.GetComponentsInChildren<MeshCollider>(true))
-        {
-            collider.sharedMesh = mesh;
-        }
+        // The look (shape, halo, collider) is applied afterwards by PowerUpPickupBuilder.
         PrefabUtility.SaveAsPrefabAsset(root, path);
         PrefabUtility.UnloadPrefabContents(root);
     }
