@@ -34,6 +34,7 @@ public static class GameUIBuilder
     private static readonly string CrownIcon = UIPack.IconSprites + "crown.png";
     private static readonly string CoinIcon = UIPack.IconSprites + "coin.png";
     private static readonly string PauseIcon = UIPack.IconSprites + "Pause (2).png";
+    private const string SoftGlow = "Assets/UI/SoftGlow.png";
 
     private struct Backing
     {
@@ -184,6 +185,7 @@ public static class GameUIBuilder
         ApplyLevelTile();
         ApplyScoreHud();
         ApplyPowerUpRow();
+        ApplyCollectFxLabel();
         ApplyPauseButton();
 
         AssetDatabase.SaveAssets();
@@ -411,6 +413,39 @@ public static class GameUIBuilder
             var settings = new SerializedObject(root.GetComponent<PowerUpHUDIcon>());
             settings.FindProperty("barTrack").objectReferenceValue = track.gameObject;
             settings.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+    }
+
+    // The label that flies from the pickup's spawn point into its HUD slot: a soft glow behind the collectable's icon (matching the
+    // pickup's own halo) and the power-up's name in the pack font.
+    private static void ApplyCollectFxLabel()
+    {
+        var path = Prefabs + "PowerUpCollectFXLabel.prefab";
+        var root = PrefabUtility.LoadPrefabContents(path);
+        try
+        {
+            var glow = UIPack.ImageChild(root.transform, "Glow", SoftGlow, new Color(1f, 0.95f, 0.6f, 0.8f), Image.Type.Simple, false);
+            UIPack.PlaceCentre(glow.rectTransform, 0f, 46f, 170f, 170f);
+            glow.transform.SetAsFirstSibling();
+
+            var icon = (RectTransform)root.transform.Find("Icon");
+            icon.GetComponent<Image>().preserveAspect = true;
+
+            var nameRect = (RectTransform)root.transform.Find("NameLabel");
+            nameRect.sizeDelta = new Vector2(20f, 34f);
+            nameRect.anchoredPosition = Vector2.zero;
+            var nameText = nameRect.GetComponent<TMP_Text>();
+            UIPack.Style(nameText, 26f, White, TextAlignmentOptions.Center);
+            nameText.textWrappingMode = TextWrappingModes.NoWrap;
+            nameText.enableAutoSizing = true;
+            nameText.fontSizeMin = 14f;
+            nameText.fontSizeMax = 26f;
 
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }

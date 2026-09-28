@@ -12,7 +12,8 @@ public class PowerUpCollectFX : MonoBehaviour
     public void PlayNewGrant(PowerUpDefinition definition, RectTransform targetSlot, System.Action onArrived)
     {
         var label = Instantiate(flyInLabelPrefab, canvasRoot);
-        var icon = label.GetComponentInChildren<Image>();
+        // Named lookup, not GetComponentInChildren<Image>(): the prefab also has a decorative glow Image sibling.
+        var icon = label.Find("Icon").GetComponent<Image>();
         var name = label.GetComponentInChildren<TMPro.TextMeshProUGUI>();
         icon.sprite = definition.Icon;
         name.text = definition.DisplayName;
