@@ -166,6 +166,14 @@ public static partial class PlaySmokeTest
         var pigFraming = PreviewFraming(screenTransform);
         var previewAnimal = GameObject.Find("SelectionPreviewStage")?.transform.Find("Preview_comp.pig");
         Check("preview shows the focused animal", previewAnimal != null && pigFraming.ok, $"found={previewAnimal != null} {pigFraming.detail}");
+
+        // Taken before the drag below: rotating the root would also change its localRotation and hide a frozen animator.
+        var previewPose0 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
+        yield return 1.0f;
+        var previewPose1 = previewAnimal != null ? PoseSnapshot(previewAnimal.gameObject) : null;
+        var previewChange = previewAnimal != null ? PoseDifference(previewPose0, previewPose1) : -1f;
+        Check("companion preview idle animation is playing (not frozen)", previewChange > 0.0005f, $"pose change {previewChange:0.0000000}");
+
         var companionRotator = screenTransform.Find("InfoPanel/PreviewFrame/Preview").GetComponent<PreviewRotator>();
         var beforeRotation = previewAnimal != null ? previewAnimal.rotation : Quaternion.identity;
         companionRotator.OnDrag(new PointerEventData(EventSystem.current) { delta = new Vector2(120f, 0f) });

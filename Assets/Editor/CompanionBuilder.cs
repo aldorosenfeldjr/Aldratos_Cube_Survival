@@ -16,6 +16,7 @@ public static class CompanionBuilder
     private const string Models = Folder + "/Models/";
     private const string CatModel = "Assets/Lowpoly Toon Cat Lite/Model/Cat Lite.fbx";
     private const string CatController = "Assets/Lowpoly Toon Cat Lite/Model/Animator/Cat_Lite_AC 1.controller";
+    private const string CatMaterial = "Assets/Lowpoly Toon Cat Lite/Model/Materials/Tex_Cat_Lite.mat";
 
     private struct Row
     {
@@ -23,6 +24,7 @@ public static class CompanionBuilder
         public string Name;
         public PriceTier Tier;
         public string Model;
+        public string Material; // null: the model's own materials. The cat's FBX imports none, so it needs one or it renders default grey.
         public string Controller; // null: generated from the model's clips
         public float WorldSize;
         public bool Wanders;
@@ -33,7 +35,7 @@ public static class CompanionBuilder
     // Only models with Walk and Run clips wander; the rest idle in place. The cat is the free default (the one already in the game).
     private static readonly Row[] Rows =
     {
-        new Row { Id = "comp.cat", Name = "Kitty", Tier = PriceTier.Free, Model = CatModel, Controller = CatController, WorldSize = 0.52f, Wanders = true, Tint = new Color(0.8f, 0.6f, 0.4f), IsDefault = true },
+        new Row { Id = "comp.cat", Name = "Kitty", Tier = PriceTier.Free, Model = CatModel, Material = CatMaterial, Controller = CatController, WorldSize = 0.52f, Wanders = true, Tint = new Color(0.8f, 0.6f, 0.4f), IsDefault = true },
         new Row { Id = "comp.pug", Name = "Pug", Tier = PriceTier.Rare, Model = Models + "Pug.fbx", WorldSize = 0.6f, Tint = new Color(0.85f, 0.75f, 0.55f) },
         new Row { Id = "comp.pig", Name = "Piggy", Tier = PriceTier.Rare, Model = Models + "Pig.fbx", WorldSize = 0.8f, Tint = new Color(0.95f, 0.65f, 0.7f) },
         new Row { Id = "comp.sheep", Name = "Woolly", Tier = PriceTier.Rare, Model = Models + "Sheep.fbx", WorldSize = 0.8f, Tint = new Color(0.92f, 0.92f, 0.9f) },
@@ -182,6 +184,17 @@ public static class CompanionBuilder
             animator.avatar = AssetDatabase.LoadAllAssetsAtPath(row.Model).OfType<Avatar>().FirstOrDefault();
             animator.applyRootMotion = false;
             instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+            if (row.Material != null)
+            {
+                var material = AssetDatabase.LoadAssetAtPath<Material>(row.Material);
+                foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
+                {
+                    var materials = new Material[renderer.sharedMaterials.Length];
+                    System.Array.Fill(materials, material);
+                    renderer.sharedMaterials = materials;
+                }
+            }
 
             return PrefabUtility.SaveAsPrefabAsset(instance, $"{Folder}/{row.Id.Replace('.', '_')}.prefab");
         }

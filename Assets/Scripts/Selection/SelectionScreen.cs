@@ -285,6 +285,17 @@ public class SelectionScreen : MonoBehaviour
         previewCamera.allowHDR = false;
         previewCamera.allowMSAA = false;
         previewCamera.targetTexture = previewTexture;
+
+        // The stage is far from the play area but still lit by Core's warm sunset sun and ambient, which tints what it shows
+        // (the white cat looked lavender). A range-limited neutral light evens the colours out and cannot reach gameplay.
+        var lightObject = new GameObject("PreviewLight");
+        lightObject.transform.SetParent(stage.transform, false);
+        lightObject.transform.localPosition = new Vector3(1.5f, 2.5f, -2.5f);
+        var previewLight = lightObject.AddComponent<Light>();
+        previewLight.type = LightType.Point;
+        previewLight.color = Color.white;
+        previewLight.range = 12f;
+        previewLight.intensity = 12f;
     }
 
     private void DestroyStage()
