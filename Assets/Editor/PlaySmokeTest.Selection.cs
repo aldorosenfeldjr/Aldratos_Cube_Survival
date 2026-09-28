@@ -247,6 +247,14 @@ public static partial class PlaySmokeTest
         rotator.OnDrag(new PointerEventData(EventSystem.current) { delta = new Vector2(120f, 0f) });
         Check("dragging the preview rotates it", cube != null && Quaternion.Angle(before, cube.rotation) > 1f);
 
+        // A real pointer only reaches OnDrag if the preview is the top raycast hit under it.
+        var previewObject = screenTransform.Find("InfoPanel/PreviewFrame/Preview");
+        var grab = new PointerEventData(EventSystem.current) { position = RectTransformUtility.WorldToScreenPoint(null, previewObject.position) };
+        var grabHits = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(grab, grabHits);
+        Check("the preview can be grabbed: a pointer over it hits it first", grabHits.Count > 0 && grabHits[0].gameObject == previewObject.gameObject,
+            grabHits.Count > 0 ? grabHits[0].gameObject.name : "no hit");
+
         var unlockButton = screenTransform.Find("InfoPanel/Unlock").GetComponent<Button>();
         var selectButton = screenTransform.Find("InfoPanel/Select").GetComponent<Button>();
         var unlockLabel = unlockButton.GetComponentInChildren<TMP_Text>();
@@ -347,6 +355,30 @@ public static partial class PlaySmokeTest
         Check("reopening focuses the selected character", !timedOut && screen.Focused != null && screen.Focused.Definition == UnlockService.Selected(UnlockCategory.Character));
         Click("SelectionScreen/TopBar/Back");
         yield return 0.2f;
+
+        // 3b. The skin: every action button, the grid panel and the teasers wear a 9-sliced sprite from the Hyper Casual UI Pack.
+        var skinProblems = new List<string>();
+        void RequireSkin(string label, Transform target)
+        {
+            var image = target != null ? target.GetComponent<Image>() : null;
+            var path = image != null && image.sprite != null ? AssetDatabase.GetAssetPath(image.sprite) : "none";
+            if (image == null || !image.enabled || image.type != Image.Type.Sliced || !path.StartsWith("Assets/Hyper_Casual_UI/") || image.sprite.border == Vector4.zero)
+            {
+                skinProblems.Add($"{label}: {path}");
+            }
+        }
+        foreach (var screenRoot in new[] { screenTransform, CanvasChild("CompanionScreen") })
+        {
+            RequireSkin(screenRoot.name + "/Back", screenRoot.Find("TopBar/Back"));
+            foreach (var action in new[] { "Select", "Unlock", "Buy", "Try", "Restore" })
+            {
+                RequireSkin(screenRoot.name + "/" + action, screenRoot.Find("InfoPanel/" + action));
+            }
+            RequireSkin(screenRoot.name + "/GridPanel", screenRoot.Find("GridPanel"));
+        }
+        RequireSkin("CharacterTeaser", CanvasChild("MainMenu/CharacterTeaser"));
+        RequireSkin("CompanionTeaser", CanvasChild("MainMenu/CompanionTeaser"));
+        Check("the selection screens and teasers wear the Hyper Casual UI Pack skin", skinProblems.Count == 0, string.Join(" | ", skinProblems));
 
         // 4. Layout audit at real screen sizes.
         var problems = LayoutAudit();
