@@ -35,6 +35,11 @@ public class MenuBackgroundRig : MonoBehaviour
 
     public static MenuBackgroundRig Instance { get; private set; }
 
+    /// <summary>"MainMenu", "Characters" or "Companions": the pose the camera is at or easing to.</summary>
+    public string CurrentPoseName { get; private set; } = "MainMenu";
+    public float CameraFieldOfView => stageCamera.fieldOfView;
+    public bool CameraEnabled => stageCamera.enabled;
+
     private Camera stageCamera;
     private RenderTexture texture;
     private Pose currentPose;
@@ -63,6 +68,12 @@ public class MenuBackgroundRig : MonoBehaviour
     private void OnEnable()
     {
         StartDrift();
+    }
+
+    // Other screens hide the menu background (a run starts, for instance): stop rendering the diorama then, it would be wasted GPU work.
+    private void LateUpdate()
+    {
+        stageCamera.enabled = backgroundImage != null && backgroundImage.isActiveAndEnabled;
     }
 
     private void OnDisable()
@@ -111,9 +122,15 @@ public class MenuBackgroundRig : MonoBehaviour
         currentPose = pose;
     }
 
-    public void MoveToMainMenu() => MoveTo(mainMenuIdle);
-    public void MoveToCharacters() => MoveTo(charactersOpen);
-    public void MoveToCompanions() => MoveTo(companionsOpen);
+    public void MoveToMainMenu() => MoveTo(mainMenuIdle, "MainMenu");
+    public void MoveToCharacters() => MoveTo(charactersOpen, "Characters");
+    public void MoveToCompanions() => MoveTo(companionsOpen, "Companions");
+
+    private void MoveTo(Pose pose, string poseName)
+    {
+        CurrentPoseName = poseName;
+        MoveTo(pose);
+    }
 
     private void SetPoseImmediate(Pose pose)
     {

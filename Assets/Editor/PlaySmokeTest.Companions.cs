@@ -156,6 +156,8 @@ public static partial class PlaySmokeTest
         Check("Companions opens its own screen: title, 8 tiles, the cat focused, main menu hidden",
             !timedOut && title == "Companions" && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == 8 && screen.Focused != null && screen.Focused.Definition == cat,
             $"title='{title}' tiles={screen.Tiles.Count}");
+        yield return 0.4f;
+        Check("the menu background moved to the Companions pose", MenuBackgroundRig.Instance.CurrentPoseName == "Companions", $"pose={MenuBackgroundRig.Instance.CurrentPoseName}");
 
         var catFraming = PreviewFraming(screenTransform);
         Check("preview shows the cat large and centred", catFraming.ok, catFraming.detail);
@@ -210,6 +212,11 @@ public static partial class PlaySmokeTest
         Click("CompanionScreen/TopBar/Back");
         yield return 0.2f;
         Check("Back closes the companion screen and restores the main menu", !screen.gameObject.activeSelf && mainMenu.gameObject.activeSelf && GameObject.Find("SelectionPreviewStage") == null);
+        yield return 0.8f;
+        var companionMenuGroup = mainMenu.GetComponent<CanvasGroup>();
+        Check("Back from Companions restores the background pose and the menu's opacity and input",
+            MenuBackgroundRig.Instance.CurrentPoseName == "MainMenu" && Mathf.Approximately(companionMenuGroup.alpha, 1f) && companionMenuGroup.interactable && companionMenuGroup.blocksRaycasts,
+            $"pose={MenuBackgroundRig.Instance.CurrentPoseName} alpha={companionMenuGroup.alpha}");
 
         // The main menu now has five buttons plus Remove Ads: everything must fit the shortest canvas (about 864 units tall).
         UseFreshTempSave();

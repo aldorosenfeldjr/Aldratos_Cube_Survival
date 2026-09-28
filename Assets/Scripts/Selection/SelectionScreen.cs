@@ -15,6 +15,7 @@ using UnityEngine.UI;
 public class SelectionScreen : MonoBehaviour
 {
     private const int PreviewSize = 512;
+    private const float FadeInDuration = 0.25f;
     private static readonly Vector3 StagePosition = new Vector3(0f, -1000f, 0f);
 
     [SerializeField] private UnlockCategory category;
@@ -54,12 +55,23 @@ public class SelectionScreen : MonoBehaviour
     {
         this.onClose = onClose;
         gameObject.SetActive(true);
+
+        var group = GetComponent<CanvasGroup>();
+        if (group == null)
+        {
+            group = gameObject.AddComponent<CanvasGroup>();
+        }
+        group.alpha = 0f;
+        group.LeanAlpha(1f, FadeInDuration);
     }
 
+    // Idempotent: a second Back (a double tap, or Escape in the same frame) finds no callback left and does nothing.
     public void Back()
     {
+        var close = onClose;
+        onClose = null;
         gameObject.SetActive(false);
-        onClose?.Invoke();
+        close?.Invoke();
     }
 
     /// <summary>Focuses a tile's item: the preview and info show it. Used by taps and by the test.</summary>
@@ -164,6 +176,7 @@ public class SelectionScreen : MonoBehaviour
     private void OnDisable()
     {
         Wallet.Changed -= OnWalletChanged;
+        LeanTween.cancel(gameObject);
         DestroyStage();
     }
 

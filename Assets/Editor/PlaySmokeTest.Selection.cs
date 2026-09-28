@@ -204,13 +204,31 @@ public static partial class PlaySmokeTest
         UseFreshTempSave();
         Wallet.Add(70);
 
+        // The open transition: the menu locks its input while it fades, the tapped teaser slides toward the card's side,
+        // and the menu background eases to the Characters pose.
+        var rig = MenuBackgroundRig.Instance;
+        var menuGroup = mainMenu.GetComponent<CanvasGroup>();
+        var teaserRect = (RectTransform)CanvasChild("MainMenu/CharacterTeaser");
+        var teaserHome = teaserRect.anchoredPosition;
+        Check("the menu background camera renders while the menu is showing", rig != null && rig.CameraEnabled && rig.CurrentPoseName == "MainMenu");
+
         Click("MainMenu/CharacterTeaser");
+        Check("opening a screen locks the menu's input while it fades", !menuGroup.blocksRaycasts && !menuGroup.interactable);
+        var tweensAfterFirstTap = LeanTween.tweensRunning;
+        Click("MainMenu/CharacterTeaser");
+        Check("a second tap during the transition starts no more animation", LeanTween.tweensRunning == tweensAfterFirstTap, $"{tweensAfterFirstTap} -> {LeanTween.tweensRunning}");
+        yield return WaitUntil(() => teaserRect.anchoredPosition.x < teaserHome.x - 50f);
+        Check("the tapped teaser slides toward the card while the menu fades",
+            !timedOut && menuGroup.alpha > 0f && menuGroup.alpha < 1f, $"x={teaserRect.anchoredPosition.x} home={teaserHome.x} alpha={menuGroup.alpha}");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
         var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponent<TMP_Text>();
         Check("Characters opens the screen and hides the main menu",
             !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenGems.text == "Gems: 70",
             $"tiles={screen.Tiles.Count}/{characters.Count} gems='{screenGems.text}'");
+        yield return 0.3f;
+        Check("the menu background moved to the Characters pose", rig.CurrentPoseName == "Characters" && Mathf.Abs(rig.CameraFieldOfView - 28f) < 0.1f,
+            $"pose={rig.CurrentPoseName} fov={rig.CameraFieldOfView}");
 
         // The preview must show the focused item: centre differs from the background and follows the item's colour.
         var freeCentre = PreviewCentre(screenTransform, out var freeCorner);
@@ -318,6 +336,11 @@ public static partial class PlaySmokeTest
         yield return 0.2f;
         Check("Back closes the screen, restores the main menu and frees the preview",
             !screen.gameObject.activeSelf && mainMenu.gameObject.activeSelf && GameObject.Find("SelectionPreviewStage") == null);
+        yield return 0.8f;
+        Check("Back restores the menu fully: background pose, opacity, input and the teaser's place",
+            rig.CurrentPoseName == "MainMenu" && Mathf.Abs(rig.CameraFieldOfView - 32f) < 0.1f && Mathf.Approximately(menuGroup.alpha, 1f)
+            && menuGroup.interactable && menuGroup.blocksRaycasts && teaserRect.anchoredPosition == teaserHome,
+            $"pose={rig.CurrentPoseName} fov={rig.CameraFieldOfView} alpha={menuGroup.alpha} input={menuGroup.interactable}/{menuGroup.blocksRaycasts} teaser={teaserRect.anchoredPosition} home={teaserHome}");
 
         Click("MainMenu/CharacterTeaser");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);

@@ -66,6 +66,8 @@ MonoBehaviour:
   selectionScreen: {fileID: 0}
   companionScreen: {fileID: 0}
   removeAdsButton: {fileID: 6693016027048151368}
+  characterTeaser: {fileID: 2150087762402694492}
+  companionTeaser: {fileID: 8817804839400626526}
 --- !u!225 &8992429939457823494
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -583,6 +585,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7231fc5b5224d9c4eb41e045eaa55af8, type: 3}
+--- !u!114 &2150087762402694492 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 671253830311384032, guid: 7231fc5b5224d9c4eb41e045eaa55af8, type: 3}
+  m_PrefabInstance: {fileID: 1478975772180465340}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b50f2125e4d1cf541ae4463b75de7f4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::SelectionTeaser
 --- !u!224 &4066518594532430177 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3236203282319382493, guid: 7231fc5b5224d9c4eb41e045eaa55af8, type: 3}
@@ -1283,3 +1296,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3236203282319382493, guid: 7231fc5b5224d9c4eb41e045eaa55af8, type: 3}
   m_PrefabInstance: {fileID: 8291099447721806526}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8817804839400626526 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 671253830311384032, guid: 7231fc5b5224d9c4eb41e045eaa55af8, type: 3}
+  m_PrefabInstance: {fileID: 8291099447721806526}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b50f2125e4d1cf541ae4463b75de7f4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NewAssembly::SelectionTeaser
