@@ -19,3 +19,4 @@ MonoBehaviour:
   thumbnail: {fileID: 0}
   isDefault: 1
   material: {fileID: 2100000, guid: b633802bc4c1c4e42880d0b69c66d036, type: 2}
+  previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

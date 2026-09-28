@@ -11,6 +11,7 @@ public static class CharacterBuilder
 {
     private const string Folder = "Assets/Characters";
     private const string PlayerMaterialPath = "Assets/Materials/Player.mat";
+    private const string PlayerMeshPath = "Assets/Platformer Pack/FBX/YellowBox.fbx";
 
     private struct Row
     {
@@ -94,6 +95,7 @@ public static class CharacterBuilder
         fields.FindProperty("tier").enumValueIndex = (int)row.Tier;
         fields.FindProperty("isDefault").boolValue = row.IsDefault;
         fields.FindProperty("material").objectReferenceValue = BuildMaterial(row);
+        fields.FindProperty("previewMesh").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Mesh>(PlayerMeshPath);
         fields.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(definition);
         return definition;

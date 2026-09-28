@@ -5,6 +5,7 @@ using UnityEngine;
 public class CharacterDefinition : UnlockableDefinition
 {
     [SerializeField] private Material material;
+    [SerializeField] private Mesh previewMesh;
 
     public Material Material => material;
 
@@ -12,11 +13,10 @@ public class CharacterDefinition : UnlockableDefinition
 
     public override GameObject CreatePreview(Transform parent)
     {
-        var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        cube.name = "Preview_" + Id;
-        Destroy(cube.GetComponent<Collider>());
-        cube.GetComponent<Renderer>().sharedMaterial = material;
-        cube.transform.SetParent(parent, false);
-        return cube;
+        var previewObject = new GameObject("Preview_" + Id, typeof(MeshFilter), typeof(MeshRenderer));
+        previewObject.GetComponent<MeshFilter>().sharedMesh = previewMesh;
+        previewObject.GetComponent<MeshRenderer>().sharedMaterial = material;
+        previewObject.transform.SetParent(parent, false);
+        return previewObject;
     }
 }
