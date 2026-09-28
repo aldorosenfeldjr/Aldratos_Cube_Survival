@@ -395,8 +395,7 @@ MonoBehaviour:
   gridPanel: {fileID: 3024004668868120396}
   topBarHeight: 100
   padding: 24
-  landscapeInfoShare: 0.42
-  portraitInfoShare: 0.52
+  heroShare: 0.5
 --- !u!1 &6377536692261897516
 GameObject:
   m_ObjectHideFlags: 0

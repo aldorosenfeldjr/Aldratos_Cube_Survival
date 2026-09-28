@@ -433,7 +433,7 @@ public static partial class PlaySmokeTest
 
         var infoRect = LocalRect(info, root);
         var gridRect = LocalRect(grid, root);
-        if (layout.IsLandscape ? gridRect.center.x <= infoRect.center.x : gridRect.center.y >= infoRect.center.y)
+        if (layout.IsLandscape ? gridRect.center.x >= infoRect.center.x : gridRect.center.y <= infoRect.center.y)
         {
             problems.Add($"{tag}: panels are not arranged for {mode}");
         }
