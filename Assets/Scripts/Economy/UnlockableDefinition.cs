@@ -30,6 +30,9 @@ public abstract class UnlockableDefinition : ScriptableObject
     /// <summary>Store product id: the save id with dots replaced (char.red -> char_red).</summary>
     public string ProductId => id.Replace('.', '_');
 
+    /// <summary>Height, relative to the preview stage, that a previewed item's feet stand on (the pedestal's top).</summary>
+    public const float PreviewFloor = -0.8f;
+
     /// <summary>Colour of the tile swatch shown when there is no thumbnail.</summary>
     public virtual Color TileColor => Color.white;
 

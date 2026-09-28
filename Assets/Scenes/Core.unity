@@ -1094,6 +1094,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: NewAssembly::MenuBackgroundRig
   stagePrefab: {fileID: 8315831465230479915, guid: 0bbe5ad237117a24983457b5c2517620, type: 3}
   backgroundImage: {fileID: 1735850618}
+  blurShader: {fileID: 4800000, guid: 4e4192000a1fb0746886f0361d3814c3, type: 3}
+  blurRadius: 1.8
   downscaleFactor: 4
   poseTweenDuration: 0.7
   mainMenuIdle:

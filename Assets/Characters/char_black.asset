@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Midnight
   category: 0
   tier: 3
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -5545154640820397835, guid: bdb76b99742f9b349ac7b8db21e6d8ac, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: 9b1fd4ee8bd352440a7f13fee884b399, type: 2}
   previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

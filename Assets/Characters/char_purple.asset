@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Grape
   category: 0
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 6671599247271621478, guid: 4dd7e4b204d9c094daa0f5d60840ff8c, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: 8469485dc00d1304690d924851a0ea56, type: 2}
   previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

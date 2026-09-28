@@ -36,8 +36,8 @@ public class SelectionScreen : MonoBehaviour
     [SerializeField] private UnlockTile tilePrefab;
     [SerializeField] private RectTransform tileContainer;
     [SerializeField] private ScrollRect scroll;
-    [SerializeField] private Color previewBackground = new Color(0.12f, 0.14f, 0.18f, 1f);
     [SerializeField] private PreviewRotator previewRotator;
+    [SerializeField] private Material pedestalMaterial;
 
     private readonly List<UnlockTile> tiles = new List<UnlockTile>();
     private UnlockTile focused;
@@ -287,12 +287,13 @@ public class SelectionScreen : MonoBehaviour
         // Static 3/4 view of the item: no rotation, no idle animation.
         var cameraObject = new GameObject("PreviewCamera");
         cameraObject.transform.SetParent(stage.transform, false);
-        cameraObject.transform.localPosition = new Vector3(2.4f, 1.9f, -3.4f);
-        cameraObject.transform.LookAt(stage.transform.position);
+        cameraObject.transform.localPosition = new Vector3(2.0f, 1.3f, -4.0f);
+        cameraObject.transform.LookAt(stage.transform.position + Vector3.down * 0.1f);
         var previewCamera = cameraObject.AddComponent<Camera>();
+        // Transparent, so the hero stands over the shifting menu background instead of in a box.
         previewCamera.clearFlags = CameraClearFlags.SolidColor;
-        previewCamera.backgroundColor = previewBackground;
-        previewCamera.fieldOfView = 30f;
+        previewCamera.backgroundColor = Color.clear;
+        previewCamera.fieldOfView = 38f;
         previewCamera.nearClipPlane = 0.3f;
         previewCamera.farClipPlane = 30f;
         previewCamera.allowHDR = false;
@@ -309,6 +310,21 @@ public class SelectionScreen : MonoBehaviour
         previewLight.color = Color.white;
         previewLight.range = 12f;
         previewLight.intensity = 12f;
+
+        // A pedestal for the hero to stand on: a wide base and a narrower top disc, feet at UnlockableDefinition.PreviewFloor.
+        AddDisc("PedestalBase", 2.3f, 0.10f, UnlockableDefinition.PreviewFloor - 0.07f);
+        AddDisc("Pedestal", 1.9f, 0.08f, UnlockableDefinition.PreviewFloor - 0.02f);
+    }
+
+    private void AddDisc(string discName, float diameter, float thickness, float centreY)
+    {
+        var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        disc.name = discName;
+        Destroy(disc.GetComponent<Collider>());
+        disc.transform.SetParent(stage.transform, false);
+        disc.transform.localPosition = new Vector3(0f, centreY, 0f);
+        disc.transform.localScale = new Vector3(diameter, thickness * 0.5f, diameter);
+        disc.GetComponent<Renderer>().sharedMaterial = pedestalMaterial;
     }
 
     private void DestroyStage()

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Woolly
   category: 1
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -791473918619581692, guid: 8025188972c220f4a8085d1fb202b455, type: 3}
   isDefault: 0
   prefab: {fileID: 5008524533754539229, guid: bb5b1695f45ae2445ab0920c53adab6d, type: 3}
   worldSize: 0.8

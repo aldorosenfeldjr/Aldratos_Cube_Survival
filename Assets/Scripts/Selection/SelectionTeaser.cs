@@ -12,7 +12,7 @@ using UnityEngine.UI;
 public class SelectionTeaser : MonoBehaviour
 {
     private const int SpoilerCount = 3;
-    private const float SlotSize = 76f;
+    private const float SlotSize = 88f;
 
     [SerializeField] private UnlockCategory category;
     [SerializeField] private TextMeshProUGUI titleText;

@@ -41,12 +41,12 @@ public class MainMenu : MonoBehaviour
 
     // Wide canvases (landscape) keep the teasers stacked at the right edge. On narrow ones (portrait phones are about 850-880
     // units wide) that edge is only a few units clear of the centred buttons, so the teasers move under them instead.
-    public const float SideLayoutMinWidth = 1000f;
+    public const float SideLayoutMinWidth = 1100f;
     public const float SideLayoutMargin = 16f;
-    public const float SideCharacterY = 60f;
-    public const float SideCompanionY = -110f;
-    private const float StackedCharacterY = -340f;
-    private const float StackedCompanionY = -510f;
+    public const float SideCharacterY = 62f;
+    public const float SideCompanionY = -125f;
+    private const float StackedCharacterY = -390f;
+    private const float StackedCompanionY = -580f;
 
     private bool transitioning;
 

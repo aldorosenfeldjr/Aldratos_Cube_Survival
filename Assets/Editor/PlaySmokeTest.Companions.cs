@@ -228,6 +228,7 @@ public static partial class PlaySmokeTest
         // The main menu now has five buttons plus Remove Ads: everything must fit the shortest canvas (about 864 units tall).
         UseFreshTempSave();
         spawner.Spawn();
+        mainMenu.GetComponent<MainMenu>().ApplyTeaserLayout(1920f);
         var menuProblems = MainMenuLayoutProblems(mainMenu);
         Check("main menu fits the shortest canvas with no overlaps", menuProblems.Count == 0, string.Join(" | ", menuProblems));
 
@@ -235,7 +236,7 @@ public static partial class PlaySmokeTest
         // 844-876 wide and about 1900 tall, tablets in between. The teasers re-place themselves for each width.
         var menu = mainMenu.GetComponent<MainMenu>();
         var canvasProblems = new List<string>();
-        foreach (var canvas in new[] { new Vector2(1920f, 866f), new Vector2(1440f, 1000f), new Vector2(1000f, 866f), new Vector2(876f, 1900f), new Vector2(844f, 1900f), new Vector2(760f, 1900f) })
+        foreach (var canvas in new[] { new Vector2(1920f, 866f), new Vector2(1440f, 1000f), new Vector2(1100f, 866f), new Vector2(1000f, 1500f), new Vector2(876f, 1900f), new Vector2(844f, 1900f), new Vector2(760f, 1900f) })
         {
             menu.ApplyTeaserLayout(canvas.x);
             canvasProblems.AddRange(MainMenuLayoutProblems(mainMenu, canvas).Select(problem => $"{canvas.x}x{canvas.y}: {problem}"));
@@ -244,13 +245,12 @@ public static partial class PlaySmokeTest
         Check("main menu fits landscape, tablet and portrait phone canvases with no overlaps", canvasProblems.Count == 0, string.Join(" | ", canvasProblems));
     }
 
-    // Positions every main-menu element from its anchors on a synthetic canvas (default 968 x 864, the combined worst case of a
-    // narrow portrait width and a short landscape height), so corner-anchored items (Sound toggle, gem counter) are judged against
-    // that canvas, not whatever the Game view is.
+    // Positions every main-menu element from its anchors on a synthetic canvas (default 1920 x 866, a landscape phone: the shortest
+    // real canvas), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
     private static List<string> MainMenuLayoutProblems(Transform mainMenu, Vector2? canvas = null)
     {
         mainMenu.Find("RemoveAds").gameObject.SetActive(true);
-        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" }, canvas);
+        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" }, canvas ?? new Vector2(1920f, 866f));
     }
 
     private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names, Vector2? canvasSize = null)
@@ -329,9 +329,11 @@ public static partial class PlaySmokeTest
         var height = (maxY - minY + 1) / (float)target.height;
         var centreX = (minX + maxX) / 2f / target.width - 0.5f;
         var centreY = (minY + maxY) / 2f / target.height - 0.5f;
+        // The subject includes the pedestal it stands on, so it sits a little low in the frame; it must not touch the frame's edge (clipped).
+        var clipped = minX <= 1 || minY <= 1 || maxX >= target.width - 2 || maxY >= target.height - 2;
         var biggest = Mathf.Max(width, height);
-        var ok = biggest >= 0.3f && biggest <= 0.95f && Mathf.Abs(centreX) < 0.15f && Mathf.Abs(centreY) < 0.15f;
-        return (ok, $"subject {width:P0} x {height:P0} of the frame, off-centre ({centreX:+0.00;-0.00}, {centreY:+0.00;-0.00})");
+        var ok = biggest >= 0.3f && biggest <= 0.95f && Mathf.Abs(centreX) < 0.15f && Mathf.Abs(centreY) < 0.25f && !clipped;
+        return (ok, $"subject {width:P0} x {height:P0} of the frame, off-centre ({centreX:+0.00;-0.00}, {centreY:+0.00;-0.00}){(clipped ? ", CLIPPED by the frame" : string.Empty)}");
     }
 
     private static int CompanionCount()

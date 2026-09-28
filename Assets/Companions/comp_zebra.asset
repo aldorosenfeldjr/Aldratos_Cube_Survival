@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Stripes
   category: 1
   tier: 4
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 3303518953127462831, guid: fead9c0f76ed3004ab332bcba72b6a25, type: 3}
   isDefault: 0
   prefab: {fileID: 7406959952211577694, guid: bba75cc9f9c660b408fe3d1a44cdd5b2, type: 3}
   worldSize: 1.2

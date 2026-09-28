@@ -8,7 +8,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Companion", menuName = "Game/Companion Definition")]
 public class CompanionDefinition : UnlockableDefinition
 {
-    private const float PreviewSize = 1.6f;
+    private const float PreviewSize = 2.0f;
     private const float PreviewYaw = 145f;
 
     [SerializeField] private GameObject prefab;
@@ -79,7 +79,7 @@ public class CompanionDefinition : UnlockableDefinition
         {
             instance.AddComponent<PreviewIdleLoop>().Begin(animator, wanders);
         }
-        CompanionFitter.CentredOn(instance, PreviewSize, parent.position);
+        CompanionFitter.OnPedestal(instance, PreviewSize, parent.position + Vector3.up * PreviewFloor);
         return instance;
     }
 }

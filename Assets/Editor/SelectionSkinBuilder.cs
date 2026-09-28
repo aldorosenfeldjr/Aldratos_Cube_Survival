@@ -30,6 +30,16 @@ public static class SelectionSkinBuilder
         ("InfoPanel/Restore", ButtonSprites + "GREY.png"),
     };
 
+    // The Main Menu's own buttons (size and position too: this table is the one place they are set). FontSize < 0 keeps the prefab's.
+    private const string MainMenuPrefab = "Assets/Prefabs/UI/MainMenu.prefab";
+    private static readonly (string Child, string Sprite, Vector2 Size, Vector2 Position, float FontSize)[] MenuButtons =
+    {
+        ("Play", ButtonSprites + "green.png", new Vector2(420f, 100f), new Vector2(0f, 10f), 64f),
+        ("Exit", ButtonSprites + "GREY.png", new Vector2(300f, 64f), new Vector2(0f, -100f), -1f),
+        ("ClearHighScore", ButtonSprites + "GREY.png", new Vector2(320f, 50f), new Vector2(0f, -170f), -1f),
+        ("RemoveAds", ButtonSprites + "orange.png", new Vector2(420f, 64f), new Vector2(0f, -245f), -1f),
+    };
+
     // The button pills are 50 px tall with fully rounded ends: keep both ends intact when a button stretches sideways.
     private static readonly Vector4 ButtonBorder = new Vector4(25f, 0f, 25f, 0f);
     private static readonly Vector4 PanelBorder = new Vector4(24f, 24f, 24f, 24f);
@@ -74,8 +84,33 @@ public static class SelectionSkinBuilder
             PrefabUtility.UnloadPrefabContents(teaser);
         }
 
+        foreach (var (_, sprite, _, _, _) in MenuButtons)
+        {
+            SetBorder(sprite, ButtonBorder);
+        }
+        var menu = PrefabUtility.LoadPrefabContents(MainMenuPrefab);
+        try
+        {
+            foreach (var (child, sprite, size, position, fontSize) in MenuButtons)
+            {
+                var button = (RectTransform)menu.transform.Find(child);
+                Skin(button.GetComponent<Image>(), sprite, Color.white);
+                button.sizeDelta = size;
+                button.anchoredPosition = position;
+                if (fontSize > 0f)
+                {
+                    button.GetComponentInChildren<TMPro.TextMeshProUGUI>().fontSize = fontSize;
+                }
+            }
+            PrefabUtility.SaveAsPrefabAsset(menu, MainMenuPrefab);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(menu);
+        }
+
         AssetDatabase.SaveAssets();
-        Debug.Log("Applied the Hyper Casual UI Pack skin to the selection screens and teasers.");
+        Debug.Log("Applied the Hyper Casual UI Pack skin to the selection screens, the teasers and the Main Menu buttons.");
     }
 
     private static void SetBorder(string spritePath, Vector4 border)

@@ -4,6 +4,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Character", menuName = "Game/Character Definition")]
 public class CharacterDefinition : UnlockableDefinition
 {
+    private const float PreviewSize = 1.5f;
+
     [SerializeField] private Material material;
     [SerializeField] private Mesh previewMesh;
 
@@ -17,6 +19,7 @@ public class CharacterDefinition : UnlockableDefinition
         previewObject.GetComponent<MeshFilter>().sharedMesh = previewMesh;
         previewObject.GetComponent<MeshRenderer>().sharedMaterial = material;
         previewObject.transform.SetParent(parent, false);
+        CompanionFitter.OnPedestal(previewObject, PreviewSize, parent.position + Vector3.up * PreviewFloor);
         return previewObject;
     }
 }

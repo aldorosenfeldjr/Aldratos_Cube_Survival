@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Ruby
   category: 0
   tier: 1
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: 5790376527510377825, guid: b5b4a46c678827b4d98dc599ddf20fcf, type: 3}
   isDefault: 0
   material: {fileID: 2100000, guid: cc2d2ec67e872154fb993e8a8d181ab6, type: 2}
   previewMesh: {fileID: -8150487723851427825, guid: b2ef5ff71ef3f9946b4f0acbf5ddc3c3, type: 3}

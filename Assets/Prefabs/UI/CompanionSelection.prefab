@@ -377,8 +377,8 @@ MonoBehaviour:
   tilePrefab: {fileID: 1913176091254539213, guid: bb69a9fa60a72774493caf02f852c98c, type: 3}
   tileContainer: {fileID: 1124952226927356088}
   scroll: {fileID: 5878806705960226310}
-  previewBackground: {r: 0.12, g: 0.14, b: 0.18, a: 1}
   previewRotator: {fileID: 9045192669162725877}
+  pedestalMaterial: {fileID: 2100000, guid: 29f29d8f6dc7eda4f8b333fe4b1d766b, type: 2}
 --- !u!114 &5473819104542417327
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -102,9 +102,12 @@ public static class SelectionScreenBuilder
         root.name = "UnlockTile";
         ((RectTransform)root.transform).sizeDelta = new Vector2(180f, 180f);
 
-        // Frame first so it draws behind the swatch and shows as a border on the selected item.
-        var frame = NewImage(root.transform, "SelectedFrame", FrameColor, 0.1f, 0.3f, 0.9f, 0.9f);
-        var swatch = NewImage(root.transform, "Swatch", Color.white, 0.14f, 0.34f, 0.86f, 0.86f);
+        // A rounded gold frame (only shown on the selected item) behind a soft card, behind the portrait: the frame reads as a border.
+        var frame = NewImage(root.transform, "SelectedFrame", FrameColor, 0.05f, 0.25f, 0.95f, 0.95f);
+        Round(frame);
+        var card = NewImage(root.transform, "Card", new Color(1f, 1f, 1f, 0.16f), 0.08f, 0.28f, 0.92f, 0.92f);
+        Round(card);
+        var swatch = NewImage(root.transform, "Swatch", Color.white, 0.11f, 0.30f, 0.89f, 0.90f);
 
         var badge = NewLabel(root.transform, "Badge", 22f, 0f, 0.86f, 1f, 1f);
         badge.color = FrameColor;
@@ -242,6 +245,7 @@ public static class SelectionScreenBuilder
         fields.FindProperty("statusText").objectReferenceValue = statusText;
         fields.FindProperty("previewImage").objectReferenceValue = preview;
         fields.FindProperty("previewRotator").objectReferenceValue = rotator;
+        fields.FindProperty("pedestalMaterial").objectReferenceValue = EnsurePedestalMaterial();
         fields.FindProperty("selectButton").objectReferenceValue = select.GetComponent<Button>();
         fields.FindProperty("selectLabel").objectReferenceValue = select.GetComponentInChildren<TextMeshProUGUI>();
         fields.FindProperty("unlockButton").objectReferenceValue = unlock.GetComponent<Button>();
@@ -271,7 +275,7 @@ public static class SelectionScreenBuilder
     {
         var root = new GameObject("SelectionTeaser", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(ClickSound));
         root.layer = LayerMask.NameToLayer("UI");
-        Place(root.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(250f, 140f));
+        Place(root.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(290f, 164f));
         var image = root.GetComponent<Image>();
         image.color = new Color(0.08f, 0.09f, 0.16f, 0.6f);
         root.GetComponent<Button>().targetGraphic = image;
@@ -289,7 +293,7 @@ public static class SelectionScreenBuilder
         tiles.anchorMin = new Vector2(0.5f, 0f);
         tiles.anchorMax = new Vector2(0.5f, 0f);
         tiles.pivot = new Vector2(0.5f, 0f);
-        tiles.sizeDelta = new Vector2(240f, 76f);
+        tiles.sizeDelta = new Vector2(276f, 88f);
         tiles.anchoredPosition = new Vector2(0f, 8f);
         var row = tiles.gameObject.AddComponent<HorizontalLayoutGroup>();
         row.spacing = 6f;
@@ -330,11 +334,8 @@ public static class SelectionScreenBuilder
             var characterTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CharacterTeaser", UnlockCategory.Character, MainMenu.SideCharacterY, menu.OpenCharacters);
             var companionTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CompanionTeaser", UnlockCategory.Companion, MainMenu.SideCompanionY, menu.OpenCompanions);
 
-            // Vertical budget: the menu must stay inside the shortest canvas (about 864 units tall, i.e. +-432), and the centred
-            // column must stay clear of the teasers on the right.
-            SetRect(contents.transform.Find("Exit"), new Vector2(0f, -75f), new Vector2(280f, 60f));
-            SetRect(contents.transform.Find("ClearHighScore"), new Vector2(0f, -150f), new Vector2(340f, 50f));
-
+            // The centred buttons' sizes and positions live in SelectionSkinBuilder.MenuButtons (vertical budget: the menu must stay
+            // inside the shortest canvas, about 864 units tall, and clear of the teasers on the right).
             var removeAds = contents.transform.Find("RemoveAds");
             if (removeAds == null)
             {
@@ -344,7 +345,6 @@ public static class SelectionScreenBuilder
                 UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, menu.RemoveAds);
                 removeAds = instance.transform;
             }
-            SetRect(removeAds, new Vector2(0f, -215f), new Vector2(400f, 60f));
             var menuFields = new SerializedObject(menu);
             menuFields.FindProperty("removeAdsButton").objectReferenceValue = removeAds.gameObject;
             menuFields.FindProperty("characterTeaser").objectReferenceValue = characterTeaser;
@@ -382,7 +382,10 @@ public static class SelectionScreenBuilder
             UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, open);
         }
 
-        ((RectTransform)instance.transform).anchoredPosition = new Vector2(-MainMenu.SideLayoutMargin, y);
+        var rect = (RectTransform)instance.transform;
+        rect.anchoredPosition = new Vector2(-MainMenu.SideLayoutMargin, y);
+        // Only the position is this menu's own: the size comes from the teaser prefab (an old size override would outlive prefab changes).
+        PrefabUtility.RevertPropertyOverride(new SerializedObject(rect).FindProperty("m_SizeDelta"), InteractionMode.AutomatedAction);
         var teaser = instance.GetComponent<SelectionTeaser>();
         var fields = new SerializedObject(teaser);
         fields.FindProperty("category").enumValueIndex = (int)category;
@@ -471,6 +474,29 @@ public static class SelectionScreenBuilder
         image.color = color;
         image.raycastTarget = false;
         return image;
+    }
+
+    private static void Round(Image image)
+    {
+        image.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        image.type = Image.Type.Sliced;
+    }
+
+    // The pedestal the preview hero stands on (an ordinary lit material, so it is part of every build).
+    private static Material EnsurePedestalMaterial()
+    {
+        const string path = "Assets/Materials/Pedestal.mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material == null)
+        {
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(material, path);
+        }
+        material.SetColor("_BaseColor", new Color(0.42f, 0.5f, 0.82f));
+        material.SetFloat("_Smoothness", 0.75f);
+        material.SetFloat("_Metallic", 0.05f);
+        EditorUtility.SetDirty(material);
+        return material;
     }
 
     private static TextMeshProUGUI NewLabel(Transform parent, string name, float size, float minX, float minY, float maxX, float maxY)

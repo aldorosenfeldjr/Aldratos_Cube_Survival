@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Piggy
   category: 1
   tier: 2
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -4988757667962573408, guid: 4fa65659d917879479dd16537ba4be26, type: 3}
   isDefault: 0
   prefab: {fileID: 3931579724237554203, guid: 1fdc34d464284944d88802330f47a6fc, type: 3}
   worldSize: 0.8

@@ -20,6 +20,9 @@ public class MenuBackgroundRig : MonoBehaviour
 
     [SerializeField] private GameObject stagePrefab;
     [SerializeField] private RawImage backgroundImage;
+    [Tooltip("UI shader that shows the render through a soft blur (UI/MenuBackgroundBlur).")]
+    [SerializeField] private Shader blurShader;
+    [SerializeField, Range(0.5f, 4f)] private float blurRadius = 1.8f;
     [SerializeField, Range(2, 8)] private int downscaleFactor = 4;
     [SerializeField] private float poseTweenDuration = 0.7f;
     [SerializeField] private Pose mainMenuIdle = new Pose { position = new Vector3(0f, 1.6f, -6f), eulerAngles = new Vector3(6f, 0f, 0f), fieldOfView = 32f };
@@ -44,6 +47,7 @@ public class MenuBackgroundRig : MonoBehaviour
     public bool TextureWired => stageCamera.targetTexture == texture && backgroundImage.texture == texture;
 
     private Camera stageCamera;
+    private Material blurMaterial;
     private RenderTexture texture;
     private Vector2Int textureScreenSize;
     private Pose basePose;
@@ -63,6 +67,13 @@ public class MenuBackgroundRig : MonoBehaviour
         stageCamera.farClipPlane = 60f;
         stageCamera.allowHDR = false;
         stageCamera.allowMSAA = false;
+
+        if (blurShader != null)
+        {
+            blurMaterial = new Material(blurShader) { name = "MenuBackgroundBlur (runtime)" };
+            blurMaterial.SetFloat("_Radius", blurRadius);
+            backgroundImage.material = blurMaterial;
+        }
 
         RebuildTexture(new Vector2Int(Screen.width, Screen.height));
         SetPoseImmediate(mainMenuIdle);
@@ -106,6 +117,10 @@ public class MenuBackgroundRig : MonoBehaviour
         {
             texture.Release();
             Destroy(texture);
+        }
+        if (blurMaterial != null)
+        {
+            Destroy(blurMaterial);
         }
     }
 

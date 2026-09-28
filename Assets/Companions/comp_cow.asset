@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Daisy
   category: 1
   tier: 3
-  thumbnail: {fileID: 0}
+  thumbnail: {fileID: -5094593559060974600, guid: 4915e2d1947fcaf488e25c59d9b50f2d, type: 3}
   isDefault: 0
   prefab: {fileID: 1144739739130577648, guid: c4a9056635f1f054a80e907d0c42e45b, type: 3}
   worldSize: 1
