@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GemMultiplier
   m_EditorClassIdentifier: NewAssembly::GemMultiplierDefinition
   displayName: Gem Multiplier
-  icon: {fileID: 2634841557194024747, guid: d55cd3f5557cad74da7b680d7c2d70cd, type: 3}
+  icon: {fileID: 21300000, guid: d55cd3f5557cad74da7b680d7c2d70cd, type: 3}
   duration: 10
   importance: 0
   multiplier: 2

@@ -56,7 +56,7 @@ public class LevelSelect : MonoBehaviour
             var unlocked = LevelProgression.IsUnlocked(registry, i);
             var tile = Instantiate(levelTilePrefab, tileContainer);
             var label = tile.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-            label.text = $"{entry.DisplayName}\n<size=45%>{TileSubtitle(i, unlocked)}</size>";
+            label.text = $"{entry.DisplayName}\n<size=55%>{TileSubtitle(i, unlocked)}</size>";
 
             var button = tile.GetComponent<UnityEngine.UI.Button>();
             button.interactable = unlocked;
@@ -78,7 +78,7 @@ public class LevelSelect : MonoBehaviour
         if (!unlocked)
         {
             var previous = registry.LevelEntries[index - 1];
-            return $"Locked: survive {previous.Theme.TargetSeconds} s in {previous.DisplayName}";
+            return $"Survive {previous.Theme.TargetSeconds} s in {previous.DisplayName}";
         }
 
         var entry = registry.LevelEntries[index];

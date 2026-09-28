@@ -41,6 +41,9 @@ public class MainMenu : MonoBehaviour
 
     // Wide canvases (landscape) keep the teasers stacked at the right edge. On narrow ones (portrait phones are about 850-880
     // units wide) that edge is only a few units clear of the centred buttons, so the teasers move under them instead.
+    // The score card hangs from the top-left corner (pivot top): hidden above the screen on the menu, slides down for a run.
+    private const float ScoreHiddenY = 200f;
+    private const float ScoreShownY = -24f;
     public const float SideLayoutMinWidth = 1100f;
     public const float SideLayoutMargin = 16f;
     public const float SideCharacterY = 62f;
@@ -100,7 +103,7 @@ public class MainMenu : MonoBehaviour
         EventSystem.current.SetSelectedGameObject(null);
         EventSystem.current.SetSelectedGameObject(firstSelected);
 
-        scoreRectTransform.anchoredPosition = new Vector2(scoreRectTransform.anchoredPosition.x, 20);
+        scoreRectTransform.anchoredPosition = new Vector2(scoreRectTransform.anchoredPosition.x, ScoreHiddenY);
     }
 
     // Whenever the menu (re)appears it is fully visible, usable and in its place, whatever a transition left behind.
@@ -172,7 +175,7 @@ public class MainMenu : MonoBehaviour
     public void OnComplete()
     {
         scoreRectTransform
-            .LeanMoveY(-72f, 0.75f)
+            .LeanMoveY(ScoreShownY, 0.75f)
             .setEaseOutBounce();
 
         levelSelect.SetActive(true);

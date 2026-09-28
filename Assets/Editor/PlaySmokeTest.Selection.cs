@@ -183,7 +183,7 @@ public static partial class PlaySmokeTest
         {
             yield break;
         }
-        Check("main menu gem counter shows the wallet", menuGems.GetComponent<TMP_Text>().text == "Gems: 70", menuGems.GetComponent<TMP_Text>().text);
+        Check("main menu gem counter shows the wallet", menuGems.GetComponentInChildren<TMP_Text>().text == "70", menuGems.GetComponentInChildren<TMP_Text>().text);
 
         // The teaser: a spoiler row of the catalog's first three characters, reusing the tiles' own lock and selected-frame logic.
         var teaser = CanvasChild("MainMenu/CharacterTeaser")?.GetComponent<SelectionTeaser>();
@@ -246,9 +246,9 @@ public static partial class PlaySmokeTest
             !timedOut && menuGroup.alpha > 0f && menuGroup.alpha < 1f, $"x={teaserRect.anchoredPosition.x} home={teaserHome.x} alpha={menuGroup.alpha}");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
-        var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponent<TMP_Text>();
+        var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponentInChildren<TMP_Text>();
         Check("Characters opens the screen and hides the main menu",
-            !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenGems.text == "Gems: 70",
+            !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenGems.text == "70",
             $"tiles={screen.Tiles.Count}/{characters.Count} gems='{screenGems.text}'");
         yield return 0.3f;
         Check("the menu background moved to the Characters pose", rig.CurrentPoseName == "Characters" && Mathf.Abs(rig.CameraFieldOfView - 28f) < 0.1f,
@@ -292,7 +292,7 @@ public static partial class PlaySmokeTest
 
         unlockButton.onClick.Invoke();
         Check("clicking Unlock spends the price and owns the item",
-            Wallet.Balance == 0 && UnlockService.IsOwned(common) && !unlockButton.gameObject.activeSelf && selectButton.gameObject.activeSelf && selectButton.interactable && screenGems.text == "Gems: 0",
+            Wallet.Balance == 0 && UnlockService.IsOwned(common) && !unlockButton.gameObject.activeSelf && selectButton.gameObject.activeSelf && selectButton.interactable && screenGems.text == "0",
             $"balance={Wallet.Balance} gems='{screenGems.text}'");
 
         selectButton.onClick.Invoke();
@@ -393,7 +393,11 @@ public static partial class PlaySmokeTest
         }
         foreach (var screenRoot in new[] { screenTransform, CanvasChild("CompanionScreen") })
         {
-            RequireSkin(screenRoot.name + "/Back", screenRoot.Find("TopBar/Back"));
+            var backSprite = screenRoot.Find("TopBar/Back").GetComponent<Image>().sprite;
+            if (backSprite == null || !AssetDatabase.GetAssetPath(backSprite).StartsWith("Assets/Hyper_Casual_UI/"))
+            {
+                skinProblems.Add(screenRoot.name + "/Back: not the pack's back tile");
+            }
             foreach (var action in new[] { "Select", "Unlock", "Buy", "Try", "Restore" })
             {
                 RequireSkin(screenRoot.name + "/" + action, screenRoot.Find("InfoPanel/" + action));

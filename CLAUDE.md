@@ -55,7 +55,8 @@ level scene holds a `LevelInfo` -> `LevelTheme` asset (hazard + power-up prefabs
 | Post-processing | Shared look: `Assets/Settings/PostProcessLook` (global `PostProcessVolume` in Core). PC-only: DoF in `URP-PC_Volume`, SSAO feature on `URP-PC_Renderer` |
 | Input (Input System package only; no `UnityEngine.Input`) | `Player` (steer/jump), `GameManager` (Esc/back = pause); UI via `InputSystemUIInputModule` in Core with `Assets/Settings/UIInputActions` (default UI actions + Space as Submit) |
 | Camera shake from landings | `CameraShaker` in Core (single owner; hazards call `ShakeImpact(force)`) |
-| Pickup prefab look (all 6) | `Assets/Editor/PowerUpPickupBuilder.cs` -> menu *Tools > PowerUps > Rebuild Pickup Prefabs* |
+| Pickup prefab look (all 8) + HUD power-up icons | `Assets/Editor/PowerUpPickupBuilder.cs` -> menu *Tools > PowerUps > Rebuild Pickup Prefabs*: one small glossy collectable per kind (heart/bolt/star/diamond), soft glow, sparkles, sphere collider; the HUD icons are rendered from the same models (`PortraitBuilder.RenderToSprite`) |
+| **UI skin (Hyper Casual UI Pack)** | `Editor/UIPack.cs` (pack paths, 9-slice borders, Baloo2 text style, rect helpers), `GameUIBuilder` (*Tools > UI > Apply Game UI Skin*: HUD score card + chips, power-up rows with shrinking bar, pause tile, Pause / Game Over + trial / Success / New Record / Level Select), `SelectionSkinBuilder` (*Apply Selection Skin*: selection screens, tiles, gem chip, teasers, Main Menu buttons). One table row per element: change the row, run the menu item, never hand-edit prefabs. Edits to prefab *instances* in Core must be recorded (`PrefabUtility.RecordPrefabInstancePropertyModifications`) or they vanish on save; layout overrides on the Score / New Record instances are cleared by the builder. |
 
 ## Rules that keep changes cheap
 - **One source of truth per setting.** Never copy tuning (shake, badge size, ...) into each

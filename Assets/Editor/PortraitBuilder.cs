@@ -75,6 +75,7 @@ public static class PortraitBuilder
         AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
         var importer = (TextureImporter)AssetImporter.GetAtPath(assetPath);
         importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
         importer.alphaIsTransparency = true;
         importer.mipmapEnabled = false;
         importer.SaveAndReimport();

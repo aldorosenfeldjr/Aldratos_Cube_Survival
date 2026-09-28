@@ -85,14 +85,37 @@ public static class SelectionScreenBuilder
         return instance.GetComponent<SelectionScreen>();
     }
 
+    // A chip: dark slot, coin icon, balance. The sprites come from SelectionSkinBuilder; this only makes the structure.
     private static GameObject BuildGemCounter()
     {
-        var root = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(LabelPath));
-        root.name = "GemCounter";
-        root.AddComponent<GemCounter>();
-        var text = root.GetComponent<TextMeshProUGUI>();
-        text.fontSize = 36f;
-        text.alignment = TextAlignmentOptions.Right;
+        var root = new GameObject("GemCounter", typeof(RectTransform));
+        root.layer = LayerMask.NameToLayer("UI");
+        ((RectTransform)root.transform).sizeDelta = new Vector2(240f, 60f);
+
+        var slot = NewRect("Slot", root.transform);
+        Stretch(slot);
+        var slotImage = slot.gameObject.AddComponent<Image>();
+        slotImage.raycastTarget = false;
+
+        var icon = NewRect("Icon", root.transform);
+        icon.anchorMin = icon.anchorMax = new Vector2(0f, 0.5f);
+        icon.pivot = new Vector2(0f, 0.5f);
+        icon.sizeDelta = new Vector2(40f, 40f);
+        icon.anchoredPosition = new Vector2(12f, 0f);
+        var iconImage = icon.gameObject.AddComponent<Image>();
+        iconImage.raycastTarget = false;
+        iconImage.preserveAspect = true;
+
+        var label = NewLabel(root.transform, "Label", 36f, 0f, 0f, 1f, 1f);
+        var labelRect = (RectTransform)label.transform;
+        labelRect.offsetMin = new Vector2(60f, 0f);
+        labelRect.offsetMax = new Vector2(-16f, 0f);
+        label.alignment = TextAlignmentOptions.Center;
+
+        var counter = root.AddComponent<GemCounter>();
+        var fields = new SerializedObject(counter);
+        fields.FindProperty("label").objectReferenceValue = label;
+        fields.ApplyModifiedPropertiesWithoutUndo();
         return Save(root, GemCounterPath);
     }
 
@@ -175,11 +198,11 @@ public static class SelectionScreenBuilder
         stack.childAlignment = TextAnchor.UpperCenter;
         stack.childControlWidth = true;
         stack.childControlHeight = true;
-        stack.childForceExpandWidth = true;
+        stack.childForceExpandWidth = false; // buttons keep their own width; the preview and the texts flex
         stack.childForceExpandHeight = false;
 
         var previewFrame = NewRect("PreviewFrame", info);
-        SetLayout(previewFrame.gameObject, minHeight: 160f, preferredHeight: 320f, flexibleHeight: 1f);
+        SetLayout(previewFrame.gameObject, minHeight: 160f, preferredHeight: 320f, flexibleHeight: 1f, flexibleWidth: 1f);
         var previewRect = NewRect("Preview", previewFrame);
         Stretch(previewRect);
         var preview = previewRect.gameObject.AddComponent<RawImage>();
@@ -190,11 +213,11 @@ public static class SelectionScreenBuilder
         fitter.aspectRatio = 1f;
 
         var nameText = AddLabel(info, "Name", "Name", 48f);
-        SetLayout(nameText.gameObject, minHeight: 50f, preferredHeight: 50f);
+        SetLayout(nameText.gameObject, minHeight: 50f, preferredHeight: 60f, flexibleWidth: 1f);
         var tierText = AddLabel(info, "Tier", "Tier", 32f);
-        SetLayout(tierText.gameObject, minHeight: 36f, preferredHeight: 36f);
+        SetLayout(tierText.gameObject, minHeight: 36f, preferredHeight: 40f, flexibleWidth: 1f);
         var statusText = AddLabel(info, "Status", "Status", 32f);
-        SetLayout(statusText.gameObject, minHeight: 36f, preferredHeight: 36f);
+        SetLayout(statusText.gameObject, minHeight: 36f, preferredHeight: 40f, flexibleWidth: 1f);
         var select = AddButton(info, "Select", "Select");
         var unlock = AddButton(info, "Unlock", "Unlock");
         var buy = AddButton(info, "Buy", "Buy");
@@ -202,7 +225,7 @@ public static class SelectionScreenBuilder
         var restore = AddButton(info, "Restore", "Restore Purchases");
         foreach (var button in new[] { select, unlock, buy, tryAd, restore })
         {
-            SetLayout(button, minHeight: 60f, preferredHeight: 60f);
+            SetLayout(button, minHeight: 64f, preferredHeight: 64f, preferredWidth: 440f);
         }
 
         // Grid panel: vertical scroll of tiles.
@@ -534,7 +557,7 @@ public static class SelectionScreenBuilder
         return instance;
     }
 
-    private static void SetLayout(GameObject go, float minHeight = -1f, float preferredHeight = -1f, float flexibleHeight = -1f)
+    private static void SetLayout(GameObject go, float minHeight = -1f, float preferredHeight = -1f, float flexibleHeight = -1f, float preferredWidth = -1f, float flexibleWidth = -1f)
     {
         var element = go.GetComponent<LayoutElement>();
         if (element == null)
@@ -544,6 +567,8 @@ public static class SelectionScreenBuilder
         element.minHeight = minHeight;
         element.preferredHeight = preferredHeight;
         element.flexibleHeight = flexibleHeight;
+        element.preferredWidth = preferredWidth;
+        element.flexibleWidth = flexibleWidth;
     }
 
     private static void Stretch(RectTransform rect)
