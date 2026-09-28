@@ -145,9 +145,17 @@ Done after the first delivery was judged too thin. Everything uses the Hyper Cas
   left over from a screenshot script spams errors until a script reload (`EditorUtility.RequestScriptReload`).
 - Smoke test 139/139 (5 new checks in `PlaySmokeTest.GameUI.cs`: pack panels/buttons and no oversized buttons, HUD, panels fit 5
   screen sizes, every pickup small with a sphere collider and glow, icons are the collectable renders).
-- Not done / eyeball: NewRecord badge animation (fades and spins from a scene-set position), the fly-in label (`PowerUpCollectFX`
-  prefab) is unskinned, fonts on the remaining `MenuLabel`s, Success has no "Next level" gap fill when there is no next level, the
-  Main Menu title keeps its display font, real-phone check.
+- **2026-09-28, follow-up pass**: the power-up collect fly-in label (`PowerUpCollectFXLabel.prefab`, via `GameUIBuilder.ApplyCollectFxLabel`)
+  now has a soft glow behind the icon and Baloo2 text (found and fixed along the way: `PowerUpCollectFX` used
+  `GetComponentInChildren<Image>()` to find the icon, which started picking the new glow sibling instead — now a named `Find("Icon")`
+  lookup; the name label also needed `textWrappingMode = NoWrap` + autosizing so e.g. "Invincibility" doesn't wrap to two lines).
+  `SuccessMenu` no longer leaves a gap when Next level is hidden (last level cleared): Keep going / Quit read their normal slot Y
+  from the positions the builder already set (`SuccessMenuBuilder` now wires a `quitButton` field) and slide up to fill Next level's
+  slot instead — the spacing stays defined once, in the builder table. Checked the New Record badge in play mode (diagonal gold
+  ribbon, -18° rotation baked into the prefab, Baloo2 text): reads fine, no change made. Every label/button in every menu already
+  gets Baloo2 explicitly, per-instance, from the two skin builders' tables — the "remaining `MenuLabel`s" item turned out to already
+  be resolved as a side effect of that; only the Main Menu title intentionally keeps its display font.
+- Not done: real-phone check.
 
 ## 3. Product roadmap (all built 2026-09-26 except step 5 of item 1; see status lines)
 
