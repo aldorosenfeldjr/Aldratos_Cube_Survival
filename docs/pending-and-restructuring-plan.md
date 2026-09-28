@@ -1,8 +1,9 @@
 # Handoff: state, open items, roadmap
 
-Updated 2026-09-26 (economy steps 1-4, characters, companions, audio and the unit-test suite are done; only economy step 5,
-the real ad/store adapters, is open: see section 3a). A fresh session starts by reading `CLAUDE.md` (project map + rules),
-then this file. Do not re-explore the project.
+Updated 2026-09-27 (economy steps 1-4, characters, companions, audio and the unit-test suite are done; only economy step 5,
+the real ad/store adapters, is open: see section 3a. The character/companion selection experience was redesigned on
+2026-09-27: see section 2c). A fresh session starts by reading `CLAUDE.md` (project map + rules), then this file. Do not
+re-explore the project.
 
 ## 1. State
 
@@ -56,7 +57,7 @@ then this file. Do not re-explore the project.
 | Animals without Walk/Run | note | Pug, Piggy, Woolly and Llama only ship Idle and Jump animations, so they stand and idle instead of wandering. Only Daisy (cow), Bolt (horse) and Stripes (zebra) wander, like the cat. The cat's Idle clips do not loop (existing setup). |
 | Companion sizing | user | Each animal's on-screen size is a `WorldSize` column in `CompanionBuilder` (cat 0.52 = its old size). Values for the animals are a first guess: check them in a real run. `CatWanderer` also drives the new animals (name kept to avoid churn). |
 | Check post-processing on a phone | user | Mobile gets tonemapping/grading/vignette + SMAA + HDR (no DoF/SSAO). Profile on a real device; drop SMAA or HDR on URP-Mobile if it costs too much. |
-| Selection preview lighting | user | The preview cube uses Core's sunset light/ambient, so it looks lavender next to the swatch's true blue. Faithful to gameplay lighting; decide if the preview needs its own neutral light. |
+| Selection preview lighting | done 2026-09-27 | The preview stage now has its own range-limited neutral Point light (`SelectionScreen.CreateStage`); Core's sunset ambient still adds a faint lavender cast (see 2c). |
 | Selection screen not eyeballed in portrait | user | Landscape checked visually once; portrait and 7 other sizes only by the numeric layout audit. Also unchecked: the grid scrolling with >1 row (`EnsureVisible`). |
 | Editor rewrites URP materials | note | `git status` shows `Gem.mat`, `PowerUp_*_Material.mat`, `Assets/Characters/*.mat` as modified after play/compile: Unity syncing `_Color` from `_BaseColor` (float noise). Do not commit them. |
 | Playground decoration/layout | user | User wants to do it personally; do not scatter decoration (see memory). |
@@ -88,6 +89,36 @@ Purpose: try the game on the user's iPhone 12 without a Mac or Apple account. Br
   that repo, switch back to Windows. A WebGL build takes ~10 min the first time and needs several GB of free memory.
 - Untested assumptions: audio starts only after the first tap (browser rule); touch input and layouts on iPhone Safari; save
   persistence across reloads; performance.
+
+## 2c. Selection experience redesign, added 2026-09-27 (branch `feature/selection-experience-redesign`)
+
+Spec `docs/superpowers/specs/2026-09-27-selection-experience-redesign-design.md`, plan `docs/superpowers/plans/2026-09-27-selection-experience-redesign.md`.
+Built: the Main Menu shows two teaser panels on the right (`SelectionTeaser`: title + the catalog's first three items, the equipped one
+framed, locked ones badged; the panel is the button); tapping one fades the menu, slides the teaser toward the card's side, eases the
+menu background to a new pose and fades the screen in; Back reverses it. The screens are flipped (card/grid left or top, hero preview
+right or bottom, one `heroShare` = 0.5 in `SelectionLayout`) and sit on a see-through scrim. The preview is the real player mesh
+(`CharacterDefinition.previewMesh`, `YellowBox.fbx`) or the companion's own idle loop (`PreviewIdleLoop`; wanderers also walk in
+place), and both drag-rotate (`PreviewRotator`). The background is `MenuBackgroundRig` (own root object in Core, parked at x=1000):
+a diorama (`Assets/Prefabs/MenuShowcaseStage.prefab`, KayKit props + one Point light) rendered by its own camera at 1/4 resolution
+(the low resolution is the "out of focus" look, no real-time DoF, so it is cheap on mobile); it drifts slowly and eases between
+three poses (`MainMenu`, `Characters`, `Companions`, editable on the component); its camera renders only while `MenuBackground` is
+visible. The selection UI wears the Hyper Casual UI Pack (`Assets/Hyper_Casual_UI`): `SelectionSkinBuilder` (*Tools > UI > Apply
+Selection Skin*) is the one table for it; the shared `MenuButton`/`MenuLabel` prefabs and every other menu are NOT skinned yet.
+- **`SelectionScreenBuilder` (*Tools > UI > Rebuild Selection Screen*) now generates all of the above** (teaser prefab, Main Menu
+  teasers and layout, draggable preview, scrim) and runs the skin: rebuild instead of hand-editing these prefabs. It also churns
+  `GameOverMenu.prefab` (regenerated fileIDs) and `UnlockTile.prefab` (TMP override noise): revert those two after a rebuild.
+- Cat: it rendered default grey because `Cat Lite.fbx` imports no materials and `CompanionBuilder` never assigned one. Rows now take a
+  `Material` (the cat wears `Tex_Cat_Lite.mat`, what the old scene cat had). The selection preview stage has its own neutral Point light.
+- Debug: *Tools > Debug > Unlock All Characters & Companions* (Edit Mode only, changes your REAL save).
+- Smoke test: 129 checks, green.
+
+| Open item | Who | Notes |
+|---|---|---|
+| Eyeball it | user | Blur strength (is 1/4 resolution "out of focus" enough? else add one cheap box-blur pass), pose values (`MenuBackgroundRig`), diorama look/brightness (its light is a placeholder Point light), teaser and `heroShare` proportions, the cat's remaining faint lavender cast (Core's sunset ambient), and the portrait phone layout of the Main Menu (teasers sit right of the centred column; only the numeric audit covers it). |
+| Diorama set-dressing | user | `MenuShowcaseStage` is three KayKit props on purpose; arrange it yourself (see the level-decoration note in memory). |
+| Skin the rest of the UI | later | HUD (powerup icons, shrinking timer bar), power-up pickups, Pause / Game Over / Level Select / Success and the shared `MenuButton`/`MenuLabel`: separate future pieces reusing the same pack. |
+| Cat spawns below the ground | later | Level ground is flat at y=0.250 but `CompanionSpawner` sits at y=0.0527, so a freshly spawned cat is about 0.2 below the ground plane and only pops up when `CatWanderer` first moves. It made the smoke check "default companion (the cat) ... on the ground and wandering" fail in ~40% of runs (it measured a cat that had already wandered); the check now destroys and respawns the cat first, so it is deterministic and still asserts the spawn-time seating. Fixing the real quirk = move the spawner onto the ground (then update the check's expectation). |
+| Portrait / small-canvas Main Menu | later | The teasers stay at the right edge; on a narrow phone canvas they crowd the centred buttons (the audit's worst case, 968 x 864, passes with an 18-unit gap). A layout switch (teasers under the title in portrait) was not built. |
 
 ## 3. Product roadmap (all built 2026-09-26 except step 5 of item 1; see status lines)
 

@@ -89,6 +89,13 @@ public static partial class PlaySmokeTest
             yield break;
         }
 
+        // Check a freshly spawned cat: one that has been alive a while has started wandering, and then follows the level's ground
+        // (0.25), which is higher than the spawner's own height (0.05), so its feet no longer match the spawner.
+        if (spawner.Current != null)
+        {
+            Object.Destroy(spawner.Current);
+        }
+        yield return 0.1f;
         spawner.Spawn();
         yield return 0.3f; // sized and seated on the first rendered frame
         var cat = companions.First(item => item.IsDefault);
