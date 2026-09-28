@@ -39,14 +39,52 @@ public class MainMenu : MonoBehaviour
     private const float OpenDuration = 0.3f;
     private const float TeaserLandingLeft = 24f;
 
-    private Vector2 characterTeaserHome;
-    private Vector2 companionTeaserHome;
+    // Wide canvases (landscape) keep the teasers stacked at the right edge. On narrow ones (portrait phones are about 850-880
+    // units wide) that edge is only a few units clear of the centred buttons, so the teasers move under them instead.
+    public const float SideLayoutMinWidth = 1000f;
+    public const float SideLayoutMargin = 16f;
+    public const float SideCharacterY = 60f;
+    public const float SideCompanionY = -110f;
+    private const float StackedCharacterY = -340f;
+    private const float StackedCompanionY = -510f;
+
     private bool transitioning;
 
     private void Awake()
     {
-        characterTeaserHome = ((RectTransform)characterTeaser.transform).anchoredPosition;
-        companionTeaserHome = ((RectTransform)companionTeaser.transform).anchoredPosition;
+        ApplyTeaserLayout();
+    }
+
+    private void OnRectTransformDimensionsChange()
+    {
+        if (characterTeaser != null && companionTeaser != null && !transitioning)
+        {
+            ApplyTeaserLayout();
+        }
+    }
+
+    /// <summary>Places both teasers for the canvas's current width.</summary>
+    public void ApplyTeaserLayout()
+    {
+        ApplyTeaserLayout(((RectTransform)transform.parent).rect.width);
+    }
+
+    /// <summary>Places both teasers as they belong on a canvas of the given width (also used by the smoke test's layout audit).</summary>
+    public void ApplyTeaserLayout(float canvasWidth)
+    {
+        var side = canvasWidth >= SideLayoutMinWidth;
+        PlaceTeaser(characterTeaser, side, side ? SideCharacterY : StackedCharacterY);
+        PlaceTeaser(companionTeaser, side, side ? SideCompanionY : StackedCompanionY);
+    }
+
+    private static void PlaceTeaser(SelectionTeaser teaser, bool side, float y)
+    {
+        var rect = (RectTransform)teaser.transform;
+        var anchor = new Vector2(side ? 1f : 0.5f, 0.5f);
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = anchor;
+        rect.anchoredPosition = new Vector2(side ? -SideLayoutMargin : 0f, y);
     }
 
     private void Start()
@@ -74,8 +112,7 @@ public class MainMenu : MonoBehaviour
         group.alpha = 1f;
         group.interactable = true;
         group.blocksRaycasts = true;
-        ((RectTransform)characterTeaser.transform).anchoredPosition = characterTeaserHome;
-        ((RectTransform)companionTeaser.transform).anchoredPosition = companionTeaserHome;
+        ApplyTeaserLayout();
     }
 
     private void OnDisable()
@@ -167,8 +204,9 @@ public class MainMenu : MonoBehaviour
 
         var teaserRect = (RectTransform)teaser.transform;
         var home = teaserRect.anchoredPosition;
+        // Slide until the teaser's left edge sits TeaserLandingLeft from the canvas's left edge, whichever way it is anchored.
         var canvasWidth = ((RectTransform)transform.parent).rect.width;
-        var landingX = TeaserLandingLeft + teaserRect.rect.width - canvasWidth;
+        var landingX = TeaserLandingLeft - teaserRect.anchorMin.x * canvasWidth + teaserRect.pivot.x * teaserRect.rect.width;
         LeanTween.value(teaser.gameObject, home.x, landingX, OpenDuration)
             .setEaseInOutSine()
             .setOnUpdate((float x) => teaserRect.anchoredPosition = new Vector2(x, home.y));

@@ -2494,6 +2494,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 88040020}
     m_Modifications:
+    - target: {fileID: 850612234975434011, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 1365727388557139177, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2574,11 +2578,19 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3179805270711580901, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 3889016239437959822, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4285257727
       objectReference: {fileID: 0}
     - target: {fileID: 3889016239437959822, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5452020413677778151, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
@@ -2603,6 +2615,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 873174968}
     - target: {fileID: 7501040763820828946, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 7801497858394511641, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
@@ -3204,7 +3220,7 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 560955496071191855, guid: c5aae329a7e438542a9fd003ed6f4769, type: 3}
-      insertIndex: -1
+      insertIndex: 0
       addedObject: {fileID: 1735850617}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c5aae329a7e438542a9fd003ed6f4769, type: 3}

@@ -327,8 +327,8 @@ public static class SelectionScreenBuilder
                     Object.DestroyImmediate(old.gameObject);
                 }
             }
-            var characterTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CharacterTeaser", UnlockCategory.Character, 60f, menu.OpenCharacters);
-            var companionTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CompanionTeaser", UnlockCategory.Companion, -110f, menu.OpenCompanions);
+            var characterTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CharacterTeaser", UnlockCategory.Character, MainMenu.SideCharacterY, menu.OpenCharacters);
+            var companionTeaser = EnsureTeaser(contents.transform, teaserPrefab, "CompanionTeaser", UnlockCategory.Companion, MainMenu.SideCompanionY, menu.OpenCompanions);
 
             // Vertical budget: the menu must stay inside the shortest canvas (about 864 units tall, i.e. +-432), and the centred
             // column must stay clear of the teasers on the right.
@@ -382,7 +382,7 @@ public static class SelectionScreenBuilder
             UnityEventTools.AddPersistentListener(instance.GetComponent<Button>().onClick, open);
         }
 
-        ((RectTransform)instance.transform).anchoredPosition = new Vector2(-16f, y);
+        ((RectTransform)instance.transform).anchoredPosition = new Vector2(-MainMenu.SideLayoutMargin, y);
         var teaser = instance.GetComponent<SelectionTeaser>();
         var fields = new SerializedObject(teaser);
         fields.FindProperty("category").enumValueIndex = (int)category;

@@ -212,6 +212,30 @@ public static partial class PlaySmokeTest
         var teaserHome = teaserRect.anchoredPosition;
         Check("the menu background camera renders while the menu is showing", rig != null && rig.CameraEnabled && rig.CurrentPoseName == "MainMenu");
 
+        Check("the diorama is the back-most menu background layer (SunGlow and Particles draw over it)",
+            CanvasChild("MenuBackground/Background").GetSiblingIndex() == 0);
+
+        // Interrupting a pose tween (open, then Back at once) continues from where the camera is instead of snapping to the old target.
+        rig.MoveToCharacters();
+        yield return 0.15f;
+        var fovBeforeInterrupt = rig.CameraFieldOfView;
+        rig.MoveToMainMenu();
+        yield return 0.06f;
+        Check("interrupting a pose tween continues smoothly instead of snapping", Mathf.Abs(rig.CameraFieldOfView - fovBeforeInterrupt) < 1f,
+            $"fov {fovBeforeInterrupt} -> {rig.CameraFieldOfView}");
+        yield return 0.9f;
+
+        // The app auto-rotates: a background texture built for one orientation must be rebuilt for the other, freeing the old one.
+        var oldTexture = rig.Texture;
+        rig.EnsureTextureSize(new Vector2Int(900, 2000));
+        Check("a rotated screen gets a background texture of its own aspect and the old one is freed",
+            !oldTexture.IsCreated() && rig.TextureWired && Mathf.Abs(rig.Texture.width / (float)rig.Texture.height - 0.45f) < 0.02f,
+            $"{rig.Texture.width}x{rig.Texture.height} wired={rig.TextureWired}");
+        yield return 0.2f;
+        Check("the background texture follows the real screen again by itself",
+            rig.TextureWired && Mathf.Abs(rig.Texture.width / (float)rig.Texture.height - Screen.width / (float)Screen.height) < 0.02f,
+            $"{rig.Texture.width}x{rig.Texture.height} screen={Screen.width}x{Screen.height}");
+
         Click("MainMenu/CharacterTeaser");
         Check("opening a screen locks the menu's input while it fades", !menuGroup.blocksRaycasts && !menuGroup.interactable);
         var tweensAfterFirstTap = LeanTween.tweensRunning;

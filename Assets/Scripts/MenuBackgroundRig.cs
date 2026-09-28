@@ -40,9 +40,12 @@ public class MenuBackgroundRig : MonoBehaviour
     public float CameraFieldOfView => stageCamera.fieldOfView;
     public bool CameraEnabled => stageCamera.enabled;
 
+    public RenderTexture Texture => texture;
+    public bool TextureWired => stageCamera.targetTexture == texture && backgroundImage.texture == texture;
+
     private Camera stageCamera;
     private RenderTexture texture;
-    private Pose currentPose;
+    private Vector2Int textureScreenSize;
     private Pose basePose;
 
     private void Awake()
@@ -61,7 +64,7 @@ public class MenuBackgroundRig : MonoBehaviour
         stageCamera.allowHDR = false;
         stageCamera.allowMSAA = false;
 
-        RebuildTexture();
+        RebuildTexture(new Vector2Int(Screen.width, Screen.height));
         SetPoseImmediate(mainMenuIdle);
     }
 
@@ -74,6 +77,10 @@ public class MenuBackgroundRig : MonoBehaviour
     private void LateUpdate()
     {
         stageCamera.enabled = backgroundImage != null && backgroundImage.isActiveAndEnabled;
+        if (stageCamera.enabled)
+        {
+            EnsureTextureSize(new Vector2Int(Screen.width, Screen.height));
+        }
     }
 
     private void OnDisable()
@@ -102,24 +109,43 @@ public class MenuBackgroundRig : MonoBehaviour
         }
     }
 
-    private void RebuildTexture()
+    /// <summary>
+    /// The app auto-rotates: a texture built for one orientation would be stretched across the other. Rebuilds it (releasing the
+    /// old one) when the screen's size has changed since it was made.
+    /// </summary>
+    public void EnsureTextureSize(Vector2Int screenSize)
     {
-        var width = Mathf.Max(4, Screen.width / downscaleFactor);
-        var height = Mathf.Max(4, Screen.height / downscaleFactor);
+        if (screenSize != textureScreenSize)
+        {
+            RebuildTexture(screenSize);
+        }
+    }
+
+    private void RebuildTexture(Vector2Int screenSize)
+    {
+        stageCamera.targetTexture = null;
+        if (texture != null)
+        {
+            texture.Release();
+            Destroy(texture);
+        }
+
+        var width = Mathf.Max(4, screenSize.x / downscaleFactor);
+        var height = Mathf.Max(4, screenSize.y / downscaleFactor);
         texture = new RenderTexture(width, height, 16) { name = "MenuBackgroundTexture", filterMode = FilterMode.Bilinear };
         stageCamera.targetTexture = texture;
         backgroundImage.texture = texture;
+        textureScreenSize = screenSize;
     }
 
-    /// <summary>Eases to the given pose, cancelling any pose tween already running — never stacks.</summary>
+    /// <summary>Eases to the given pose from wherever the camera is right now (even mid-tween), cancelling any tween already running.</summary>
     public void MoveTo(Pose pose)
     {
         LeanTween.cancel(gameObject);
-        var start = currentPose;
+        var start = basePose;
         LeanTween.value(gameObject, 0f, 1f, poseTweenDuration)
             .setEaseInOutSine()
             .setOnUpdate((float t) => basePose = LerpPose(start, pose, t));
-        currentPose = pose;
     }
 
     public void MoveToMainMenu() => MoveTo(mainMenuIdle, "MainMenu");
@@ -134,7 +160,6 @@ public class MenuBackgroundRig : MonoBehaviour
 
     private void SetPoseImmediate(Pose pose)
     {
-        currentPose = pose;
         basePose = pose;
     }
 

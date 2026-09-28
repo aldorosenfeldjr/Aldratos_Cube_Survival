@@ -230,20 +230,33 @@ public static partial class PlaySmokeTest
         spawner.Spawn();
         var menuProblems = MainMenuLayoutProblems(mainMenu);
         Check("main menu fits the shortest canvas with no overlaps", menuProblems.Count == 0, string.Join(" | ", menuProblems));
+
+        // Real canvases (the scaler matches width and height halfway on 1920x866): landscape phones are 1920 wide, portrait phones
+        // 844-876 wide and about 1900 tall, tablets in between. The teasers re-place themselves for each width.
+        var menu = mainMenu.GetComponent<MainMenu>();
+        var canvasProblems = new List<string>();
+        foreach (var canvas in new[] { new Vector2(1920f, 866f), new Vector2(1440f, 1000f), new Vector2(1000f, 866f), new Vector2(876f, 1900f), new Vector2(844f, 1900f), new Vector2(760f, 1900f) })
+        {
+            menu.ApplyTeaserLayout(canvas.x);
+            canvasProblems.AddRange(MainMenuLayoutProblems(mainMenu, canvas).Select(problem => $"{canvas.x}x{canvas.y}: {problem}"));
+        }
+        menu.ApplyTeaserLayout();
+        Check("main menu fits landscape, tablet and portrait phone canvases with no overlaps", canvasProblems.Count == 0, string.Join(" | ", canvasProblems));
     }
 
-    // Positions every main-menu element from its anchors on a synthetic worst-case canvas (968 wide: portrait; 864 tall: a landscape
-    // phone), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
-    private static List<string> MainMenuLayoutProblems(Transform mainMenu)
+    // Positions every main-menu element from its anchors on a synthetic canvas (default 968 x 864, the combined worst case of a
+    // narrow portrait width and a short landscape height), so corner-anchored items (Sound toggle, gem counter) are judged against
+    // that canvas, not whatever the Game view is.
+    private static List<string> MainMenuLayoutProblems(Transform mainMenu, Vector2? canvas = null)
     {
         mainMenu.Find("RemoveAds").gameObject.SetActive(true);
-        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" });
+        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" }, canvas);
     }
 
-    private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names)
+    private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names, Vector2? canvasSize = null)
     {
         var problems = new List<string>();
-        var canvas = new Vector2(968f, 864f);
+        var canvas = canvasSize ?? new Vector2(968f, 864f);
         var limit = new Rect(-canvas.x / 2f, -canvas.y / 2f, canvas.x, canvas.y);
         var rects = new List<(string, Rect)>();
         foreach (var name in names)
