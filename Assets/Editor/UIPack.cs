@@ -107,6 +107,10 @@ public static class UIPack
                 ascii.Append((char)c);
             }
             font.TryAddCharacters(ascii.ToString(), out _);
+            // Dynamic mode treats the atlas as a runtime-regenerable cache: a platform/texture reimport (e.g. a build
+            // target switch) can legitimately clear or partially reset it, silently breaking every label using this
+            // font. Static locks in the glyphs already baked above so the atlas serializes as fixed content.
+            font.atlasPopulationMode = AtlasPopulationMode.Static;
             EditorUtility.SetDirty(font);
             AssetDatabase.SaveAssets();
         }
