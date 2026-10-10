@@ -20,7 +20,7 @@ public static partial class PlaySmokeTest
 
         var pcTotal = characters.Sum(item => UnlockService.PriceFor(item.Tier, false));
         var mobileTotal = characters.Sum(item => UnlockService.PriceFor(item.Tier, true));
-        Check("everything unlockable costs 20,400 gems on PC and 51,000 on mobile", pcTotal == 20400 && mobileTotal == 51000, $"pc={pcTotal} mobile={mobileTotal}");
+        Check("everything unlockable costs 20,400 coins on PC and 51,000 on mobile", pcTotal == 20400 && mobileTotal == 51000, $"pc={pcTotal} mobile={mobileTotal}");
 
         var ids = characters.Select(item => item.Id).Distinct().Count();
         var products = characters.Select(item => item.ProductId).Distinct().Count();
@@ -44,7 +44,7 @@ public static partial class PlaySmokeTest
         var startsAsDefault = renderer.sharedMaterial == free.Material;
 
         Wallet.Add(UnlockService.Price(owned));
-        UnlockService.TryBuyWithGems(owned);
+        UnlockService.TryBuyWithCoins(owned);
         UnlockService.Select(owned);
         player.ResetState();
         var wearsOwned = renderer.sharedMaterial == owned.Material;

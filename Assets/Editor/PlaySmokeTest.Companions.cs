@@ -26,7 +26,7 @@ public static partial class PlaySmokeTest
             $"total={companions.Count} rare={Count(PriceTier.Rare)} epic={Count(PriceTier.Epic)} legendary={Count(PriceTier.Legendary)}");
         var pcTotal = companions.Sum(item => UnlockService.PriceFor(item.Tier, false));
         var mobileTotal = companions.Sum(item => UnlockService.PriceFor(item.Tier, true));
-        Check("all companions cost 27,000 gems on PC and 67,500 on mobile", pcTotal == 27000 && mobileTotal == 67500, $"pc={pcTotal} mobile={mobileTotal}");
+        Check("all companions cost 27,000 coins on PC and 67,500 on mobile", pcTotal == 27000 && mobileTotal == 67500, $"pc={pcTotal} mobile={mobileTotal}");
         Check("companion ids, product ids and names are unique; characters and companions do not clash",
             companions.Select(item => item.Id).Distinct().Count() == 8 && companions.Select(item => item.ProductId).Distinct().Count() == 8
             && companions.Select(item => item.DisplayName).Distinct().Count() == 8 && catalog.Items.Select(item => item.Id).Distinct().Count() == catalog.Items.Count);
@@ -108,14 +108,14 @@ public static partial class PlaySmokeTest
         var cow = companions.First(item => item.Id == "comp.cow");
         var pig = companions.First(item => item.Id == "comp.pig");
         Wallet.Add(UnlockService.Price(cow) + UnlockService.Price(pig));
-        UnlockService.TryBuyWithGems(cow);
+        UnlockService.TryBuyWithCoins(cow);
         UnlockService.Select(cow);
         yield return 0.3f;
         Check("selecting a wandering companion swaps it (one companion only)",
             spawner.Definition == cow && CompanionLooksRight(spawner, cow) && spawner.Current.GetComponent<CatWanderer>() != null && CompanionCount() == 1 && GameObject.Find("Cat Lite") == null,
             DescribeCompanion(spawner) + $" count={CompanionCount()}");
 
-        UnlockService.TryBuyWithGems(pig);
+        UnlockService.TryBuyWithCoins(pig);
         UnlockService.Select(pig);
         yield return 0.3f;
         var pigStart = spawner.Current.transform.position;
@@ -205,7 +205,7 @@ public static partial class PlaySmokeTest
         var unlockButton = screenTransform.Find("InfoPanel/Unlock").GetComponent<Button>();
         var pigPrice = UnlockService.Price(pig);
         Check("locked companion shows its tier price on the Unlock button",
-            unlockButton.gameObject.activeSelf && unlockButton.interactable && unlockButton.GetComponentInChildren<TMP_Text>().text == $"Unlock ({pigPrice} gems)");
+            unlockButton.gameObject.activeSelf && unlockButton.interactable && unlockButton.GetComponentInChildren<TMP_Text>().text == $"Unlock ({pigPrice} coins)");
         unlockButton.onClick.Invoke();
         screenTransform.Find("InfoPanel/Select").GetComponent<Button>().onClick.Invoke();
         yield return 0.3f;
@@ -214,7 +214,7 @@ public static partial class PlaySmokeTest
         var horse = companions.First(item => item.Id == "comp.horse");
         screen.Focus(screen.Tiles.First(tile => tile.Definition == horse));
         var horseUnlock = screenTransform.Find("InfoPanel/Unlock").GetComponentInChildren<TMP_Text>().text;
-        Check("a Legendary companion asks for its full price", horseUnlock == $"Need {UnlockService.Price(horse) - Wallet.Balance} more gems" && UnlockService.Price(horse) == 7200, horseUnlock);
+        Check("a Legendary companion asks for its full price", horseUnlock == $"Need {UnlockService.Price(horse) - Wallet.Balance} more coins" && UnlockService.Price(horse) == 7200, horseUnlock);
 
         Click("CompanionScreen/TopBar/Back");
         yield return 0.2f;
@@ -246,11 +246,11 @@ public static partial class PlaySmokeTest
     }
 
     // Positions every main-menu element from its anchors on a synthetic canvas (default 1920 x 866, a landscape phone: the shortest
-    // real canvas), so corner-anchored items (Sound toggle, gem counter) are judged against that canvas, not whatever the Game view is.
+    // real canvas), so corner-anchored items (Sound toggle, coin counter) are judged against that canvas, not whatever the Game view is.
     private static List<string> MainMenuLayoutProblems(Transform mainMenu, Vector2? canvas = null)
     {
         mainMenu.Find("RemoveAds").gameObject.SetActive(true);
-        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "GemCounter" }, canvas ?? new Vector2(1920f, 866f));
+        return MenuLayoutProblems(mainMenu, new[] { "Title", "Play", "CharacterTeaser", "CompanionTeaser", "Exit", "ClearHighScore", "RemoveAds", "SoundToggle", "CoinCounter" }, canvas ?? new Vector2(1920f, 866f));
     }
 
     private static List<string> MenuLayoutProblems(Transform mainMenu, string[] names, Vector2? canvasSize = null)

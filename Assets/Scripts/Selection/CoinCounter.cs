@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>Shows the wallet balance next to a coin icon and keeps it current. One prefab, used on the main menu and the selection screens.</summary>
-public class GemCounter : MonoBehaviour
+public class CoinCounter : MonoBehaviour
 {
     [SerializeField]
     private TMP_Text label;

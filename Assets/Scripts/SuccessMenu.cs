@@ -36,7 +36,7 @@ public class SuccessMenu : MonoBehaviour
         var clear = game.LastClear;
 
         title.text = $"{game.LevelName} cleared!";
-        var reward = $"+{clear.Reward} gems{(clear.FirstClear ? " (first clear)" : string.Empty)}";
+        var reward = $"+{clear.Reward} coins{(clear.FirstClear ? " (first clear)" : string.Empty)}";
         rewardText.text = clear.UnlockedLevelId != null ? $"{reward}\nNew level unlocked!" : reward;
 
         nextLevelButton.SetActive(game.HasNextLevel);

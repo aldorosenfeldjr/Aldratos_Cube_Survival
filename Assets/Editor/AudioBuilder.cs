@@ -32,7 +32,7 @@ public static class AudioBuilder
         var files = new Dictionary<string, float[]>
         {
             ["click"] = Click(),
-            ["gem"] = Gem(),
+            ["coin"] = Coin(),
             ["powerup"] = PowerUp(),
             ["land"] = Land(),
             ["gameover"] = GameOver(),
@@ -138,7 +138,7 @@ public static class AudioBuilder
 
     private static float[] Click() => Tone(1000f, 0.05f, 0.45f, 60f);
 
-    private static float[] Gem() => Sequence(0.35f, (0f, Tone(1318.5f, 0.2f, 0.4f, 14f)), (0.07f, Tone(1760f, 0.28f, 0.4f, 12f)));
+    private static float[] Coin() => Sequence(0.35f, (0f, Tone(1318.5f, 0.2f, 0.4f, 14f)), (0.07f, Tone(1760f, 0.28f, 0.4f, 12f)));
 
     private static float[] PowerUp() => Sequence(0.5f,
         (0f, Tone(523.25f, 0.18f, 0.35f, 9f)), (0.07f, Tone(659.25f, 0.18f, 0.35f, 9f)),
@@ -234,7 +234,7 @@ public static class AudioBuilder
         var fields = new SerializedObject(library);
         foreach (var (property, file) in new[]
         {
-            ("music", "music"), ("click", "click"), ("gem", "gem"), ("powerUp", "powerup"),
+            ("music", "music"), ("click", "click"), ("coin", "coin"), ("powerUp", "powerup"),
             ("land", "land"), ("gameOver", "gameover"), ("success", "success"),
         })
         {
@@ -265,7 +265,7 @@ public static class AudioBuilder
         }
     }
 
-    // Main menu: top-left, mirroring the gem counter on the top-right. Pause menu: centred, under its last button.
+    // Main menu: top-left, mirroring the coin counter on the top-right. Pause menu: centred, under its last button.
     private static void AddSoundToggle(string prefabPath, bool topLeft)
     {
         var contents = PrefabUtility.LoadPrefabContents(prefabPath);

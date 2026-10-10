@@ -9,10 +9,10 @@ public class LevelTheme : ScriptableObject
     [Tooltip("Seconds to survive to clear the level. Set in LevelBuilder.")]
     [SerializeField]
     private int targetSeconds;
-    [Tooltip("Gems for the first clear. Set in LevelBuilder.")]
+    [Tooltip("Coins for the first clear. Set in LevelBuilder.")]
     [SerializeField]
     private int firstClearReward;
-    [Tooltip("Gems for every repeat clear. Set in LevelBuilder.")]
+    [Tooltip("Coins for every repeat clear. Set in LevelBuilder.")]
     [SerializeField]
     private int repeatClearReward;
     [SerializeField]
@@ -24,7 +24,8 @@ public class LevelTheme : ScriptableObject
     [SerializeField]
     private GameObject shieldPrefab;
     [SerializeField]
-    private GameObject gemMultiplierPrefab;
+    [UnityEngine.Serialization.FormerlySerializedAs("gemMultiplierPrefab")]
+    private GameObject coinMultiplierPrefab;
 
     public string DisplayName => displayName;
     public int TargetSeconds => targetSeconds;
@@ -34,5 +35,5 @@ public class LevelTheme : ScriptableObject
     public GameObject SpeedBoostPrefab => speedBoostPrefab;
     public GameObject InvincibilityPrefab => invincibilityPrefab;
     public GameObject ShieldPrefab => shieldPrefab;
-    public GameObject GemMultiplierPrefab => gemMultiplierPrefab;
+    public GameObject CoinMultiplierPrefab => coinMultiplierPrefab;
 }

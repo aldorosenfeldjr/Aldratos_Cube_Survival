@@ -14,8 +14,8 @@ public static class SaveService
     public const string LegacyHighScoreKey = "HighScore";
     public const string MigratedLevelId = "Level_Meadow";
 
-    /// <summary>Gems a fresh save starts with in a test or development build on a device (see <see cref="BuildInfo"/>).</summary>
-    public const int DevelopmentBuildStartingGems = 10000;
+    /// <summary>Coins a fresh save starts with in a test or development build on a device (see <see cref="BuildInfo"/>).</summary>
+    public const int DevelopmentBuildStartingCoins = 10000;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")]
@@ -73,9 +73,9 @@ public static class SaveService
             MigrateLegacyHighScore();
         }
 
-        if (BuildInfo.GivesStartingGems)
+        if (BuildInfo.GivesStartingCoins)
         {
-            data.gems = DevelopmentBuildStartingGems;
+            data.coins = DevelopmentBuildStartingCoins;
         }
     }
 
@@ -135,7 +135,7 @@ public static class SaveService
         return true;
     }
 
-    /// <summary>Clears every level's best score; gems and clears are kept.</summary>
+    /// <summary>Clears every level's best score; coins and clears are kept.</summary>
     public static void ClearBestScores()
     {
         foreach (var level in Data.levels)

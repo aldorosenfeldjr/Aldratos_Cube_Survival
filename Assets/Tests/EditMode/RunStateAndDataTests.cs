@@ -18,15 +18,15 @@ public class RunStateTests : SaveTestBase
     }
 
     [Test]
-    public void GemsCountTheBaseValueAndTheMultiplierBonusSeparately()
+    public void CoinsCountTheBaseValueAndTheMultiplierBonusSeparately()
     {
         var run = new RunState();
         run.Reset();
 
-        var earned = run.AddGem(1, 2);
+        var earned = run.AddCoin(1, 2);
 
         Assert.AreEqual(2, earned);
-        Assert.AreEqual(1, run.GemsCollected);
+        Assert.AreEqual(1, run.CoinsCollected);
         Assert.AreEqual(1, run.MultiplierBonus);
     }
 
@@ -38,13 +38,13 @@ public class RunStateTests : SaveTestBase
         run.Reset();
         run.Tick(1f);
         run.Tick(1f);
-        run.AddGem(1, 3);
+        run.AddCoin(1, 3);
         run.CommitHighScore();
 
         run.Reset();
 
         Assert.AreEqual(0, run.Score);
-        Assert.AreEqual(0, run.GemsCollected);
+        Assert.AreEqual(0, run.CoinsCollected);
         Assert.AreEqual(0, run.MultiplierBonus);
         Assert.AreEqual(2, run.HighScore);
     }

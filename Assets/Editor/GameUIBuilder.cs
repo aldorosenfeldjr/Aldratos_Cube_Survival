@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Dresses the in-game UI in the Hyper Casual UI Pack (Tools > UI > Apply Game UI Skin): the HUD (score card, best / gem chips,
+// Dresses the in-game UI in the Hyper Casual UI Pack (Tools > UI > Apply Game UI Skin): the HUD (score card, best / coin chips,
 // power-up rows with shrinking bars, pause button) and the Pause, Game Over (+ trial), Success, New Record and Level Select
 // screens. Every screen is one row of tables below: a backing panel or slot, then per button its pack sprite, rect and font size,
 // then per label its rect, font size and colour. Idempotent: change a number or sprite here and run it again, never hand-edit the
@@ -110,7 +110,7 @@ public static class GameUIBuilder
             Backings = new[]
             {
                 new Backing("", "Panel", PopupPink, 56f, 0f, 0f, 620f, 740f, true),
-                new Backing("", "GemSlot", SlotBrown, 20f, 0f, 15f, 480f, 200f),
+                new Backing("", "CoinSlot", SlotBrown, 20f, 0f, 15f, 480f, 200f),
             },
             Buttons = new[]
             {
@@ -123,7 +123,7 @@ public static class GameUIBuilder
                 new Label("Title", 0f, 300f, 560f, 90f, 88f, White),
                 new Label("FinalScoreText", 0f, 215f, 560f, 80f, 64f, Gold),
                 new Label("HighScore", 0f, 150f, 560f, 50f, 40f, UIPack.Soft),
-                new Label("GemBreakdown", 0f, 15f, 440f, 190f, 27f, White),
+                new Label("CoinBreakdown", 0f, 15f, 440f, 190f, 27f, White),
             },
         },
         new Menu
@@ -316,7 +316,7 @@ public static class GameUIBuilder
         }
     }
 
-    // Score card top-left with the best-score and gem chips under it, then the power-up rows.
+    // Score card top-left with the best-score and coin chips under it, then the power-up rows.
     private static void ApplyScoreHud()
     {
         var path = UI + "Score.prefab";
@@ -335,12 +335,12 @@ public static class GameUIBuilder
             UIPack.PlaceTopLeft(bestSlot.rectTransform, 0f, 122f, 210f, 52f);
             var bestIcon = UIPack.ImageChild(root.transform, "BestIcon", CrownIcon, Color.white, Image.Type.Simple, false);
             UIPack.PlaceTopLeft(bestIcon.rectTransform, 10f, 131f, 36f, 34f);
-            var gemSlot = UIPack.ImageChild(root.transform, "GemSlot", SlotTeal, Color.white, Image.Type.Sliced, false);
-            UIPack.PlaceTopLeft(gemSlot.rectTransform, 226f, 122f, 214f, 52f);
-            var gemIcon = UIPack.ImageChild(root.transform, "GemIcon", CoinIcon, Color.white, Image.Type.Simple, false);
-            UIPack.PlaceTopLeft(gemIcon.rectTransform, 236f, 130f, 34f, 34f);
+            var coinSlot = UIPack.ImageChild(root.transform, "CoinSlot", SlotTeal, Color.white, Image.Type.Sliced, false);
+            UIPack.PlaceTopLeft(coinSlot.rectTransform, 226f, 122f, 214f, 52f);
+            var coinIcon = UIPack.ImageChild(root.transform, "CoinIcon", CoinIcon, Color.white, Image.Type.Simple, false);
+            UIPack.PlaceTopLeft(coinIcon.rectTransform, 236f, 130f, 34f, 34f);
             var index = 0;
-            foreach (var backing in new[] { panel, bestSlot, bestIcon, gemSlot, gemIcon })
+            foreach (var backing in new[] { panel, bestSlot, bestIcon, coinSlot, coinIcon })
             {
                 backing.transform.SetSiblingIndex(index++);
             }
@@ -348,7 +348,7 @@ public static class GameUIBuilder
             PlaceLabel(root, "ScoreLabel", 28f, 33f, 150f, 44f, 30f, UIPack.Soft, TextAlignmentOptions.MidlineLeft);
             PlaceLabel(root, "ScoreText", 150f, 4f, 270f, 100f, 76f, White, TextAlignmentOptions.MidlineRight);
             PlaceLabel(root, "HighScoreText", 54f, 122f, 150f, 52f, 30f, White, TextAlignmentOptions.MidlineLeft);
-            PlaceLabel(root, "GemText", 278f, 122f, 156f, 52f, 34f, White, TextAlignmentOptions.MidlineLeft);
+            PlaceLabel(root, "CoinText", 278f, 122f, 156f, 52f, 34f, White, TextAlignmentOptions.MidlineLeft);
 
             var container = (RectTransform)root.transform.Find("PowerUpHUDContainer");
             UIPack.PlaceTopLeft(container, 0f, 190f, 300f, 64f);

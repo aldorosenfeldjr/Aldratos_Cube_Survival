@@ -1,30 +1,30 @@
 using System;
 
-/// <summary>The gem balance. Backed by the save; every change is written to disk.</summary>
+/// <summary>The coin balance. Backed by the save; every change is written to disk.</summary>
 public static class Wallet
 {
     public static event Action<int> Changed;
 
-    public static int Balance => SaveService.Data.gems;
+    public static int Balance => SaveService.Data.coins;
 
-    public static void Add(int gems)
+    public static void Add(int coins)
     {
-        if (gems <= 0)
+        if (coins <= 0)
         {
             return;
         }
-        SaveService.Data.gems += gems;
+        SaveService.Data.coins += coins;
         SaveService.Save();
         Changed?.Invoke(Balance);
     }
 
-    public static bool TrySpend(int gems)
+    public static bool TrySpend(int coins)
     {
-        if (gems < 0 || gems > Balance)
+        if (coins < 0 || coins > Balance)
         {
             return false;
         }
-        SaveService.Data.gems -= gems;
+        SaveService.Data.coins -= coins;
         SaveService.Save();
         Changed?.Invoke(Balance);
         return true;

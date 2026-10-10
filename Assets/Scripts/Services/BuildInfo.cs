@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// What kind of build this is. Test builds (the Editor, development builds, and any build with the <c>TEST_BUILD</c> scripting
-/// symbol, currently set for WebGL) use fake ads/store and give a fresh save starting gems, so everything can be tried on a device
+/// symbol, currently set for WebGL) use fake ads/store and give a fresh save starting coins, so everything can be tried on a device
 /// before the real adapters exist. A real release build has neither.
 /// </summary>
 public static class BuildInfo
@@ -20,8 +20,8 @@ public static class BuildInfo
         }
     }
 
-    /// <summary>A fresh save starts with gems. Never in the Editor, so unit tests and normal Editor play are unaffected.</summary>
-    public static bool GivesStartingGems
+    /// <summary>A fresh save starts with coins. Never in the Editor, so unit tests and normal Editor play are unaffected.</summary>
+    public static bool GivesStartingCoins
     {
         get
         {

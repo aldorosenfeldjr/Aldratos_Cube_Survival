@@ -100,7 +100,7 @@ public static partial class PlaySmokeTest
         Check("no ads/store (PC): prompt shows no Buy or Watch ad",
             panel.gameObject.activeSelf && !buy.gameObject.activeSelf && !watch.gameObject.activeSelf && unlock.gameObject.activeSelf);
         unlock.onClick.Invoke();
-        Check("Unlock with gems from the prompt owns and selects the item", !panel.gameObject.activeSelf && UnlockService.IsOwned(rare) && UnlockService.Selected(UnlockCategory.Character) == rare);
+        Check("Unlock with coins from the prompt owns and selects the item", !panel.gameObject.activeSelf && UnlockService.IsOwned(rare) && UnlockService.Selected(UnlockCategory.Character) == rare);
         foreach (var step in Steps(LeaveGameOver(gameManager, hazardSpawner, restart))) { yield return step; }
 
         Services.Ads = new FakeAdService();

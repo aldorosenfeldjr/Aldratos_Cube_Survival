@@ -28,6 +28,12 @@ public class Hazard : MonoBehaviour
     {
         if (!collision.gameObject.CompareTag("Hazard") && !collision.gameObject.CompareTag("PowerUp"))
             {
+                // Breaking on the floor (anything but the player) awards a coin; breaking against the player does not.
+                if (collision.gameObject.GetComponent<Player>() == null)
+                {
+                    GameManager.Instance.CollectCoin(transform.position);
+                }
+
                 Destroy(gameObject);
                 Instantiate(breakingEffect, transform.position, Quaternion.identity);
                 AudioManager.Play(Sfx.Land, player != null ? Mathf.Clamp01(1f / Mathf.Max(Vector3.Distance(transform.position, player.transform.position), 1f) + 0.3f) : 0.5f);

@@ -10,7 +10,7 @@ public class SaveServiceTests : SaveTestBase
     [Test]
     public void FreshSaveIsEmpty()
     {
-        Assert.AreEqual(0, SaveService.Data.gems);
+        Assert.AreEqual(0, SaveService.Data.coins);
         Assert.AreEqual(0, SaveService.Data.owned.Count);
         Assert.AreEqual(0, SaveService.Data.trials.Count);
         Assert.IsFalse(SaveService.Data.removeAds);
@@ -23,7 +23,7 @@ public class SaveServiceTests : SaveTestBase
     {
         var common = Character(PriceTier.Common);
         Wallet.Add(650);
-        UnlockService.TryBuyWithGems(common);
+        UnlockService.TryBuyWithCoins(common);
         UnlockService.Select(common);
         SaveService.Data.GetOrAddLevel(MeadowId).cleared = true;
         SaveService.SetBestScore(MeadowId, 77);
@@ -78,12 +78,13 @@ public class SaveServiceTests : SaveTestBase
     [Test]
     public void ASaveWrittenBeforeNewFieldsExistedStillLoads()
     {
-        // Version 1 files from before owned/selected/trials were added: only gems and levels.
+        // Version 1 files from before owned/selected/trials were added, and from before the "gems" field was renamed
+        // to "coins": the old value is intentionally not carried over (a fresh coin balance), but the rest still loads.
         File.WriteAllText(SavePath, "{\"version\":1,\"gems\":123,\"levels\":[{\"id\":\"Level_Meadow\",\"cleared\":true,\"bestScore\":9}]}");
 
         Reload();
 
-        Assert.AreEqual(123, Wallet.Balance);
+        Assert.AreEqual(0, Wallet.Balance);
         Assert.IsTrue(SaveService.IsCleared(MeadowId));
         Assert.IsNotNull(SaveService.Data.owned);
         Assert.IsNotNull(SaveService.Data.trials);
@@ -101,7 +102,7 @@ public class SaveServiceTests : SaveTestBase
     }
 
     [Test]
-    public void ClearingBestScoresKeepsGemsAndClears()
+    public void ClearingBestScoresKeepsCoinsAndClears()
     {
         Wallet.Add(40);
         SaveService.Data.GetOrAddLevel(MeadowId).cleared = true;

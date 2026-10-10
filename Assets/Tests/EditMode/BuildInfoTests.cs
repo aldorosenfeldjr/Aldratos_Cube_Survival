@@ -12,17 +12,17 @@ public class BuildInfoTests : SaveTestBase
     }
 
     [Test]
-    public void TheEditorNeverGivesStartingGems()
+    public void TheEditorNeverGivesStartingCoins()
     {
-        Assert.IsFalse(BuildInfo.GivesStartingGems);
+        Assert.IsFalse(BuildInfo.GivesStartingCoins);
         Assert.AreEqual(0, Wallet.Balance);
     }
 
     [Test]
-    public void AFreshSaveOnADeviceStartsWithTheTestGemsOnlyWhenTheBuildAllowsIt()
+    public void AFreshSaveOnADeviceStartsWithTheTestCoinsOnlyWhenTheBuildAllowsIt()
     {
         // In the Editor the rule is off, so a fresh save is empty: this is what keeps every other test deterministic.
         SaveService.Load();
-        Assert.AreEqual(BuildInfo.GivesStartingGems ? SaveService.DevelopmentBuildStartingGems : 0, Wallet.Balance);
+        Assert.AreEqual(BuildInfo.GivesStartingCoins ? SaveService.DevelopmentBuildStartingCoins : 0, Wallet.Balance);
     }
 }

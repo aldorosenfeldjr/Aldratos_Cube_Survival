@@ -23,7 +23,7 @@ public static class PowerUpPickupBuilder
     private const string IconFolder = "Assets/PowerUps/Icons";
     private const string KayKit = "Assets/KayKit_Platformer_Pack/fbx(unity)";
 
-    private enum Kind { Shield, SpeedBoost, Invincibility, GemMultiplier }
+    private enum Kind { Shield, SpeedBoost, Invincibility, CoinMultiplier }
 
     private struct Look
     {
@@ -43,7 +43,7 @@ public static class PowerUpPickupBuilder
             case Kind.SpeedBoost: return new Look($"{KayKit}/green/power_green.fbx", new Color(0.25f, 0.9f, 0.35f));
             case Kind.Invincibility: return new Look($"{KayKit}/yellow/star_yellow.fbx", new Color(1f, 0.8f, 0.15f));
             case Kind.Shield: return new Look($"{KayKit}/red/heart_red.fbx", new Color(1f, 0.3f, 0.4f));
-            default: return new Look($"{KayKit}/blue/diamond_blue.fbx", new Color(0.75f, 0.35f, 1f));
+            default: return new Look("Assets/Platformer Pack/FBX/Coin.fbx", new Color(1f, 0.65f, 0.05f));
         }
     }
 
@@ -55,11 +55,11 @@ public static class PowerUpPickupBuilder
         ("Assets/Prefabs/KayKit_Shield.prefab", Kind.Shield),
         ("Assets/Prefabs/KayKit_SpeedBoost.prefab", Kind.SpeedBoost),
         ("Assets/Prefabs/KayKit_Invincibility.prefab", Kind.Invincibility),
-        ("Assets/Prefabs/PowerUp_GemMultiplier.prefab", Kind.GemMultiplier),
-        ("Assets/Prefabs/KayKit_GemMultiplier.prefab", Kind.GemMultiplier),
+        ("Assets/Prefabs/PowerUp_CoinMultiplier.prefab", Kind.CoinMultiplier),
+        ("Assets/Prefabs/KayKit_CoinMultiplier.prefab", Kind.CoinMultiplier),
     };
 
-    private static string DefinitionPath(Kind kind) => kind == Kind.GemMultiplier ? "Assets/PowerUps/GemMultiplier.asset" : $"Assets/PowerUps/{kind}.asset";
+    private static string DefinitionPath(Kind kind) => kind == Kind.CoinMultiplier ? "Assets/PowerUps/CoinMultiplier.asset" : $"Assets/PowerUps/{kind}.asset";
 
     [MenuItem("Tools/PowerUps/Rebuild Pickup Prefabs")]
     public static void RebuildAll()

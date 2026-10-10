@@ -33,12 +33,13 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private PowerUpSpawner powerUpSpawner;
     [SerializeField]
-    private GemSpawner gemSpawner;
-    [SerializeField]
-    [Tooltip("Run gem counter, next to the score. Shown only during a run.")]
-    private TMPro.TextMeshProUGUI gemText;
+    [Tooltip("Run coin counter, next to the score. Shown only during a run.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("gemText")]
+    private TMPro.TextMeshProUGUI coinText;
     [SerializeField]
     private PowerUpJuiceController powerUpJuiceController;
+
+    private Image coinIcon;
 
     [SerializeField]
     private GameObject mainVCam;
@@ -70,7 +71,7 @@ public class GameManager : MonoBehaviour
     public string LevelName => currentTheme != null ? currentTheme.DisplayName : string.Empty;
     public int TargetSeconds => TargetSecondsOverride > 0 ? TargetSecondsOverride : (currentTheme != null ? currentTheme.TargetSeconds : 0);
     public bool ClearedThisRun => clearedThisRun;
-    public int GemsCollected => run.GemsCollected;
+    public int CoinsCollected => run.CoinsCollected;
     public int MultiplierBonus => run.MultiplierBonus;
     /// <summary>Clear reward earned in the run being shown (0 if the level was not cleared this run).</summary>
     public int ClearReward => clearedThisRun ? LastClear.Reward : 0;
@@ -117,7 +118,7 @@ public class GameManager : MonoBehaviour
         gameOver = false;
         BeginRun();
         highScoreText.gameObject.SetActive(true);
-        gemText.gameObject.SetActive(true);
+        coinText.gameObject.SetActive(true);
         pauseButton.SetActive(true);
     }
 
@@ -127,9 +128,9 @@ public class GameManager : MonoBehaviour
         {
             highScoreText.gameObject.SetActive(false);
         }
-        if (gemText != null)
+        if (coinText != null)
         {
-            gemText.gameObject.SetActive(false);
+            coinText.gameObject.SetActive(false);
         }
         if (pauseButton != null)
         {
@@ -185,18 +186,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>Called by a gem pickup the player catches: credits the wallet (x the active multiplier) right away.</summary>
-    public void CollectGem()
+    /// <summary>Called when a hazard breaks on the floor: credits the wallet (x the active multiplier) right away and
+    /// plays a cosmetic coin flying from <paramref name="worldPosition"/> to the HUD counter.</summary>
+    public void CollectCoin(Vector3 worldPosition)
     {
-        var multiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.GemMultiplier : 1;
-        Wallet.Add(run.AddGem(EconomyConfig.Instance.GemValue, multiplier));
-        AudioManager.Play(Sfx.Gem);
-        UpdateGemText();
+        var multiplier = PowerUpManager.Instance != null ? PowerUpManager.Instance.CoinMultiplier : 1;
+        Wallet.Add(run.AddCoin(EconomyConfig.Instance.CoinValue, multiplier));
+        AudioManager.Play(Sfx.Coin);
+        UpdateCoinText();
+
+        if (coinIcon == null)
+        {
+            coinIcon = coinText.transform.parent.Find("CoinIcon")?.GetComponent<Image>();
+        }
+        CoinFlyEffect.Spawn(coinIcon, worldPosition, GameConfig.Instance.CoinFlyDuration);
     }
 
-    private void UpdateGemText()
+    private void UpdateCoinText()
     {
-        gemText.text = (run.GemsCollected + run.MultiplierBonus).ToString();
+        coinText.text = (run.CoinsCollected + run.MultiplierBonus).ToString();
     }
 
     private void ClearLevel()
@@ -226,7 +234,6 @@ public class GameManager : MonoBehaviour
         NewRecordScreen.SetActive(false);
         hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
-        gemSpawner.StopSpawning();
         ClearFallingObjects();
         scoreText.transform.localScale = Vector3.one;
         player.GetComponent<Player>().ResetState();
@@ -288,13 +295,12 @@ public class GameManager : MonoBehaviour
         clearedThisRun = false;
 
         scoreText.text = "0";
-        UpdateGemText();
+        UpdateCoinText();
         scoreText.color = normalScoreColor;
         highScoreText.text = $"Best: {run.HighScore}";
 
         hazardSpawner.BeginSpawning();
         powerUpSpawner.BeginSpawning();
-        gemSpawner.BeginSpawning();
         if (PowerUpManager.Instance != null)
         {
             PowerUpManager.Instance.ResetAll();
@@ -330,7 +336,6 @@ public class GameManager : MonoBehaviour
     {
         hazardSpawner.StopSpawning();
         powerUpSpawner.StopSpawning();
-        gemSpawner.StopSpawning();
         gameOver = true;
         AudioManager.Play(Sfx.GameOver);
         var endedTrials = UnlockService.EndRunForTrials();

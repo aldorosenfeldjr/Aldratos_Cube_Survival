@@ -5,7 +5,7 @@ using UnityEngine;
 // One row per character: creates its material (a copy of the Player material, recoloured), its
 // CharacterDefinition asset, and lists it in Assets/Resources/UnlockCatalog.asset. Idempotent: existing
 // assets are updated in place. The ids are stored in saves: never rename one once it has shipped.
-// The set: 1 free default + 11 unlockable colours (4 Common, 4 Rare, 3 Epic = 20,400 gems on PC). Add or change a
+// The set: 1 free default + 11 unlockable colours (4 Common, 4 Rare, 3 Epic = 20,400 coins on PC). Add or change a
 // character by editing this table and running the menu item; never hand-edit the assets.
 public static class CharacterBuilder
 {

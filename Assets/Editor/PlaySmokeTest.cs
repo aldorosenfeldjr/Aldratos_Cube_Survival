@@ -304,18 +304,24 @@ public static partial class PlaySmokeTest
         yield return 2.4f;
         Check("score ticks", gameManager.Score >= 2, $"score={gameManager.Score}");
 
-        // 2b. The gem spawner drops a gem on its own (interval <= GemMaxInterval).
-        var gemDeadline = Time.realtimeSinceStartup + GameConfig.Instance.GemMaxInterval + 2f;
-        while (UnityEngine.Object.FindAnyObjectByType<GemPickup>() == null && Time.realtimeSinceStartup < gemDeadline)
+        // 2b. A hazard breaking on the floor awards a coin (invincible so a stray landing on the player cannot end the run;
+        // breaking against the player awards no coin, so the loop just waits for whichever hazard lands on the floor first).
+        var coinInvincibility = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:InvincibilityDefinition")[0]));
+        powerUps.Grant(coinInvincibility);
+        hazardSpawner.BeginSpawning();
+        var coinStart = Wallet.Balance;
+        var coinDeadline = Time.realtimeSinceStartup + GameConfig.Instance.HazardWaveInterval + 3f;
+        while (Wallet.Balance == coinStart && Time.realtimeSinceStartup < coinDeadline)
         {
             yield return 0.25f;
         }
-        Check("gem spawns on its own", UnityEngine.Object.FindAnyObjectByType<GemPickup>() != null);
-        UnityEngine.Object.FindAnyObjectByType<GemSpawner>().StopSpawning(); // keep the wallet checks below deterministic
-        foreach (var stray in UnityEngine.Object.FindObjectsByType<GemPickup>())
-        {
-            UnityEngine.Object.Destroy(stray.gameObject);
-        }
+        hazardSpawner.StopSpawning();
+        hazardSpawner.ClearAll();
+        powerUps.ResetAll();
+        var coinGain = Wallet.Balance - coinStart;
+        // Land plays right after the coin sound in the same break event (Hazard.cs), so LastPlayed cannot check
+        // the coin sound here; the coin clip itself is covered generically by AudioChecks.
+        Check("hazard breaking on the floor awards a coin", coinGain == EconomyConfig.Instance.CoinValue && gameManager.CoinsCollected >= 1, $"gain={coinGain}");
 
         // 3. Every power-up: effect applies and shows in the HUD.
         var badPowerUps = new List<string>();
@@ -332,7 +338,7 @@ public static partial class PlaySmokeTest
             var effect = definition is ShieldDefinition ? powerUps.HasShield
                 : definition is SpeedBoostDefinition ? powerUps.SpeedMultiplier > 1f
                 : definition is InvincibilityDefinition ? powerUps.IsInvincible
-                : definition is GemMultiplierDefinition ? powerUps.GemMultiplier > 1
+                : definition is CoinMultiplierDefinition ? powerUps.CoinMultiplier > 1
                 : true;
             if (!effect || hudContainer.childCount <= iconsBefore)
             {
@@ -343,23 +349,14 @@ public static partial class PlaySmokeTest
         powerUps.ResetAll();
         yield return 0.1f;
 
-        // 3b. A real gem pickup lands on the player and credits the wallet; the multiplier doubles the value.
-        var gemPlayer = UnityEngine.Object.FindAnyObjectByType<Player>();
-        var gemPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gem.prefab");
-        var gemStart = Wallet.Balance;
-        UnityEngine.Object.Instantiate(gemPrefab, gemPlayer.transform.position + Vector3.up * 1.5f, Quaternion.identity);
-        yield return 1.2f;
-        var gemGain = Wallet.Balance - gemStart;
-        Check("gem pickup credits wallet", gemGain == EconomyConfig.Instance.GemValue && gameManager.GemsCollected >= 1, $"gain={gemGain}");
-        Check("gem pickup plays the gem sound", AudioManager.Instance != null && AudioManager.Instance.LastPlayed == Sfx.Gem, AudioManager.Instance != null ? AudioManager.Instance.LastPlayed.ToString() : "no audio manager");
-
-        var multiplierDefinition = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:GemMultiplierDefinition")[0]));
+        // 3b. The coin multiplier power-up doubles a coin's value.
+        var multiplierDefinition = AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:CoinMultiplierDefinition")[0]));
         powerUps.Grant(multiplierDefinition);
         var grantSoundPlayed = AudioManager.Instance.LastPlayed == Sfx.PowerUp;
         var doubledStart = Wallet.Balance;
-        gameManager.CollectGem();
+        gameManager.CollectCoin(UnityEngine.Object.FindAnyObjectByType<Player>().transform.position);
         var doubledGain = Wallet.Balance - doubledStart;
-        Check("gem multiplier doubles value", doubledGain == EconomyConfig.Instance.GemValue * 2 && gameManager.MultiplierBonus >= EconomyConfig.Instance.GemValue, $"gain={doubledGain} bonus={gameManager.MultiplierBonus}");
+        Check("coin multiplier doubles value", doubledGain == EconomyConfig.Instance.CoinValue * 2 && gameManager.MultiplierBonus >= EconomyConfig.Instance.CoinValue, $"gain={doubledGain} bonus={gameManager.MultiplierBonus}");
         Check("power-up grant plays the power-up sound", grantSoundPlayed);
         powerUps.ResetAll();
         UseFreshTempSave(); // the level-clear checks below expect an empty wallet
@@ -374,6 +371,7 @@ public static partial class PlaySmokeTest
         hazardSpawner.StopSpawning();
         hazardSpawner.ClearAll();
         powerUps.ResetAll();
+        UseFreshTempSave(); // hazards falling above can award coins now; the level-clear checks below expect an empty wallet
 
         // 5. Pause in the middle of a power-up slowdown, then resume back to normal speed.
         powerUps.Grant(AssetDatabase.LoadAssetAtPath<PowerUpDefinition>(AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:ShieldDefinition")[0])));
@@ -424,7 +422,7 @@ public static partial class PlaySmokeTest
         var firstReward = registry.LevelEntries[0].Theme.FirstClearReward;
         Check("clear at target: reward, unlock, pause", cleared && Wallet.Balance == firstReward && SaveService.IsCleared(MeadowId)
             && LevelProgression.IsUnlocked(registry, 1) && time.IsPaused && Time.timeScale < 0.01f && SaveService.BestScore(MeadowId) >= 3,
-            $"shown={cleared} gems={Wallet.Balance}/{firstReward} cleared={SaveService.IsCleared(MeadowId)} paused={time.IsPaused} best={SaveService.BestScore(MeadowId)}");
+            $"shown={cleared} coins={Wallet.Balance}/{firstReward} cleared={SaveService.IsCleared(MeadowId)} paused={time.IsPaused} best={SaveService.BestScore(MeadowId)}");
         Check("level clear plays the success sound", AudioManager.Instance.LastPlayed == Sfx.Success, AudioManager.Instance.LastPlayed.ToString());
 
         Click("SuccessMenu/KeepGoing");
@@ -433,14 +431,14 @@ public static partial class PlaySmokeTest
         var scoreAfterResume = gameManager.Score;
         yield return 1.5f;
         Check("keep going resumes run, no second clear", resumed && gameManager.Score > scoreAfterResume && !successMenu.gameObject.activeSelf && Wallet.Balance == firstReward,
-            $"resumed={resumed} score {scoreAfterResume}->{gameManager.Score} gems={Wallet.Balance}");
+            $"resumed={resumed} score {scoreAfterResume}->{gameManager.Score} coins={Wallet.Balance}");
 
         // 9. Save round trip: what is in memory equals what comes back from disk.
-        var gemsBefore = Wallet.Balance;
+        var coinsBefore = Wallet.Balance;
         SaveService.Save();
         SaveService.Load();
-        Check("save round trip", Wallet.Balance == gemsBefore && SaveService.IsCleared(MeadowId) && SaveService.BestScore(MeadowId) >= 3,
-            $"gems={Wallet.Balance}/{gemsBefore} cleared={SaveService.IsCleared(MeadowId)}");
+        Check("save round trip", Wallet.Balance == coinsBefore && SaveService.IsCleared(MeadowId) && SaveService.BestScore(MeadowId) >= 3,
+            $"coins={Wallet.Balance}/{coinsBefore} cleared={SaveService.IsCleared(MeadowId)}");
 
         // 10. Repeat clear pays the small reward; Next level loads the following level and starts a run.
         gameManager.RestartGame();

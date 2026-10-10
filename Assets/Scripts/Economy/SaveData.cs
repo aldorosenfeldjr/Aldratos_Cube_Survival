@@ -8,7 +8,7 @@ public class SaveData
     public const int CurrentVersion = 1;
 
     public int version = CurrentVersion;
-    public int gems;
+    public int coins;
     public List<LevelSave> levels = new List<LevelSave>();
     public List<OwnedEntry> owned = new List<OwnedEntry>();
     public List<SelectedEntry> selected = new List<SelectedEntry>();
@@ -43,7 +43,7 @@ public class LevelSave
     public int bestScore;
 }
 
-/// <summary>An unlockable the player owns. <c>source</c> is "gems" or "purchase".</summary>
+/// <summary>An unlockable the player owns. <c>source</c> is "coins" or "purchase".</summary>
 [Serializable]
 public class OwnedEntry
 {

@@ -8,8 +8,8 @@ public static class DebugTools
 {
     private static string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
 
-    [MenuItem("Tools/Debug/Add 10000 Gems To Save")]
-    public static void AddGems()
+    [MenuItem("Tools/Debug/Add 10000 Coins To Save")]
+    public static void AddCoins()
     {
         if (RefuseWhilePlaying())
         {
@@ -19,7 +19,7 @@ public static class DebugTools
         SaveService.UseFile(null);
         SaveService.Load();
         Wallet.Add(10000);
-        Debug.Log($"Debug: added 10000 gems. Balance is now {Wallet.Balance}. Save: {SavePath}");
+        Debug.Log($"Debug: added 10000 coins. Balance is now {Wallet.Balance}. Save: {SavePath}");
     }
 
     [MenuItem("Tools/Debug/Unlock All Characters & Companions")]
@@ -44,7 +44,7 @@ public static class DebugTools
         Debug.Log($"Debug: unlocked {count} item(s). Save: {SavePath}");
     }
 
-    [MenuItem("Tools/Debug/Reset Save (gems, unlocks, levels, mute)")]
+    [MenuItem("Tools/Debug/Reset Save (coins, unlocks, levels, mute)")]
     public static void ResetSave()
     {
         if (RefuseWhilePlaying())
@@ -52,7 +52,7 @@ public static class DebugTools
             return;
         }
 
-        if (File.Exists(SavePath) && EditorUtility.DisplayDialog("Reset save?", "This deletes your gems, unlocks, level progress and best scores.", "Delete", "Cancel"))
+        if (File.Exists(SavePath) && EditorUtility.DisplayDialog("Reset save?", "This deletes your coins, unlocks, level progress and best scores.", "Delete", "Cancel"))
         {
             File.Delete(SavePath);
             SaveService.UseFile(null);

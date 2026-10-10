@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// The shared selection screen for one <see cref="UnlockCategory"/>: a grid of the catalog's items, a static preview of
-/// the focused one, and Select / Unlock (gems) actions. Focus follows the EventSystem selection, so mouse, touch,
+/// the focused one, and Select / Unlock (coins) actions. Focus follows the EventSystem selection, so mouse, touch,
 /// arrow keys and gamepad all behave the same. The preview is a small camera rendering into a RenderTexture; the
 /// camera and its stage are created while the screen is open and live far from the play area.
 /// </summary>
@@ -98,7 +98,7 @@ public class SelectionScreen : MonoBehaviour
 
     public void Unlock()
     {
-        if (focused != null && UnlockService.TryBuyWithGems(focused.Definition))
+        if (focused != null && UnlockService.TryBuyWithCoins(focused.Definition))
         {
             Refresh();
             EventSystem.current.SetSelectedGameObject(focused.gameObject);
@@ -256,7 +256,7 @@ public class SelectionScreen : MonoBehaviour
         nameText.text = definition.DisplayName;
         tierText.text = definition.Tier == PriceTier.Free ? "Free" : definition.Tier.ToString();
         statusText.text = trialRuns > 0 ? $"Trial: {trialRuns} run{(trialRuns == 1 ? string.Empty : "s")} left"
-            : selected ? "Selected" : owned ? "Owned" : $"{price} gems";
+            : selected ? "Selected" : owned ? "Owned" : $"{price} coins";
 
         selectButton.gameObject.SetActive(usable);
         selectButton.interactable = !selected;
@@ -264,7 +264,7 @@ public class SelectionScreen : MonoBehaviour
 
         unlockButton.gameObject.SetActive(!owned);
         unlockButton.interactable = affordable;
-        unlockLabel.text = affordable ? $"Unlock ({price} gems)" : $"Need {price - Wallet.Balance} more gems";
+        unlockLabel.text = affordable ? $"Unlock ({price} coins)" : $"Need {price - Wallet.Balance} more coins";
 
         buyButton.gameObject.SetActive(!owned && store.IsAvailable);
         buyLabel.text = $"Buy {store.LocalizedPrice(definition.ProductId)}";

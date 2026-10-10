@@ -39,7 +39,7 @@ public static partial class PlaySmokeTest
             yield break;
         }
 
-        // 1. Price table from the plan: PC gems, mobile = x2.5 rounded to the nearest 5.
+        // 1. Price table from the plan: PC coins, mobile = x2.5 rounded to the nearest 5.
         var expected = new[]
         {
             (PriceTier.Free, 0, 0), (PriceTier.Common, 600, 1500), (PriceTier.Rare, 1800, 4500),
@@ -63,17 +63,17 @@ public static partial class PlaySmokeTest
             UnlockService.IsOwned(free) && UnlockService.Selected(UnlockCategory.Character) == free && !UnlockService.IsOwned(common) && !UnlockService.IsOwned(rare));
 
         var price = UnlockService.Price(common);
-        var boughtBroke = UnlockService.TryBuyWithGems(common);
-        Check("buying with too few gems changes nothing",
+        var boughtBroke = UnlockService.TryBuyWithCoins(common);
+        Check("buying with too few coins changes nothing",
             !boughtBroke && Wallet.Balance == 0 && !UnlockService.IsOwned(common) && SaveService.Data.owned.Count == 0);
 
         Wallet.Add(price + 50);
-        var bought = UnlockService.TryBuyWithGems(common);
+        var bought = UnlockService.TryBuyWithCoins(common);
         var source = SaveService.Data.owned.Count == 1 ? SaveService.Data.owned[0].source : "?";
-        Check("buying spends the exact price and owns the item", bought && Wallet.Balance == 50 && UnlockService.IsOwned(common) && source == "gems",
+        Check("buying spends the exact price and owns the item", bought && Wallet.Balance == 50 && UnlockService.IsOwned(common) && source == "coins",
             $"bought={bought} balance={Wallet.Balance} source={source}");
 
-        var boughtAgain = UnlockService.TryBuyWithGems(common);
+        var boughtAgain = UnlockService.TryBuyWithCoins(common);
         Check("buying an owned item is refused and free", !boughtAgain && Wallet.Balance == 50 && SaveService.Data.owned.Count == 1);
 
         var selectedLocked = UnlockService.Select(rare);
@@ -113,7 +113,7 @@ public static partial class PlaySmokeTest
 
         UnlockService.Select(free);
         Wallet.Add(UnlockService.Price(common) + 10);
-        UnlockService.TryBuyWithGems(common);
+        UnlockService.TryBuyWithCoins(common);
         UnlockService.Select(common);
         UnlockService.StartTrial(rare);
         UnlockService.StartTrial(rare);
@@ -176,14 +176,14 @@ public static partial class PlaySmokeTest
         var mainMenu = CanvasChild("MainMenu");
         var screenTransform = CanvasChild("SelectionScreen");
         var screen = screenTransform != null ? screenTransform.GetComponent<SelectionScreen>() : null;
-        var menuGems = CanvasChild("MainMenu/GemCounter");
-        Check("main menu has a Characters teaser, gem counter, and Core has the screen",
-            CanvasChild("MainMenu/CharacterTeaser") != null && menuGems != null && screen != null);
-        if (screen == null || menuGems == null)
+        var menuCoins = CanvasChild("MainMenu/CoinCounter");
+        Check("main menu has a Characters teaser, coin counter, and Core has the screen",
+            CanvasChild("MainMenu/CharacterTeaser") != null && menuCoins != null && screen != null);
+        if (screen == null || menuCoins == null)
         {
             yield break;
         }
-        Check("main menu gem counter shows the wallet", menuGems.GetComponentInChildren<TMP_Text>().text == "70", menuGems.GetComponentInChildren<TMP_Text>().text);
+        Check("main menu coin counter shows the wallet", menuCoins.GetComponentInChildren<TMP_Text>().text == "70", menuCoins.GetComponentInChildren<TMP_Text>().text);
 
         // The teaser: a spoiler row of the catalog's first three characters, reusing the tiles' own lock and selected-frame logic.
         var teaser = CanvasChild("MainMenu/CharacterTeaser")?.GetComponent<SelectionTeaser>();
@@ -246,10 +246,10 @@ public static partial class PlaySmokeTest
             !timedOut && menuGroup.alpha > 0f && menuGroup.alpha < 1f, $"x={teaserRect.anchoredPosition.x} home={teaserHome.x} alpha={menuGroup.alpha}");
         yield return WaitUntil(() => screen.gameObject.activeInHierarchy);
         yield return 0.4f;
-        var screenGems = screenTransform.Find("TopBar/GemCounter").GetComponentInChildren<TMP_Text>();
+        var screenCoins = screenTransform.Find("TopBar/CoinCounter").GetComponentInChildren<TMP_Text>();
         Check("Characters opens the screen and hides the main menu",
-            !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenGems.text == "70",
-            $"tiles={screen.Tiles.Count}/{characters.Count} gems='{screenGems.text}'");
+            !timedOut && !mainMenu.gameObject.activeSelf && screen.Tiles.Count == characters.Count && screen.Focused != null && screen.Focused.Definition == free && screenCoins.text == "70",
+            $"tiles={screen.Tiles.Count}/{characters.Count} coins='{screenCoins.text}'");
         yield return 0.3f;
         Check("the menu background moved to the Characters pose", rig.CurrentPoseName == "Characters" && Mathf.Abs(rig.CameraFieldOfView - 28f) < 0.1f,
             $"pose={rig.CurrentPoseName} fov={rig.CameraFieldOfView}");
@@ -283,17 +283,17 @@ public static partial class PlaySmokeTest
         var selectButton = screenTransform.Find("InfoPanel/Select").GetComponent<Button>();
         var unlockLabel = unlockButton.GetComponentInChildren<TMP_Text>();
         var commonPrice = UnlockService.Price(common);
-        Check("locked item, short of gems: Unlock disabled, says how many more",
-            unlockButton.gameObject.activeSelf && !unlockButton.interactable && !selectButton.gameObject.activeSelf && unlockLabel.text == $"Need {commonPrice - 70} more gems",
+        Check("locked item, short of coins: Unlock disabled, says how many more",
+            unlockButton.gameObject.activeSelf && !unlockButton.interactable && !selectButton.gameObject.activeSelf && unlockLabel.text == $"Need {commonPrice - 70} more coins",
             unlockLabel.text);
 
         Wallet.Add(commonPrice - 70);
-        Check("locked item, enough gems: Unlock enabled with the price", unlockButton.interactable && unlockLabel.text == $"Unlock ({commonPrice} gems)", unlockLabel.text);
+        Check("locked item, enough coins: Unlock enabled with the price", unlockButton.interactable && unlockLabel.text == $"Unlock ({commonPrice} coins)", unlockLabel.text);
 
         unlockButton.onClick.Invoke();
         Check("clicking Unlock spends the price and owns the item",
-            Wallet.Balance == 0 && UnlockService.IsOwned(common) && !unlockButton.gameObject.activeSelf && selectButton.gameObject.activeSelf && selectButton.interactable && screenGems.text == "0",
-            $"balance={Wallet.Balance} gems='{screenGems.text}'");
+            Wallet.Balance == 0 && UnlockService.IsOwned(common) && !unlockButton.gameObject.activeSelf && selectButton.gameObject.activeSelf && selectButton.interactable && screenCoins.text == "0",
+            $"balance={Wallet.Balance} coins='{screenCoins.text}'");
 
         selectButton.onClick.Invoke();
         var frames = 0;
@@ -319,7 +319,7 @@ public static partial class PlaySmokeTest
         Services.Ads = new NullAdService();
         Services.Store = new NullStoreService();
         screen.Focus(rareTile);
-        Check("no ads/store (PC): Buy, Try and Restore are hidden, gem Unlock stays",
+        Check("no ads/store (PC): Buy, Try and Restore are hidden, coin Unlock stays",
             !buyObject.activeSelf && !tryObject.activeSelf && !restoreObject.activeSelf && screenTransform.Find("InfoPanel/Unlock").gameObject.activeSelf);
 
         var fakeAds = new FakeAdService { RewardedReady = false };
@@ -478,7 +478,7 @@ public static partial class PlaySmokeTest
                 action.gameObject.SetActive(true);
                 actions.Add(action);
             }
-            actions[1].GetComponentInChildren<TMP_Text>().text = "Need 17995 more gems";
+            actions[1].GetComponentInChildren<TMP_Text>().text = "Need 17995 more coins";
             actions[2].GetComponentInChildren<TMP_Text>().text = "Buy CHF 999.99";
 
             Canvas.ForceUpdateCanvases();
@@ -513,12 +513,12 @@ public static partial class PlaySmokeTest
         var topBar = (RectTransform)root.Find("TopBar");
         var back = (RectTransform)topBar.Find("Back");
         var title = (RectTransform)topBar.Find("Title");
-        var gems = (RectTransform)topBar.Find("GemCounter");
+        var coins = (RectTransform)topBar.Find("CoinCounter");
         var info = (RectTransform)root.Find("InfoPanel");
         var grid = (RectTransform)root.Find("GridPanel");
         var viewport = (RectTransform)grid.Find("Viewport");
 
-        var named = new (string Name, RectTransform Rect)[] { ("TopBar", topBar), ("Back", back), ("Title", title), ("GemCounter", gems), ("InfoPanel", info), ("GridPanel", grid) };
+        var named = new (string Name, RectTransform Rect)[] { ("TopBar", topBar), ("Back", back), ("Title", title), ("CoinCounter", coins), ("InfoPanel", info), ("GridPanel", grid) };
         foreach (var (name, rect) in named)
         {
             if (Outside(LocalRect(rect, root), rootRect))
@@ -528,7 +528,7 @@ public static partial class PlaySmokeTest
         }
 
         AddOverlap(problems, tag, "Back/Title", LocalRect(back, root), LocalRect(title, root));
-        AddOverlap(problems, tag, "Title/GemCounter", LocalRect(title, root), LocalRect(gems, root));
+        AddOverlap(problems, tag, "Title/CoinCounter", LocalRect(title, root), LocalRect(coins, root));
         AddOverlap(problems, tag, "InfoPanel/GridPanel", LocalRect(info, root), LocalRect(grid, root));
         AddOverlap(problems, tag, "TopBar/InfoPanel", LocalRect(topBar, root), LocalRect(info, root));
         AddOverlap(problems, tag, "TopBar/GridPanel", LocalRect(topBar, root), LocalRect(grid, root));

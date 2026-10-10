@@ -762,7 +762,6 @@ GameObject:
   - component: {fileID: 402352957}
   - component: {fileID: 402352959}
   - component: {fileID: 402352960}
-  - component: {fileID: 402352961}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -790,8 +789,7 @@ MonoBehaviour:
   pauseButton: {fileID: 135417497}
   hazardSpawner: {fileID: 402352960}
   powerUpSpawner: {fileID: 402352959}
-  gemSpawner: {fileID: 402352961}
-  gemText: {fileID: 7073401774477412566}
+  coinText: {fileID: 7073401774477412566}
   powerUpJuiceController: {fileID: 1796181066}
   mainVCam: {fileID: 1796181058}
   zoomVCam: {fileID: 1975513362}
@@ -845,19 +843,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NewAssembly::HazardSpawner
   hazardPrefab: {fileID: 8112962851509513234, guid: 6e989956cc298fa4a81c7929524519bf, type: 3}
---- !u!114 &402352961
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 402352956}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76c379905affec343bcf00616a69cc11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: NewAssembly::GemSpawner
-  gemPrefab: {fileID: 7333296456177530089, guid: 06139b1dfde7bff47a122d6901b319d7, type: 3}
 --- !u!1 &578458745
 GameObject:
   m_ObjectHideFlags: 0
@@ -2590,7 +2575,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3179805270711580901, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_fontColor32.rgba
-      value: 4283227135
+      value: 4294967295
       objectReference: {fileID: 0}
     - target: {fileID: 3179805270711580901, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_TextStyleHashCode
@@ -2610,7 +2595,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5452020413677778151, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_fontColor32.rgba
-      value: 4283227135
+      value: 4294967295
       objectReference: {fileID: 0}
     - target: {fileID: 5452020413677778151, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_TextStyleHashCode
@@ -2641,6 +2626,10 @@ PrefabInstance:
       value: -1183493901
       objectReference: {fileID: 0}
     - target: {fileID: 7801497858394511641, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 7812740999582368141, guid: 3b757c08313d8c34b8b14d1339c65d50, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}

@@ -11,7 +11,8 @@ public class GameOverMenu : MonoBehaviour
     [SerializeField]
     private TMPro.TextMeshProUGUI finalScoreText;
     [SerializeField]
-    private TMPro.TextMeshProUGUI gemBreakdownText;
+    [UnityEngine.Serialization.FormerlySerializedAs("gemBreakdownText")]
+    private TMPro.TextMeshProUGUI coinBreakdownText;
     [SerializeField]
     private GameObject nextLevelButton;
     [SerializeField]
@@ -43,8 +44,8 @@ public class GameOverMenu : MonoBehaviour
 
         var game = GameManager.Instance;
         nextLevelButton.SetActive(game.ClearedThisRun && game.HasNextLevel);
-        var total = game.GemsCollected + game.MultiplierBonus + game.ClearReward;
-        gemBreakdownText.text = $"Gems collected: {game.GemsCollected}\nMultiplier bonus: {game.MultiplierBonus}\nClear reward: {game.ClearReward}\nTotal: +{total}";
+        var total = game.CoinsCollected + game.MultiplierBonus + game.ClearReward;
+        coinBreakdownText.text = $"Coins collected: {game.CoinsCollected}\nMultiplier bonus: {game.MultiplierBonus}\nClear reward: {game.ClearReward}\nTotal: +{total}";
 
         finalScoreText.text = $"Score: {GameManager.Instance.Score}";
         finalScoreText.transform.localScale = Vector3.zero;
@@ -112,7 +113,7 @@ public class GameOverMenu : MonoBehaviour
         InterstitialPacer.OnLeave(() => GameManager.Instance.ReturnToMainMenu());
     }
 
-    // Trial-over prompt: keep the item (buy / gems) or watch an ad for more runs. Each option shows only when the platform offers it.
+    // Trial-over prompt: keep the item (buy / coins) or watch an ad for more runs. Each option shows only when the platform offers it.
     private void OpenTrialPanel()
     {
         trialPanel.SetActive(true);
@@ -125,7 +126,7 @@ public class GameOverMenu : MonoBehaviour
 
         var price = UnlockService.Price(trialItem);
         trialUnlockButton.gameObject.SetActive(Wallet.Balance >= price);
-        trialUnlockButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = $"Unlock ({price} gems)";
+        trialUnlockButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = $"Unlock ({price} coins)";
 
         var ads = Services.Ads;
         trialAdButton.gameObject.SetActive(ads.IsAvailable && ads.RewardedReady);
@@ -180,7 +181,7 @@ public class GameOverMenu : MonoBehaviour
 
     public void TrialUnlock()
     {
-        if (UnlockService.TryBuyWithGems(trialItem))
+        if (UnlockService.TryBuyWithCoins(trialItem))
         {
             UnlockService.Select(trialItem);
             CloseTrialPanel();

@@ -1,19 +1,19 @@
-public class GemMultiplierEffect : IPowerUpEffect
+public class CoinMultiplierEffect : IPowerUpEffect
 {
     private readonly int multiplier;
 
-    public GemMultiplierEffect(int multiplier)
+    public CoinMultiplierEffect(int multiplier)
     {
         this.multiplier = multiplier;
     }
 
     public void Apply(PowerUpManager manager)
     {
-        manager.SetGemMultiplier(multiplier);
+        manager.SetCoinMultiplier(multiplier);
     }
 
     public void Remove(PowerUpManager manager)
     {
-        manager.SetGemMultiplier(1);
+        manager.SetCoinMultiplier(1);
     }
 }

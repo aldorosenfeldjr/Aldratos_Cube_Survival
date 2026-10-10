@@ -49,7 +49,7 @@ public static partial class PlaySmokeTest
         Check("in-game menus wear the pack's panels and buttons, none oversized", problems.Count == 0, string.Join(" | ", problems));
 
         problems.Clear();
-        foreach (var path in new[] { "Score/Panel", "Score/BestSlot", "Score/GemSlot" })
+        foreach (var path in new[] { "Score/Panel", "Score/BestSlot", "Score/CoinSlot" })
         {
             var image = CanvasChild(path)?.GetComponent<Image>();
             if (image == null || !IsPackSprite(image.sprite))
@@ -70,7 +70,7 @@ public static partial class PlaySmokeTest
         {
             problems.Add("power-up row (slot or bar track)");
         }
-        Check("HUD: score card, best and gem chips, pause tile and power-up rows wear the pack", problems.Count == 0, string.Join(" | ", problems));
+        Check("HUD: score card, best and coin chips, pause tile and power-up rows wear the pack", problems.Count == 0, string.Join(" | ", problems));
 
         problems.Clear();
         foreach (var size in new[] { new Vector2(1920f, 866f), new Vector2(1440f, 1000f), new Vector2(1000f, 1500f), new Vector2(760f, 1900f), new Vector2(720f, 1280f) })

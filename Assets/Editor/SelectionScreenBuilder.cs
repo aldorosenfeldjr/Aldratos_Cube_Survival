@@ -7,9 +7,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // Builds the selection-screen prefabs from the shared MenuButton / MenuLabel prefabs (Tools > UI > Rebuild Selection Screen):
-//   GemCounter (wallet balance label, also on the main menu), UnlockTile (grid tile), SelectionScreen (Characters),
+//   CoinCounter (wallet balance label, also on the main menu), UnlockTile (grid tile), SelectionScreen (Characters),
 //   CompanionSelection, SelectionTeaser (the main menu's spoiler panel), then dresses them in the Hyper Casual UI Pack (SelectionSkinBuilder).
-// Also adds the two teasers and the gem counter to the MainMenu prefab, and wires the Core scene's MainMenu
+// Also adds the two teasers and the coin counter to the MainMenu prefab, and wires the Core scene's MainMenu
 // to a SelectionScreen instance (Tools > UI > Wire Selection Screen In Core). Idempotent: rebuilding replaces the
 // prefab files in place, so scene instances keep their links.
 public static class SelectionScreenBuilder
@@ -17,7 +17,7 @@ public static class SelectionScreenBuilder
     private const string UiFolder = "Assets/Prefabs/UI/";
     private const string LabelPath = UiFolder + "MenuLabel.prefab";
     private const string ButtonPath = UiFolder + "MenuButton.prefab";
-    private const string GemCounterPath = UiFolder + "GemCounter.prefab";
+    private const string CoinCounterPath = UiFolder + "CoinCounter.prefab";
     private const string TilePath = UiFolder + "UnlockTile.prefab";
     private const string TeaserPath = UiFolder + "SelectionTeaser.prefab";
     private const string ScreenPath = UiFolder + "SelectionScreen.prefab";
@@ -32,12 +32,12 @@ public static class SelectionScreenBuilder
     [MenuItem("Tools/UI/Rebuild Selection Screen")]
     public static void RebuildAll()
     {
-        var gemCounter = BuildGemCounter();
+        var coinCounter = BuildCoinCounter();
         var tile = BuildTile();
-        BuildScreen(gemCounter, tile, UnlockCategory.Character, ScreenPath, "SelectionScreen", "Characters");
-        BuildScreen(gemCounter, tile, UnlockCategory.Companion, CompanionScreenPath, "CompanionScreen", "Companions");
+        BuildScreen(coinCounter, tile, UnlockCategory.Character, ScreenPath, "SelectionScreen", "Characters");
+        BuildScreen(coinCounter, tile, UnlockCategory.Companion, CompanionScreenPath, "CompanionScreen", "Companions");
         var teaser = BuildTeaser(tile);
-        UpdateMainMenuPrefab(gemCounter, teaser);
+        UpdateMainMenuPrefab(coinCounter, teaser);
         UpdateGameOverPrefab();
         AssetDatabase.SaveAssets();
         SelectionSkinBuilder.ApplyAll();
@@ -86,9 +86,9 @@ public static class SelectionScreenBuilder
     }
 
     // A chip: dark slot, coin icon, balance. The sprites come from SelectionSkinBuilder; this only makes the structure.
-    private static GameObject BuildGemCounter()
+    private static GameObject BuildCoinCounter()
     {
-        var root = new GameObject("GemCounter", typeof(RectTransform));
+        var root = new GameObject("CoinCounter", typeof(RectTransform));
         root.layer = LayerMask.NameToLayer("UI");
         ((RectTransform)root.transform).sizeDelta = new Vector2(240f, 60f);
 
@@ -112,11 +112,11 @@ public static class SelectionScreenBuilder
         labelRect.offsetMax = new Vector2(-16f, 0f);
         label.alignment = TextAlignmentOptions.Center;
 
-        var counter = root.AddComponent<GemCounter>();
+        var counter = root.AddComponent<CoinCounter>();
         var fields = new SerializedObject(counter);
         fields.FindProperty("label").objectReferenceValue = label;
         fields.ApplyModifiedPropertiesWithoutUndo();
-        return Save(root, GemCounterPath);
+        return Save(root, CoinCounterPath);
     }
 
     private static UnlockTile BuildTile()
@@ -157,7 +157,7 @@ public static class SelectionScreenBuilder
         return saved.GetComponent<UnlockTile>();
     }
 
-    private static void BuildScreen(GameObject gemCounterPrefab, UnlockTile tilePrefab, UnlockCategory category, string path, string rootName, string titleText)
+    private static void BuildScreen(GameObject coinCounterPrefab, UnlockTile tilePrefab, UnlockCategory category, string path, string rootName, string titleText)
     {
         var root = new GameObject(rootName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         root.layer = LayerMask.NameToLayer("UI");
@@ -166,7 +166,7 @@ public static class SelectionScreenBuilder
         var screen = root.AddComponent<SelectionScreen>();
         var layout = root.AddComponent<SelectionLayout>();
 
-        // Top bar: Back (left), title (centre), gem counter (right).
+        // Top bar: Back (left), title (centre), coin counter (right).
         var topBar = NewRect("TopBar", root.transform);
         topBar.anchorMin = new Vector2(0f, 1f);
         topBar.anchorMax = new Vector2(1f, 1f);
@@ -179,16 +179,16 @@ public static class SelectionScreenBuilder
         title.enableAutoSizing = true;
         title.fontSizeMin = 28f;
         title.fontSizeMax = 56f;
-        // Fills the gap between Back and the gem counter, so it never overlaps them on a narrow (portrait) screen.
+        // Fills the gap between Back and the coin counter, so it never overlaps them on a narrow (portrait) screen.
         var titleRect = (RectTransform)title.transform;
         titleRect.anchorMin = new Vector2(0f, 0.5f);
         titleRect.anchorMax = new Vector2(1f, 0.5f);
         titleRect.pivot = new Vector2(0.5f, 0.5f);
         titleRect.offsetMin = new Vector2(240f, -40f);
         titleRect.offsetMax = new Vector2(-320f, 40f);
-        var gems = (GameObject)PrefabUtility.InstantiatePrefab(gemCounterPrefab, topBar);
-        gems.name = "GemCounter";
-        Place(gems.transform, new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(280f, 60f));
+        var coins = (GameObject)PrefabUtility.InstantiatePrefab(coinCounterPrefab, topBar);
+        coins.name = "CoinCounter";
+        Place(coins.transform, new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(280f, 60f));
 
         // Info panel: preview, name, tier, status, actions. Stacked; SelectionLayout decides where the panel sits.
         var info = NewRect("InfoPanel", root.transform);
@@ -337,16 +337,16 @@ public static class SelectionScreenBuilder
         return Save(root, TeaserPath).GetComponent<SelectionTeaser>();
     }
 
-    // The main menu keeps its own prefab: the two teasers (Characters on top, Companions below, on the right) and the gem counter.
-    private static void UpdateMainMenuPrefab(GameObject gemCounterPrefab, SelectionTeaser teaserPrefab)
+    // The main menu keeps its own prefab: the two teasers (Characters on top, Companions below, on the right) and the coin counter.
+    private static void UpdateMainMenuPrefab(GameObject coinCounterPrefab, SelectionTeaser teaserPrefab)
     {
         var contents = PrefabUtility.LoadPrefabContents(MainMenuPath);
         try
         {
             var menu = contents.GetComponent<MainMenu>();
 
-            // The text buttons the teasers replaced (older builds of this prefab had them).
-            foreach (var legacy in new[] { "Characters", "Companions" })
+            // The text buttons the teasers replaced (older builds of this prefab had them), and the old gem counter (renamed to coin counter).
+            foreach (var legacy in new[] { "Characters", "Companions", "GemCounter" })
             {
                 var old = contents.transform.Find(legacy);
                 if (old != null)
@@ -374,11 +374,11 @@ public static class SelectionScreenBuilder
             menuFields.FindProperty("companionTeaser").objectReferenceValue = companionTeaser;
             menuFields.ApplyModifiedPropertiesWithoutUndo();
 
-            if (contents.transform.Find("GemCounter") == null)
+            if (contents.transform.Find("CoinCounter") == null)
             {
-                var gems = (GameObject)PrefabUtility.InstantiatePrefab(gemCounterPrefab, contents.transform);
-                gems.name = "GemCounter";
-                Place(gems.transform, new Vector2(1f, 1f), new Vector2(-40f, -30f), new Vector2(320f, 60f));
+                var coins = (GameObject)PrefabUtility.InstantiatePrefab(coinCounterPrefab, contents.transform);
+                coins.name = "CoinCounter";
+                Place(coins.transform, new Vector2(1f, 1f), new Vector2(-40f, -30f), new Vector2(320f, 60f));
             }
 
             PrefabUtility.SaveAsPrefabAsset(contents, MainMenuPath);

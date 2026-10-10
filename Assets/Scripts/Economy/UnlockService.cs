@@ -4,14 +4,14 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Ownership, gem purchases, ad trials and selection for unlockables. Game code and the selection screen use only this.
+/// Ownership, coin purchases, ad trials and selection for unlockables. Game code and the selection screen use only this.
 /// A trial (won by watching a rewarded ad) makes an item usable and selected for a few runs; see <see cref="StartTrial"/>.
 /// </summary>
 public static class UnlockService
 {
     public static event Action Changed;
 
-    /// <summary>Gem price for a tier: the PC price, times the mobile multiplier on mobile, rounded to the nearest 5.</summary>
+    /// <summary>Coin price for a tier: the PC price, times the mobile multiplier on mobile, rounded to the nearest 5.</summary>
     public static int PriceFor(PriceTier tier, bool mobile)
     {
         var config = EconomyConfig.Instance;
@@ -45,16 +45,16 @@ public static class UnlockService
         return trial != null ? trial.runsLeft : 0;
     }
 
-    /// <summary>Spends gems to own the item. False (nothing changes) when already owned or the balance is short.</summary>
-    public static bool TryBuyWithGems(UnlockableDefinition definition)
+    /// <summary>Spends coins to own the item. False (nothing changes) when already owned or the balance is short.</summary>
+    public static bool TryBuyWithCoins(UnlockableDefinition definition)
     {
         if (IsOwned(definition))
         {
             return false;
         }
 
-        // Owned entry first, then the spend: the spend saves once, so the gems and the item land in one write.
-        var entry = new OwnedEntry { id = definition.Id, source = "gems" };
+        // Owned entry first, then the spend: the spend saves once, so the coins and the item land in one write.
+        var entry = new OwnedEntry { id = definition.Id, source = "coins" };
         SaveService.Data.owned.Add(entry);
         if (!Wallet.TrySpend(Price(definition)))
         {

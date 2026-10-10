@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ea11cfd45b97674caddbb10d3f66888, type: 3}
   m_Name: GemMultiplier
   m_EditorClassIdentifier: NewAssembly::GemMultiplierDefinition
-  displayName: Gem Multiplier
-  icon: {fileID: 21300000, guid: d55cd3f5557cad74da7b680d7c2d70cd, type: 3}
+  displayName: Coin Multiplier
+  icon: {fileID: 21300000, guid: fcc85a63c1ac21642abcd83e98089ed3, type: 3}
   duration: 10
   importance: 0
   multiplier: 2

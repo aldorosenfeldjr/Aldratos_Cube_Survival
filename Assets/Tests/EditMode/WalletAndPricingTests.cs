@@ -3,7 +3,7 @@ using NUnit.Framework;
 public class WalletAndPricingTests : SaveTestBase
 {
     [Test]
-    public void AddingGemsRaisesTheBalanceAndIgnoresNonPositiveAmounts()
+    public void AddingCoinsRaisesTheBalanceAndIgnoresNonPositiveAmounts()
     {
         Wallet.Add(10);
         Wallet.Add(0);

@@ -23,7 +23,7 @@ public static class LevelBuilder
         public string SpeedBoost;
         public string Invincibility;
         public string Shield;
-        public string GemMultiplier;
+        public string CoinMultiplier;
     }
 
     private const string ThemeFolder = "Assets/Levels";
@@ -40,7 +40,7 @@ public static class LevelBuilder
             SpeedBoost = "Assets/Prefabs/PowerUp_SpeedBoost.prefab",
             Invincibility = "Assets/Prefabs/PowerUp_Invincibility.prefab",
             Shield = "Assets/Prefabs/PowerUp_Shield.prefab",
-            GemMultiplier = "Assets/Prefabs/PowerUp_GemMultiplier.prefab",
+            CoinMultiplier = "Assets/Prefabs/PowerUp_CoinMultiplier.prefab",
         },
         new Row
         {
@@ -50,7 +50,7 @@ public static class LevelBuilder
             SpeedBoost = "Assets/Prefabs/KayKit_SpeedBoost.prefab",
             Invincibility = "Assets/Prefabs/KayKit_Invincibility.prefab",
             Shield = "Assets/Prefabs/KayKit_Shield.prefab",
-            GemMultiplier = "Assets/Prefabs/KayKit_GemMultiplier.prefab",
+            CoinMultiplier = "Assets/Prefabs/KayKit_CoinMultiplier.prefab",
         },
     };
 
@@ -94,7 +94,7 @@ public static class LevelBuilder
         {
             ("hazardPrefab", row.Hazard), ("speedBoostPrefab", row.SpeedBoost),
             ("invincibilityPrefab", row.Invincibility), ("shieldPrefab", row.Shield),
-            ("gemMultiplierPrefab", row.GemMultiplier),
+            ("coinMultiplierPrefab", row.CoinMultiplier),
         })
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);

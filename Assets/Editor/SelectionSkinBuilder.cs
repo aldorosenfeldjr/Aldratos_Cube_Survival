@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 // Dresses the selection UI and the Main Menu in the Hyper Casual UI Pack (Tools > UI > Apply Selection Skin; Rebuild Selection Screen
 // runs it too). Table-driven and idempotent: give the pack sprites their 9-slice borders, then put one sprite per role on the two
-// selection screens (card panel, tiles, buttons, gem chip, back tile), the Main Menu teasers and the Main Menu buttons. Change a
+// selection screens (card panel, tiles, buttons, coin chip, back tile), the Main Menu teasers and the Main Menu buttons. Change a
 // sprite or number in the tables and run it again; never hand-edit the images. The in-game HUD and menus are GameUIBuilder's.
 public static class SelectionSkinBuilder
 {
@@ -17,7 +17,7 @@ public static class SelectionSkinBuilder
     private static readonly string CoinIcon = UIPack.IconSprites + "coin.png";
     private const string TeaserPrefab = "Assets/Prefabs/UI/SelectionTeaser.prefab";
     private const string TilePrefab = "Assets/Prefabs/UI/UnlockTile.prefab";
-    private const string GemCounterPrefab = "Assets/Prefabs/UI/GemCounter.prefab";
+    private const string CoinCounterPrefab = "Assets/Prefabs/UI/CoinCounter.prefab";
     private const string MainMenuPrefab = "Assets/Prefabs/UI/MainMenu.prefab";
 
     private static readonly string[] ScreenPrefabs =
@@ -26,7 +26,7 @@ public static class SelectionSkinBuilder
         "Assets/Prefabs/UI/CompanionSelection.prefab",
     };
 
-    // Child path inside a screen prefab -> button sprite. Green selects, orange spends gems, blue buys or tries, grey is neutral.
+    // Child path inside a screen prefab -> button sprite. Green selects, orange spends coins, blue buys or tries, grey is neutral.
     private static readonly (string Path, string Sprite)[] Buttons =
     {
         ("InfoPanel/Select", UIPack.ButtonSprites + "green.png"),
@@ -123,7 +123,7 @@ public static class SelectionSkinBuilder
             UIPack.StyleFont(root.transform.Find("Badge").GetComponent<TMP_Text>());
         });
 
-        Edit(GemCounterPrefab, root =>
+        Edit(CoinCounterPrefab, root =>
         {
             UIPack.Skin(root.transform.Find("Slot").GetComponent<Image>(), SlotTeal, Color.white);
             UIPack.Skin(root.transform.Find("Icon").GetComponent<Image>(), CoinIcon, Color.white, Image.Type.Simple);
@@ -150,7 +150,7 @@ public static class SelectionSkinBuilder
         });
 
         AssetDatabase.SaveAssets();
-        Debug.Log("Applied the Hyper Casual UI Pack skin to the selection screens, tiles, gem chip, teasers and Main Menu buttons.");
+        Debug.Log("Applied the Hyper Casual UI Pack skin to the selection screens, tiles, coin chip, teasers and Main Menu buttons.");
     }
 
     private static void Edit(string prefabPath, System.Action<GameObject> apply)

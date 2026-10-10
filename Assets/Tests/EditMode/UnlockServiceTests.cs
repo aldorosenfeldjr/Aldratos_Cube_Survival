@@ -23,20 +23,20 @@ public class UnlockServiceTests : SaveTestBase
         var price = UnlockService.Price(common);
         Wallet.Add(price + 7);
 
-        Assert.IsTrue(UnlockService.TryBuyWithGems(common));
+        Assert.IsTrue(UnlockService.TryBuyWithCoins(common));
 
         Assert.AreEqual(7, Wallet.Balance);
         Assert.IsTrue(UnlockService.IsOwned(common));
-        Assert.AreEqual("gems", SaveService.Data.owned.Single().source);
+        Assert.AreEqual("coins", SaveService.Data.owned.Single().source);
     }
 
     [Test]
-    public void BuyingWithTooFewGemsChangesNothing()
+    public void BuyingWithTooFewCoinsChangesNothing()
     {
         var common = Character(PriceTier.Common);
         Wallet.Add(UnlockService.Price(common) - 1);
 
-        Assert.IsFalse(UnlockService.TryBuyWithGems(common));
+        Assert.IsFalse(UnlockService.TryBuyWithCoins(common));
 
         Assert.IsFalse(UnlockService.IsOwned(common));
         Assert.AreEqual(UnlockService.Price(common) - 1, Wallet.Balance);
@@ -48,10 +48,10 @@ public class UnlockServiceTests : SaveTestBase
     {
         var common = Character(PriceTier.Common);
         Wallet.Add(UnlockService.Price(common) * 2);
-        UnlockService.TryBuyWithGems(common);
+        UnlockService.TryBuyWithCoins(common);
         var balance = Wallet.Balance;
 
-        Assert.IsFalse(UnlockService.TryBuyWithGems(common));
+        Assert.IsFalse(UnlockService.TryBuyWithCoins(common));
 
         Assert.AreEqual(balance, Wallet.Balance);
         Assert.AreEqual(1, SaveService.Data.owned.Count);
@@ -191,7 +191,7 @@ public class UnlockServiceTests : SaveTestBase
         UnlockService.StartTrial(rare);
         Wallet.Add(UnlockService.Price(rare));
 
-        UnlockService.TryBuyWithGems(rare);
+        UnlockService.TryBuyWithCoins(rare);
 
         Assert.AreEqual(0, SaveService.Data.trials.Count);
         Assert.IsTrue(UnlockService.IsOwned(rare));

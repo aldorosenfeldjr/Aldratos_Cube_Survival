@@ -11,7 +11,7 @@ public class SelectionLayout : MonoBehaviour
     [SerializeField] private RectTransform infoPanel;
     [Tooltip("The card: the scrollable grid of items.")]
     [SerializeField] private RectTransform gridPanel;
-    [Tooltip("Height of the top bar (Back, title, gem counter) that both panels sit below.")]
+    [Tooltip("Height of the top bar (Back, title, coin counter) that both panels sit below.")]
     [SerializeField] private float topBarHeight = 100f;
     [SerializeField] private float padding = 24f;
     [Tooltip("Share of the screen given to the hero preview: width in landscape, height in portrait.")]

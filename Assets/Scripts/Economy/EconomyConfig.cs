@@ -21,13 +21,13 @@ public class EconomyConfig : ScriptableObject
         }
     }
 
-    [Header("Gems")]
-    [Tooltip("Gems one falling gem pickup is worth.")]
-    [SerializeField] private int gemValue = 1;
-    [Tooltip("Every gem price is multiplied by this on mobile, then rounded to the nearest 5.")]
+    [Header("Coins")]
+    [Tooltip("Coins one broken hazard is worth.")]
+    [SerializeField] [UnityEngine.Serialization.FormerlySerializedAs("gemValue")] private int coinValue = 1;
+    [Tooltip("Every coin price is multiplied by this on mobile, then rounded to the nearest 5.")]
     [SerializeField] private float mobilePriceMultiplier = 2.5f;
 
-    [Header("Price tiers (PC gems)")]
+    [Header("Price tiers (PC coins)")]
     [SerializeField] private int commonPrice = 600;
     [SerializeField] private int rarePrice = 1800;
     [SerializeField] private int epicPrice = 3600;
@@ -37,13 +37,13 @@ public class EconomyConfig : ScriptableObject
     [SerializeField] private int trialRuns = 3;
     [SerializeField] private int gameOversPerInterstitial = 10;
 
-    public int GemValue => gemValue;
+    public int CoinValue => coinValue;
     public float MobilePriceMultiplier => mobilePriceMultiplier;
     public int CommonPrice => commonPrice;
     public int RarePrice => rarePrice;
     public int EpicPrice => epicPrice;
     public int LegendaryPrice => legendaryPrice;
-    /// <summary>PC gem price of a tier. Use <see cref="UnlockService.PriceFor"/> for the platform price.</summary>
+    /// <summary>PC coin price of a tier. Use <see cref="UnlockService.PriceFor"/> for the platform price.</summary>
     public int TierPrice(PriceTier tier)
     {
         switch (tier)

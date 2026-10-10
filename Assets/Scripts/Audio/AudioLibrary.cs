@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum Sfx { Click, Gem, PowerUp, Land, GameOver, Success }
+public enum Sfx { Click, Coin, PowerUp, Land, GameOver, Success }
 
 /// <summary>
 /// Every sound in the game and its volume (Assets/Resources/AudioLibrary.asset), read via <see cref="Instance"/>. The one place to
@@ -31,7 +31,7 @@ public class AudioLibrary : ScriptableObject
     [Header("Sound effects")]
     [SerializeField, Range(0f, 1f)] private float sfxVolume = 0.8f;
     [SerializeField] private AudioClip click;
-    [SerializeField] private AudioClip gem;
+    [SerializeField] [UnityEngine.Serialization.FormerlySerializedAs("gem")] private AudioClip coin;
     [SerializeField] private AudioClip powerUp;
     [SerializeField] private AudioClip land;
     [SerializeField] private AudioClip gameOver;
@@ -46,7 +46,7 @@ public class AudioLibrary : ScriptableObject
         switch (sfx)
         {
             case Sfx.Click: return click;
-            case Sfx.Gem: return gem;
+            case Sfx.Coin: return coin;
             case Sfx.PowerUp: return powerUp;
             case Sfx.Land: return land;
             case Sfx.GameOver: return gameOver;
